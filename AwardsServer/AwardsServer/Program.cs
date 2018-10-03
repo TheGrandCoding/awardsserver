@@ -8,12 +8,22 @@ namespace AwardsServer
 {
     public class Program
     {
+        public static SocketHandler Server;
+        public static DatabaseStuffs Database;
         // TODO stuff
+
+
         static void Main(string[] args)
         {
+            AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
             while(true)
             {
-                Logging.Log("Started up.");
+                Logging.Log("Loading existing categories...");
+                Database = new DatabaseStuffs();
+                var tt = Database.Load_All_Votes();
+                Logging.Log("Starting...");
+                Server = new SocketHandler();
+                Logging.Log("Started. Ready to accept new connections.");
                 // some minor testing things below
                 var user = new User();
                 user.AccountName = "davsmi14";
@@ -41,6 +51,11 @@ namespace AwardsServer
                 Console.ReadLine();
             }
 
+        }
+
+        private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            Logging.Log(new Logging.LogMessage(Logging.LogSeverity.Severe, "Unhandled", (Exception)e.ExceptionObject));
         }
     }
     // Shared stuff that will be used across multiple files.

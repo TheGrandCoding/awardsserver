@@ -1,0 +1,8 @@
+# Allows for specific people to be required to sign off on changes to certain places
+
+# Defaults to requiring me to sign off on it
+*       @CheAle14
+
+# Gives the database directory to abdul
+
+/AwardsServer/AwardsServer/Database/       @abdulshafiq0

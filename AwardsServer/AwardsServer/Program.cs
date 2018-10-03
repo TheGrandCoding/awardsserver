@@ -12,45 +12,61 @@ namespace AwardsServer
         public static DatabaseStuffs Database;
         // TODO stuff
 
+        public static bool TryGetUser(string username, out User user)
+        {
+            user = null;
+            if(Database.AllStudents.ContainsKey(username))
+            {
+                user = Database.AllStudents[username];
+                return true;
+            }
+            return false;
+        }
 
         static void Main(string[] args)
         {
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
-            while(true)
+            Logging.Log(Logging.LogSeverity.Info,  "Loading existing categories...");
+            Database = new DatabaseStuffs();
+            Database.Load_All_Votes();
+            foreach(var c in Database.AllCategories)
             {
-                Logging.Log("Loading existing categories...");
-                Database = new DatabaseStuffs();
-                var tt = Database.Load_All_Votes();
-                Logging.Log("Starting...");
-                Server = new SocketHandler();
-                Logging.Log("Started. Ready to accept new connections.");
-                // some minor testing things below
-                var user = new User();
-                user.AccountName = "davsmi14";
-                user.FirstName = "Dave";
-                user.LastName = "Smith";
-                user.Tutor = "11BOB";
-                var category = new Category();
-                category.Prompt = "Most likely to become Prime Minister";
-                try
+                string msg = $"{c.Value.ID} - {c.Value.Prompt}";
+                foreach(var vote in c.Value.Votes)
                 {
-                    category.AddVote(user, user);
-                } catch (Exception ex)
-                {
-                    Logging.Log("StartUp", ex);
+                    msg += $"\r\n{vote.Key} - {vote.Value.Count} votes";
                 }
+                Logging.Log(Logging.LogSeverity.Info, msg);
+            }
+            Logging.Log("Starting...");
+            Server = new SocketHandler();
+            Logging.Log("Started. Ready to accept new connections.");
+            // some minor testing things below
+                
 
-                try
+            if(TryGetUser("jakepaul", out User user))
+            {
+                if(TryGetUser("smith101", out User otherUser))
                 {
-
-                } catch (Exception ex)
-                {
-                    Logging.Log("LoadCategory", ex);
+                    try
+                    {
+                        Database.AddVoteFor(1, user, otherUser);
+                    } catch (Exception ex)
+                    {
+                        Logging.Log("Testing", ex);
+                    }
                 }
-
+            }
+            while(Server.Listening)
+            {
                 Console.ReadLine();
             }
-
+            Logging.Log(Logging.LogSeverity.Severe, "Server has exited its main listening loop");
+            Logging.Log(Logging.LogSeverity.Error, "Server closed.");
+            while(true)
+            { // pause at end so they can read console
+                Console.ReadLine();
+            }
         }
 
         private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
@@ -65,11 +81,21 @@ namespace AwardsServer
         public string FirstName;
         public string LastName;
         public string Tutor;
+        public override string ToString()
+        {
+            return $"{AccountName}: {FirstName} {LastName} ({Tutor})";
+        }
     }
     public class Category
     {
-        public int ID; // each category should have a integer assigned (from 1 to 15 for example)
+        public readonly int ID; // each category should have a integer assigned (from 1 to 15 for example)
         public string Prompt; // eg 'most likely to become Prime Minister'
+        private static int __id = 0;
+        public Category()
+        {
+            ID = System.Threading.Interlocked.Increment(ref __id);
+            Votes = new Dictionary<string, List<User>>();
+        }
         public Dictionary<string, List<User>> Votes; // key: AccountName of user, list is all the users that voted for that person.
 
         /// <summary>
@@ -89,6 +115,10 @@ namespace AwardsServer
                 var list = new List<User>() { votedBy };
                 Votes.Add(voted.AccountName, list);
             }
+        }
+        public override string ToString()
+        {
+            return $"{ID}: {Votes.Count} {Prompt}";
         }
     }
 }

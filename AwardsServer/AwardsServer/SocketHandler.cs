@@ -36,18 +36,19 @@ namespace AwardsServer
 
             private void HandleMessage(string message)
             {
-                if(message == "GET_CATE")
-                { // asking for list of categories.
+                if(message .StartsWith("GET_CATE:"))
+                { // asking for specific category
                     string response = "";
-                    foreach(var c in Program.Database.AllCategories)
+                    message = message.Replace("GET_CATE:", "");
+                    if(int.TryParse(message, out int id))
                     {
-                        response += $"{c.Key}:{c.Value}=";
+                        if(Program.Database.AllCategories.TryGetValue(id, out Category cat))
+                        {
+                            response = $"{cat.ID}:{cat.Prompt}";
+                            this.Send("Cat:" + response);
+                        }
                     }
-                    if(!string.IsNullOrWhiteSpace(response))
-                    {
-                        response = response.Substring(response.Length-2); // remove last =
-                    }
-                    this.Send("Qs:" + response);
+                    // dont respond if it is out of range.
                 } else if (message.StartsWith("SET_CATE"))
                 {
                     message = message.Replace("SET_CATE", "");
@@ -107,6 +108,7 @@ namespace AwardsServer
                     NetworkStream stream = this.Client.GetStream();
                     Byte[] broadcastBytes = Encoding.UTF8.GetBytes(message);
                     stream.Write(broadcastBytes, 0, broadcastBytes.Length);
+                    Logging.Log( Logging.LogSeverity.Debug, message, $"{UserName}/Send");
                 } catch (Exception ex)
                 {
                     Logging.Log($"{UserName}/Send", ex);
@@ -166,8 +168,11 @@ namespace AwardsServer
                         clientSocket.Close();
                         continue;
                     }
-                    Logging.Log(Logging.LogSeverity.Warning, "New connection: " + ipEnd.Address.ToString(), "NewCon");
+                    dataFromClient = dataFromClient.Substring(1, dataFromClient.LastIndexOf("`")-1);
                     var user = new SocketConnection(clientSocket, dataFromClient); // first message is username.
+                    Logging.Log(Logging.LogSeverity.Warning, "New connection: " + ipEnd.Address.ToString() + " -> " + user.User.ToString(), "NewCon");
+                    user.Send("Ready:" + user.User.FirstName);
+                    user.Send("NumCat:" + Program.Database.AllCategories.Count);
                 } catch (Exception ex)
                 {
                     Logging.Log("NewConn", ex);

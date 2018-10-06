@@ -21,6 +21,22 @@ namespace AwardsServer
             string path = @"Provider = Microsoft.ACE.OLEDB.12.0;Data Source = DataBase.accdb; Persist Security Info = False;";
             connection.ConnectionString = path;
         }
+
+        private void LoadCategories()
+        {
+            OleDbCommand command = new OleDbCommand();
+            command.Connection = connection;
+            command.CommandText = "select * from CategoryData";
+            OleDbDataReader reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                Category cat = new Category();
+                cat.ID = int.Parse(reader["ID"].ToString());
+                cat.Prompt = reader["Prompt"].ToString();
+                AllCategories.Add(cat);
+            }
+        }
+
         public void Load_All_Votes()
         {
             // this should read from a database
@@ -30,6 +46,7 @@ namespace AwardsServer
             // so essentially: this is returning all of the categories, with existing votes already placed into them.
             // (it should also load the AllStudents and AllCategories lists..)
             connection.Open();
+            LoadCategories();
             OleDbCommand command = new OleDbCommand();
             command.Connection = connection;
             command.CommandText = "select * from UserData";
@@ -40,6 +57,7 @@ namespace AwardsServer
                 user.AccountName = reader["UserName"].ToString();
                 user.FirstName = reader["LastName"].ToString();
                 user.Tutor = reader["Tutor"].ToString();
+                user.Sex = reader["Sex"].ToString();
                 AllStudents.Add(user);
             }
             OleDbCommand command2 = new OleDbCommand();

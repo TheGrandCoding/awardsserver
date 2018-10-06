@@ -75,6 +75,7 @@ namespace AwardsServer
         public string FirstName;
         public string LastName;
         public string Tutor;
+        public string Sex;
         public Dictionary<Category,User> VotedFor = new Dictionary<Category,User>();
     }
     public class Category

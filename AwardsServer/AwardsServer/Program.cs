@@ -12,6 +12,24 @@ namespace AwardsServer
         public static DatabaseStuffs Database;
         // TODO stuff
 
+        public static class Options
+        {
+            /// <summary>
+            /// Maximum number of students to list in a name query response
+            /// </summary>
+            public static int Maximum_Query_Response = 10;
+
+            /// <summary>
+            /// Prevent a user from connecting twice.
+            /// </summary>
+            public static bool Disallow_Simultaneous_Sessions = true;
+
+            /// <summary>
+            /// Maximum number of simultaneous users before the next one is put in a queue.
+            /// </summary>
+            public static int Maximum_Concurrent_Connections = 99;
+        }
+
         public static bool TryGetUser(string username, out User user)
         {
             user = null;
@@ -77,24 +95,57 @@ namespace AwardsServer
     // Shared stuff that will be used across multiple files.
     public class User
     {
-        public string AccountName; // eg 'cheale14'
-        public string FirstName;
-        public string LastName;
-        public string Tutor;
+        public readonly string AccountName; // eg 'cheale14'
+        public readonly string FirstName;
+        public readonly string LastName;
+        public readonly string Tutor;
+        public readonly char Sex;
+        public User(string accountName, string firstName, string lastName, string tutor, char sex)
+        {
+            AccountName = accountName;
+            FirstName = firstName;
+            LastName = lastName;
+            Tutor = tutor;
+            if(!(sex == 'F' || sex == 'M'))
+            {
+                throw new ArgumentException("Must be either 'F' or 'M'", "sex");
+            }
+            Sex = sex;
+        }
         public override string ToString()
         {
-            return $"{AccountName}: {FirstName} {LastName} ({Tutor})";
+            return this.ToString("AN: FN LN (TT)"); // $"{AccountName}: {FirstName} {LastName} ({Tutor})";
+        }
+        /// <summary>
+        /// AN = Account Name
+        /// FN = First Name
+        /// LN = Last Name
+        /// TT = Tutor
+        /// SX = Sex
+        /// </summary>
+        /// <param name="format"></param>
+        /// <returns></returns>
+        public string ToString(string format)
+        {
+            format = format.Replace("AN", "{0}");
+            format = format.Replace("FN", "{1}");
+            format = format.Replace("LN", "{2}");
+            format = format.Replace("TT", "{3}");
+            format = format.Replace("SX", "{4}");
+            return string.Format(format, this.AccountName, this.FirstName, this.LastName, this.Tutor, this.Sex);
         }
     }
     public class Category
     {
         public readonly int ID; // each category should have a integer assigned (from 1 to 15 for example)
-        public string Prompt; // eg 'most likely to become Prime Minister'
+        public readonly string Prompt; // eg 'most likely to become Prime Minister'
         private static int __id = 0;
-        public Category()
+        public Category(string prompt)
         {
+
             ID = System.Threading.Interlocked.Increment(ref __id);
             Votes = new Dictionary<string, List<User>>();
+            Prompt = prompt;
         }
         public Dictionary<string, List<User>> Votes; // key: AccountName of user, list is all the users that voted for that person.
 

@@ -49,7 +49,7 @@ namespace AwardsServer
                         }
                     }
                     // dont respond if it is out of range.
-                } else if (message.StartsWith("SET_CATE"))
+                }/* else if (message.StartsWith("SET_CATE"))
                 {
                     message = message.Replace("SET_CATE", "");
                     // expecting: ID:Username
@@ -65,6 +65,75 @@ namespace AwardsServer
                             }
                         }
                     }
+                }*/ else if(message.StartsWith("SUBMIT:"))
+                { // submit all votes.
+                    message = message.Replace("SUBMIT:", "");
+                    string rejectedReason = "";
+                    try
+                    {
+                        string[] cats = message.Split('#');
+                        for(int index = 1; index <= cats.Length; index++)
+                        {
+                            string[] catSplit = cats[index].Split(';');
+                            string maleWin = catSplit[0];
+                            string femaleWin = catSplit[1];
+                            if(Program.TryGetUser(maleWin, out User target))
+                            {
+                                if(target.AccountName == this.User.AccountName)
+                                {
+                                    rejectedReason = "Rejected:Self";
+                                } else
+                                {
+                                    Program.Database.AddVoteFor(index, target, this.User);
+                                }
+                            }
+                            if(Program.TryGetUser(femaleWin, out User ftarget))
+                            {
+                                if (target.AccountName == this.User.AccountName)
+                                {
+                                    rejectedReason = "Rejected:Self";
+                                }
+                                else
+                                {
+                                    Program.Database.AddVoteFor(index, target, this.User);
+                                }
+                            }
+                        }
+                    } catch (Exception ex)
+                    {
+                        rejectedReason = "Rejected:Errored";
+                        Logging.Log($"{UserName}/Submit", ex);
+                    }
+                    if(string.IsNullOrWhiteSpace(rejectedReason))
+                    {
+                        this.Send("Accepted");
+                    } else
+                    {
+                        this.Send(rejectedReason);
+                    }
+                } else if(message.StartsWith("QUERY"))
+                {
+                    message = message.Replace("QUERY:", "");
+                    string response = "";
+                    char sex = char.Parse(message.Substring(0, 1));
+                    message = message.Substring(2);
+                    int count = 0;
+                    foreach (var student in Program.Database.AllStudents.Values)
+                    {
+                        if (student.Sex == sex)
+                        {
+                            if (student.ToString().Contains(message))
+                            {
+                                count++;
+                                if(count >= Program.Options.Maximum_Query_Response)
+                                {
+                                    break;
+                                }
+                                response += student.ToString("AN-FN-LN-TT") + "#";
+                            }
+                        }
+                    }
+                    this.Send("Q_RES:" + response);
                 }
             }
 

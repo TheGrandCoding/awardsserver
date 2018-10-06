@@ -32,35 +32,18 @@ namespace AwardsServer
 
             foreach(var prompt in categoryPrompts)
             {
-                var newC = new Category();
-                newC.Prompt = prompt;
+                var newC = new Category(prompt);
                 AllCategories.Add(newC.ID, newC);
             }
 
-            var tempStudent1 = new User()
-            {
-                AccountName = "smith101",
-                FirstName = "Smith",
-                LastName = "101",
-                Tutor = "aaa"
-            };
-            var tempStudent2 = new User()
-            {
-                AccountName = "davebob",
-                FirstName = "Dave",
-                LastName = "Bob",
-                Tutor = "bbb"
-            };
-            var tempStudent3 = new User()
-            {
-                AccountName = "jakepaul",
-                FirstName = "Jake",
-                LastName = "Pual",
-                Tutor = "hhh"
-            };
+            var tempStudent1 = new User("smith101", "Smith", "101", "aaa", 'M');
+            var tempStudent2 = new User("davebob", "Dave", "Bob", "bbb", 'M');
+            var tempStudent3 = new User("jakepaul", "Jake", "Pual", "aaa", 'F');
+            var selfStudent = new User(Environment.UserName, "Local", "Host", "bbb", 'F');
             AllStudents.Add(tempStudent1.AccountName, tempStudent1);
             AllStudents.Add(tempStudent2.AccountName, tempStudent2);
             AllStudents.Add(tempStudent3.AccountName, tempStudent3);
+            AllStudents.Add(selfStudent.AccountName, selfStudent);
 
             // Temporary debug implementation ends, please remove above when properly adding.
             return;

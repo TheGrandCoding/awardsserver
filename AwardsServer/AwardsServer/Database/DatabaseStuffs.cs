@@ -13,8 +13,11 @@ namespace AwardsServer
 { 
     public class DatabaseStuffs
     {
-        public List<User> AllStudents = new List<User>(); // would be AccountName:User again
-        public List<Category> AllCategories = new List<Category>(); // int is the Category's ID.
+        public Dictionary<string, User> AllStudents = new Dictionary<string, User>(); // would be AccountName:User again
+        public Dictionary<int, Category> AllCategories = new Dictionary<int, Category>(); // int is the Category's ID.
+
+        public List<string> AlreadyVotedNames = new List<string>();
+
         public static OleDbConnection connection = new OleDbConnection();
         public void Connect()
         {
@@ -30,10 +33,8 @@ namespace AwardsServer
             OleDbDataReader reader = command.ExecuteReader();
             while (reader.Read())
             {
-                Category cat = new Category();
-                cat.ID = int.Parse(reader["ID"].ToString());
-                cat.Prompt = reader["Prompt"].ToString();
-                AllCategories.Add(cat);
+                Category cat = new Category(reader["Prompt"].ToString(), int.Parse(reader["ID"].ToString()));
+                AllCategories.Add(cat.ID, cat);
             }
         }
 
@@ -53,40 +54,54 @@ namespace AwardsServer
             OleDbDataReader reader = command.ExecuteReader();
             while (reader.Read())
             {
-                User user = new User();
-                user.AccountName = reader["UserName"].ToString();
-                user.FirstName = reader["LastName"].ToString();
-                user.Tutor = reader["Tutor"].ToString();
-                user.Sex = reader["Sex"].ToString();
-                AllStudents.Add(user);
+                User user = new User(reader["UserName"].ToString(), reader["FirstName"].ToString(), reader["LastName"].ToString(), reader["Tutor"].ToString(), char.Parse(reader["Sex"].ToString()));
+                AllStudents.Add(user.AccountName, user);
             }
             OleDbCommand command2 = new OleDbCommand();
             command2.Connection = connection;
-            for (int i = 0; i < AllCategories.Count(); i++)
+            foreach(var cat in AllCategories.Values)
             {
-                command2.CommandText = $"select * from {AllCategories[i].Prompt}";
-                OleDbDataReader reader2 = command2.ExecuteReader();
+                command2.CommandText = $"select * from Category{cat.ID}";
+                OleDbDataReader reader2 = null;
+                try
+                {
+                    reader2 = command2.ExecuteReader();
+                }
+                catch (System.Data.OleDb.OleDbException ex)
+                {
+                    if(ex.Message.Contains("cannot find the input table or query"))
+                    {
+                        // table is missing
+                        Logging.Log(Logging.LogSeverity.Warning, "Database table for category " + cat.ID + " missing, attempting to create..");
+                        OleDbCommand tableCommand = new OleDbCommand();
+                        tableCommand.Connection = connection;
+                        tableCommand.CommandText = $"create table Category{cat.ID} (UserName varchar(255), VotedFor varchar(255));";
+                        tableCommand.ExecuteNonQuery();
+                        reader2 = command2.ExecuteReader();
+                    }
+                }
                 while (reader2.Read())
                 {
                     User VotedBy = null;
                     User UserVotedFor = null;
-                    for (int n = 0; n < AllStudents.Count(); n++)
+                    Program.TryGetUser(reader2["UserName"].ToString(), out VotedBy);
+                    Program.TryGetUser(reader2["VotedFor"].ToString(), out UserVotedFor);
+                    if(VotedBy == null)
                     {
-                        if (AllStudents[n].AccountName == reader2["VotedFor"].ToString())
-                        {
-                            UserVotedFor = AllStudents[n];
-                        }
-                        if (AllStudents[n].AccountName == reader2["UserName"].ToString())
-                        {
-                            VotedBy = AllStudents[n];
-                        }
+                        Logging.Log(Logging.LogSeverity.Error, $"User '{reader2["UserName"]}' changed, disgarding vote for '{reader2["VotedFor"]}' in category {cat.ID}");
+                        continue;
                     }
-                    AllCategories[i].Votes.Add(VotedBy, UserVotedFor);
-                    AllCategories[i].InverseVotes.Add(UserVotedFor, VotedBy);
+                    if (UserVotedFor == null)
+                    {
+                        Logging.Log(Logging.LogSeverity.Error, $"User '{reader2["VotedFor"]}' changed, disgarding vote by '{reader2["UserName"]}' in category {cat.ID}");
+                        continue;
+                    }
+                    AlreadyVotedNames.Add(VotedBy.AccountName);
+                    cat.AddVote(UserVotedFor, VotedBy);
                 }
+                reader2.Close();
             }
             connection.Close();
-            AddVoteFor(AllCategories[0], AllStudents[0], AllStudents[1]);
         }
 
         /// <summary>
@@ -95,12 +110,19 @@ namespace AwardsServer
         /// <param name="categoryID">Category's ID</param>
         /// <param name="voted">Who's name was given to be voted for</param>
         /// <param name="votedBy">Who has actually done the vote</param>
-        public void AddVoteFor(Category category, User voted, User votedBy)
+        public void AddVoteFor(int categoryID, User voted, User votedBy)
         {
+            if(AllCategories.TryGetValue(categoryID, out Category category))
+            {
+                category.AddVote(voted, votedBy);
+            } else
+            {
+                throw new ArgumentException("Unknown category id: " + categoryID.ToString(), "categoryID");
+            }
             connection.Open();
             OleDbCommand command = new OleDbCommand();
             command.Connection = connection;
-            command.CommandText = $"insert into {category.Prompt} (UserName , VotedFor) values ('{votedBy.AccountName}','{voted.AccountName}')";
+            command.CommandText = $"insert into Category{category.ID} (UserName , VotedFor) values ('{votedBy.AccountName}','{voted.AccountName}')";
             command.ExecuteNonQuery();
             connection.Close();
         }

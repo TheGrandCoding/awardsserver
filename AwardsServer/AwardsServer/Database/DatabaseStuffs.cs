@@ -46,7 +46,13 @@ namespace AwardsServer
             // place them into the classes above, then return it.
             // so essentially: this is returning all of the categories, with existing votes already placed into them.
             // (it should also load the AllStudents and AllCategories lists..)
-            connection.Open();
+            try
+            {
+                connection.Open();
+            } catch (Exception ex)
+            {
+                Logging.Log(Logging.LogSeverity.Severe, ex.ToString());
+            }
             LoadCategories();
             OleDbCommand command = new OleDbCommand();
             command.Connection = connection;
@@ -101,6 +107,21 @@ namespace AwardsServer
                 }
                 reader2.Close();
             }
+            connection.Close();
+        }
+
+        public void ExecuteCommand(string cmd)
+        {
+            // probably not very good to be able to do this but hey..
+            if(connection.State == System.Data.ConnectionState.Closed)
+            {
+                Connect(); // just to be safe..
+                connection.Open();
+            }
+            OleDbCommand command = new OleDbCommand();
+            command.Connection = connection;
+            command.CommandText = cmd;
+            command.ExecuteNonQuery();
             connection.Close();
         }
 

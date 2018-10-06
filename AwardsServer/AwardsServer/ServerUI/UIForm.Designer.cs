@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.dgvStudents = new System.Windows.Forms.DataGridView();
@@ -38,13 +39,16 @@
             this.Column4 = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.tabPage2 = new System.Windows.Forms.TabPage();
             this.dgvCategories = new System.Windows.Forms.DataGridView();
-            this.Column6 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Column7 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.tabPage3 = new System.Windows.Forms.TabPage();
             this.dgvWinners = new System.Windows.Forms.DataGridView();
             this.Column8 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Column9 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Column10 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.tabPage4 = new System.Windows.Forms.TabPage();
+            this.queueTimer = new System.Windows.Forms.Timer(this.components);
+            this.btnSaveOptions = new System.Windows.Forms.Button();
+            this.Column6 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Column7 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvStudents)).BeginInit();
@@ -52,6 +56,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.dgvCategories)).BeginInit();
             this.tabPage3.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvWinners)).BeginInit();
+            this.tabPage4.SuspendLayout();
             this.SuspendLayout();
             // 
             // tabControl1
@@ -59,6 +64,7 @@
             this.tabControl1.Controls.Add(this.tabPage1);
             this.tabControl1.Controls.Add(this.tabPage2);
             this.tabControl1.Controls.Add(this.tabPage3);
+            this.tabControl1.Controls.Add(this.tabPage4);
             this.tabControl1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tabControl1.Location = new System.Drawing.Point(0, 0);
             this.tabControl1.Name = "tabControl1";
@@ -143,8 +149,6 @@
             // 
             // dgvCategories
             // 
-            this.dgvCategories.AllowUserToAddRows = false;
-            this.dgvCategories.AllowUserToDeleteRows = false;
             this.dgvCategories.AllowUserToResizeRows = false;
             this.dgvCategories.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             this.dgvCategories.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
@@ -154,23 +158,12 @@
             this.dgvCategories.Dock = System.Windows.Forms.DockStyle.Fill;
             this.dgvCategories.Location = new System.Drawing.Point(3, 3);
             this.dgvCategories.Name = "dgvCategories";
-            this.dgvCategories.ReadOnly = true;
             this.dgvCategories.RowHeadersVisible = false;
             this.dgvCategories.RowTemplate.Height = 24;
             this.dgvCategories.Size = new System.Drawing.Size(786, 415);
             this.dgvCategories.TabIndex = 1;
-            // 
-            // Column6
-            // 
-            this.Column6.HeaderText = "ID";
-            this.Column6.Name = "Column6";
-            this.Column6.ReadOnly = true;
-            // 
-            // Column7
-            // 
-            this.Column7.HeaderText = "Prompt";
-            this.Column7.Name = "Column7";
-            this.Column7.ReadOnly = true;
+            this.dgvCategories.CellBeginEdit += new System.Windows.Forms.DataGridViewCellCancelEventHandler(this.dgvCategories_CellBeginEdit);
+            this.dgvCategories.CellEndEdit += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvCategories_CellEndEdit);
             // 
             // tabPage3
             // 
@@ -221,6 +214,44 @@
             this.Column10.Name = "Column10";
             this.Column10.ReadOnly = true;
             // 
+            // tabPage4
+            // 
+            this.tabPage4.Controls.Add(this.btnSaveOptions);
+            this.tabPage4.Location = new System.Drawing.Point(4, 25);
+            this.tabPage4.Name = "tabPage4";
+            this.tabPage4.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage4.Size = new System.Drawing.Size(792, 421);
+            this.tabPage4.TabIndex = 3;
+            this.tabPage4.Text = "Server Options";
+            this.tabPage4.UseVisualStyleBackColor = true;
+            // 
+            // queueTimer
+            // 
+            this.queueTimer.Enabled = true;
+            this.queueTimer.Interval = 10000;
+            this.queueTimer.Tick += new System.EventHandler(this.queueTimer_Tick);
+            // 
+            // btnSaveOptions
+            // 
+            this.btnSaveOptions.Location = new System.Drawing.Point(6, 6);
+            this.btnSaveOptions.Name = "btnSaveOptions";
+            this.btnSaveOptions.Size = new System.Drawing.Size(780, 25);
+            this.btnSaveOptions.TabIndex = 0;
+            this.btnSaveOptions.Text = "Save";
+            this.btnSaveOptions.UseVisualStyleBackColor = true;
+            this.btnSaveOptions.Click += new System.EventHandler(this.btnSaveOptions_Click);
+            // 
+            // Column6
+            // 
+            this.Column6.HeaderText = "ID";
+            this.Column6.Name = "Column6";
+            this.Column6.ReadOnly = true;
+            // 
+            // Column7
+            // 
+            this.Column7.HeaderText = "Prompt";
+            this.Column7.Name = "Column7";
+            // 
             // UIForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -237,6 +268,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.dgvCategories)).EndInit();
             this.tabPage3.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.dgvWinners)).EndInit();
+            this.tabPage4.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
@@ -254,11 +286,14 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn Column5;
         private System.Windows.Forms.DataGridViewCheckBoxColumn Column4;
         private System.Windows.Forms.DataGridView dgvCategories;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Column6;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Column7;
         private System.Windows.Forms.DataGridView dgvWinners;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column8;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column9;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column10;
+        private System.Windows.Forms.TabPage tabPage4;
+        private System.Windows.Forms.Timer queueTimer;
+        private System.Windows.Forms.Button btnSaveOptions;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Column6;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Column7;
     }
 }

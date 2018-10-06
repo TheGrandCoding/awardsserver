@@ -10,22 +10,29 @@ namespace AwardsServer
     {
         public static SocketHandler Server;
         public static DatabaseStuffs Database;
+        [AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
+        public class OptionAttribute : Attribute
+        {
+            public readonly string Name;
+            public readonly string Description;
+            public readonly object DefaultValue;
+            public OptionAttribute(string description, string name, object defaultValue)
+            {
+                Name = name;
+                Description = description;
+                DefaultValue = defaultValue;
+            }
+        }
         public static class Options
         {
-            /// <summary>
-            /// Maximum number of students to list in a name query response
-            /// </summary>
-            public static int Maximum_Query_Response = 10;
+            [Option("Maximum number of students to list in a name query response", "Max students for query", 10)]
+            public static int Maximum_Query_Response;
 
-            /// <summary>
-            /// Prevent a user from connecting twice.
-            /// </summary>
-            public static bool Disallow_Simultaneous_Sessions = true;
+            [Option("Is the same username permitted to be connected at the same time", "Disallow identical usernames", true)]
+            public static bool Simultaneous_Session_Allowed;
 
-            /// <summary>
-            /// Maximum number of simultaneous users before the next one is put in a queue.
-            /// </summary>
-            public static int Maximum_Concurrent_Connections = 99;
+            [Option("Maximum before queue beings.", "Queue threshhold", 15)]
+            public static int Maximum_Concurrent_Connections;
         }
 
         public static bool TryGetUser(string username, out User user)

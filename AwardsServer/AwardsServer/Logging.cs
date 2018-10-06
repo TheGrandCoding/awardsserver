@@ -40,6 +40,12 @@ namespace AwardsServer
                 Message = message;
                 Source = "App";
             }
+            public LogMessage(LogSeverity severity, string source, Exception ex)
+            {
+                Severity = severity;
+                Source = source;
+                Error = ex;
+            }
         }
         public enum LogSeverity
         {
@@ -75,6 +81,9 @@ namespace AwardsServer
                 logText = logText.Replace("\n", "\n    ..." + (new string(' ', startLength)));
                 switch (msg.Severity)
                 {
+                    case LogSeverity.Severe:
+                        Console.ForegroundColor = ConsoleColor.Magenta;
+                        break;
                     case LogSeverity.Error:
                         Console.ForegroundColor = ConsoleColor.Red;
                         break;
@@ -82,13 +91,14 @@ namespace AwardsServer
                         Console.ForegroundColor = ConsoleColor.Yellow;
                         break;
                     case LogSeverity.Info:
-                        Console.ForegroundColor = ConsoleColor.Blue;
+                        Console.ForegroundColor = ConsoleColor.White;
                         break;
                     case LogSeverity.Debug:
                             Console.ForegroundColor = ConsoleColor.DarkGray;
                         break;
                 }
                 Console.Out.WriteLineAsync(logText);       // Write the log text to the console
+                Console.ForegroundColor = ConsoleColor.Blue;
             }
         }
         public static void Log(string message)

@@ -62,7 +62,7 @@ namespace AwardsServer
             // some minor testing things below
                 
 
-            if(TryGetUser("jakepaul", out User user))
+            /*if(TryGetUser("jakepaul", out User user))
             {
                 if(TryGetUser("smith101", out User otherUser))
                 {
@@ -74,7 +74,12 @@ namespace AwardsServer
                         Logging.Log("Testing", ex);
                     }
                 }
-            }
+            }*/
+
+            // Open UI form..
+            System.Threading.Thread uiThread = new System.Threading.Thread(runUI);
+            uiThread.Start();
+
             while(Server.Listening)
             {
                 Console.ReadLine();
@@ -91,7 +96,14 @@ namespace AwardsServer
         {
             Logging.Log(new Logging.LogMessage(Logging.LogSeverity.Severe, "Unhandled", (Exception)e.ExceptionObject));
         }
+        private static void runUI()
+        {
+            ServerUI.UIForm form = new ServerUI.UIForm();
+
+            form.ShowDialog();
+        }
     }
+
     // Shared stuff that will be used across multiple files.
     public class User
     {
@@ -100,6 +112,7 @@ namespace AwardsServer
         public readonly string LastName;
         public readonly string Tutor;
         public readonly char Sex;
+        public string FullName => FirstName + " " + LastName;
         public User(string accountName, string firstName, string lastName, string tutor, char sex)
         {
             AccountName = accountName;
@@ -148,6 +161,17 @@ namespace AwardsServer
             Prompt = prompt;
         }
         public Dictionary<string, List<User>> Votes; // key: AccountName of user, list is all the users that voted for that person.
+
+        /// <summary>
+        /// Returns the keys of the Votes dict from highest to lowest.
+        /// </summary>
+        /// <returns></returns>
+        public List<string> OrderVotes()
+        {
+            var sortedDict = from entry in Votes orderby entry.Value.Count ascending select entry.Key;
+            return sortedDict.ToList();
+        }
+
 
         /// <summary>
         /// Adds the vote specified, creating a new Dictionary entry if needed

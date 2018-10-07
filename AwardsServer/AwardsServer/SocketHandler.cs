@@ -11,14 +11,19 @@ namespace AwardsServer
 {
     public class SocketHandler
     {
+        public static object LockClient = new object();
+        public static List<SocketConnection> CurrentClients = new List<SocketConnection>();
+        public static List<SocketConnection> ClientQueue = new List<SocketConnection>();
 
         public class SocketConnection
         {
             public TcpClient Client;
-            public readonly string UserName;
+            public string UserName;
             public User User;
 
             public bool Listening = true;
+
+            Thread listenThread;
 
             public SocketConnection(TcpClient client, string name)
             {
@@ -30,8 +35,23 @@ namespace AwardsServer
                 {
                     throw new ArgumentException("User not found: '" + name + "'");
                 }
-                Thread tt = new Thread(Listen);
-                tt.Start();
+            }
+
+            /// <summary>
+            /// Indicates that it should begin to listen because it's been moved from the queue
+            /// </summary>
+            public void AcceptFromQueue()
+            {
+                Logging.Log(Logging.LogSeverity.Warning, "Bringing " + this.User.ToString() + " from queue.");
+                lock(LockClient)
+                {
+                    ClientQueue.Remove(this);
+                    CurrentClients.Add(this);
+                }
+                Send("Ready:" + this.User.FirstName);
+                Send("NumCat:" + Program.Database.AllCategories.Count);
+                listenThread = new Thread(Listen);
+                listenThread.Start();
             }
 
             private void HandleMessage(string message)
@@ -139,6 +159,33 @@ namespace AwardsServer
                 }
             }
 
+            public void Close(string reason = "unknown")
+            {
+                Logging.Log(Logging.LogSeverity.Warning, $"Closing {UserName}({this.User?.ToString() ?? "n/a"}) due to {reason}");
+                try
+                {
+                    Client.Close();
+                }
+                catch { }
+                Listening = false;
+                try
+                {
+                    listenThread.Abort();
+                }
+                catch { }
+                lock(LockClient)
+                {
+                    CurrentClients.Remove(this);
+                    ClientQueue.Remove(this);
+                    while(CurrentClients.Count < Program.Options.Maximum_Concurrent_Connections)
+                    {
+                        if (ClientQueue.Count == 0)
+                            break;
+                        ClientQueue[0].AcceptFromQueue();
+                    }
+                }
+            }
+
             private void Listen()
             {
                 NetworkStream stream = Client.GetStream();
@@ -166,7 +213,7 @@ namespace AwardsServer
                     } catch (Exception ex)
                     {
                         Logging.Log($"{UserName}/Rec", ex);
-                        Listening = false;
+                        Close("Errored");
                     }
                 }
             }
@@ -183,9 +230,13 @@ namespace AwardsServer
                 } catch (Exception ex)
                 {
                     Logging.Log($"{UserName}/Send", ex);
-                    Listening = false;
+                    this.Close("SendErrored");
                 }
-    }
+            }
+            public void Heartbeat()
+            {
+                this.Send("hi");
+            }
         }
 
         public bool Listening = false;
@@ -193,7 +244,6 @@ namespace AwardsServer
         // any clients (ie, the programs) that attempt to communicate.
         private TcpListener ServerListener;
 
-        public List<SocketConnection> Connections = new List<SocketConnection>();
 
         public SocketHandler()
         {
@@ -210,7 +260,7 @@ namespace AwardsServer
                 Logging.Log("Server", ex);
             }
         }
-
+        private static Random rnd = new Random();
         private void NewConnections()
         {
             // todo: would accept new connections from clients and things.
@@ -240,20 +290,43 @@ namespace AwardsServer
                         continue;
                     }
                     dataFromClient = dataFromClient.Substring(1, dataFromClient.LastIndexOf("`")-1);
+                    
                     var user = new SocketConnection(clientSocket, dataFromClient); // first message is username.
+                    lock(LockClient)
+                    {
+                        if (CurrentClients.Select(x => x.UserName).Contains(dataFromClient) || ClientQueue.Select(x => x.UserName).Contains(dataFromClient))
+                        {
+                            if (Program.Options.Simultaneous_Session_Allowed)
+                            {
+                                user.Send("REJECT:Already");
+                                user.Close("Already Connected");
+                            } else
+                            {
+                                user.UserName += rnd.Next(0, 999).ToString("000");
+                            }
+                        }
+                    }
                     Logging.Log(Logging.LogSeverity.Warning, "New connection: " + ipEnd.Address.ToString() + " -> " + user.User.ToString(), "NewCon");
                     if(Program.Database.AlreadyVotedNames.Contains(user.User.AccountName))
                     {
                         Logging.Log(Logging.LogSeverity.Warning, "Refusing connection: " + user.User.ToString() + ", already voted.");
                         user.Send("REJECT:Voted");
-                        user.Listening = false;
-                        user.Client.Close();
-                        clientSocket.Close();
+                        user.Close("Prior Vote");
                         continue;
                     }
-                    user.Send("Ready:" + user.User.FirstName);
-                    user.Send("NumCat:" + Program.Database.AllCategories.Count);
-                } catch (Exception ex)
+                    lock(LockClient)
+                    {
+                        if(CurrentClients.Count >= Program.Options.Maximum_Concurrent_Connections)
+                        {
+                            ClientQueue.Add(user);
+                            user.Send("QUEUE:" + ClientQueue.Count);
+                        } else
+                        {
+                            user.AcceptFromQueue();
+                        }
+                    }
+                }
+                catch (Exception ex)
                 {
                     Logging.Log("NewConn", ex);
                 }

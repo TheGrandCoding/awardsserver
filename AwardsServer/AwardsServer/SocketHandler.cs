@@ -11,7 +11,7 @@ namespace AwardsServer
 {
     public class SocketHandler
     {
-        public static object LockClient = new object();
+        public static readonly object LockClient = new object();
         public static List<SocketConnection> CurrentClients = new List<SocketConnection>();
         public static List<SocketConnection> ClientQueue = new List<SocketConnection>();
 
@@ -188,11 +188,11 @@ namespace AwardsServer
 
             private void Listen()
             {
-                NetworkStream stream = Client.GetStream();
                 while(Listening)
                 {
                     try
                     {
+                        NetworkStream stream = Client.GetStream();
                         Byte[] bytesFrom = new Byte[Client.ReceiveBufferSize];
                         string data;
                         stream.Read(bytesFrom, 0, Client.ReceiveBufferSize);

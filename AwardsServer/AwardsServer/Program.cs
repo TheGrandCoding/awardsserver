@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Win32;
+using System.ComponentModel;
 
 namespace AwardsServer
 {
@@ -33,6 +35,36 @@ namespace AwardsServer
 
             [Option("Maximum before queue beings.", "Queue threshhold", 15)]
             public static int Maximum_Concurrent_Connections;
+        }
+
+        private const string MainRegistry = "HKEY_CURRENT_USER\\AwardsProgram\\Server";
+        public static void SetOption(string key, string value)
+        {
+            Microsoft.Win32.Registry.SetValue(MainRegistry, key, value);
+        }
+        public static T Convert<T>(string input)
+        {
+            try
+            {
+                var converter = TypeDescriptor.GetConverter(typeof(T));
+                if (converter != null)
+                {
+                    // Cast ConvertFromString(string text) : object to (T)
+                    return (T)converter.ConvertFromString(input);
+                }
+                return default(T);
+            }
+            catch (NotSupportedException)
+            {
+                return default(T);
+            }
+        }
+        public static T GetOption<T>(string key, T defaultValue)
+        {
+            var item = Microsoft.Win32.Registry.GetValue(MainRegistry, key, defaultValue);
+            if (item == null)
+                item = defaultValue;
+            return Convert<T>(item.ToString());
         }
 
         public static bool TryGetUser(string username, out User user)

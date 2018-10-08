@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Win32;
 using System.ComponentModel;
+using System.Runtime.InteropServices;
 
 namespace AwardsServer
 {
@@ -83,8 +84,26 @@ namespace AwardsServer
             return user;
         }
 
+
+        // Console window closing things:
+        private delegate bool ConsoleEventDelegate(int eventType);
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool SetConsoleCtrlHandler(ConsoleEventDelegate callback, bool add);
+        static ConsoleEventDelegate handler;
+        static bool ConsoleEventCallback(int eventType)
+        {
+            if (eventType == 2)
+            {
+                // code to run here
+                Logging.Log(new Logging.LogMessage(Logging.LogSeverity.Severe, "Console window closing.."));
+            }
+            return false;
+        }
+
         static void Main(string[] args)
         {
+            handler = new ConsoleEventDelegate(ConsoleEventCallback);
+            SetConsoleCtrlHandler(handler, true);
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
             Logging.Log(Logging.LogSeverity.Info,  "Loading existing categories...");
             Database = new DatabaseStuffs();

@@ -70,6 +70,7 @@ namespace AwardsServer.ServerUI
             dgvQueue.Rows.Clear();
             lock(SocketHandler.LockClient)
             { // prevents same-time access
+                int index = 0;
                 foreach(var que in SocketHandler.ClientQueue)
                 {
                     object[] row = new object[] { index, que.User.ToString("FN LN TT") };

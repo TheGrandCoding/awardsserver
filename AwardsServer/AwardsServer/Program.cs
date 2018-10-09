@@ -31,11 +31,14 @@ namespace AwardsServer
             [Option("Maximum number of students to list in a name query response", "Max students for query", 10)]
             public static int Maximum_Query_Response;
 
-            [Option("Is the same username permitted to be connected at the same time", "Disallow identical usernames", true)]
+            [Option("Is the same username permitted to be connected at the same time", "Allow identical usernames", false)]
             public static bool Simultaneous_Session_Allowed;
 
-            [Option("Maximum before queue beings.", "Queue threshhold", 15)]
+            [Option("Maximum before queue begins.", "Queue threshhold", 15)]
             public static int Maximum_Concurrent_Connections;
+
+            [Option("Time (in seconds) between each heartbeat message is sent", "Time (s) between heartbeat", 5)]
+            public static int Time_Between_Heartbeat;
         }
 
         private const string MainRegistry = "HKEY_CURRENT_USER\\AwardsProgram\\Server";
@@ -60,12 +63,19 @@ namespace AwardsServer
                 return default(T);
             }
         }
-        public static T GetOption<T>(string key, T defaultValue)
+        /*public static T GetOption<T>(string key, T defaultValue)
         {
             var item = Microsoft.Win32.Registry.GetValue(MainRegistry, key, defaultValue);
             if (item == null)
                 item = defaultValue;
             return Convert<T>(item.ToString());
+        }*/
+        public static string GetOption(string key, string defaultValue)
+        {
+            var item = Microsoft.Win32.Registry.GetValue(MainRegistry, key, defaultValue);
+            if (item == null)
+                return defaultValue;
+            return (string)item;
         }
 
         public static bool TryGetUser(string username, out User user)

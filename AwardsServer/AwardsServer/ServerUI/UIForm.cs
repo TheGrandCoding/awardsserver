@@ -61,7 +61,7 @@ namespace AwardsServer.ServerUI
                     winnerFemale = firstFemale.FullName + " " + firstFemale.Tutor + " (" + cat.Value.Votes[firstFemale.AccountName].Count.ToString() + ")";
                 }
 
-                object[] row = new object[] { cat.Value.Prompt, winnerMale, winnerFemale};
+                object[] row = new object[] { cat.Value.ID.ToString() + ": " + cat.Value.Prompt, winnerMale, winnerFemale};
                 dgvWinners.Rows.Add(row);
             }
         }
@@ -141,10 +141,19 @@ namespace AwardsServer.ServerUI
                 {
                     AttributeValue = option.Description,
                     InputType = variable.FieldType,
-                    VariableName = option.Name,
+                    VariableName = variable.Name,
                     FieldInfo = variable
                 };
-                var savedValue = Program.GetOption(hold.VariableName, option.DefaultValue);
+
+                dynamic savedValue = Program.GetOption(hold.VariableName, option.DefaultValue.ToString());
+                if (hold.InputType == typeof(int))
+                {
+                    savedValue = int.Parse(savedValue);
+                } else if (hold.InputType == typeof(bool))
+                {
+                    savedValue = bool.Parse(savedValue);
+
+                }
                 if (savedValue == null)
                     savedValue = option.DefaultValue;
                 variable.SetValue(null, savedValue);
@@ -153,18 +162,18 @@ namespace AwardsServer.ServerUI
                 Label display = new Label();
                 int yValue = 30 + (options.Count * 30);
                 display.Location = new Point(3, yValue);
-                if(option.DefaultValue.GetType() == typeof(int))
+                if(savedValue.GetType() == typeof(int))
                 {
                     inputCont = new NumericUpDown();
-                    ((NumericUpDown)inputCont).Value = (int)option.DefaultValue;
-                } else if (option.DefaultValue.GetType() == typeof(string))
+                    ((NumericUpDown)inputCont).Value = (int)savedValue;
+                } else if (savedValue.GetType() == typeof(string))
                 {
                     inputCont = new TextBox();
-                    ((TextBox)inputCont).Text = (string)option.DefaultValue;
-                } else if (option.DefaultValue.GetType() == typeof(bool))
+                    ((TextBox)inputCont).Text = (string)savedValue;
+                } else if (savedValue.GetType() == typeof(bool))
                 {
                     inputCont = new CheckBox();
-                    ((CheckBox)inputCont).Checked = (bool)option.DefaultValue;
+                    ((CheckBox)inputCont).Checked = (bool)savedValue;
                 }
                 inputCont.Location = new Point(275, yValue);
                 display.Size = new Size(270, 25);
@@ -190,6 +199,7 @@ namespace AwardsServer.ServerUI
 
         private void queueTimer_Tick(object sender, EventArgs e)
         {
+            queueTimer.Interval = Program.Options.Time_Between_Heartbeat * 1000; // since its in seconds
             lock (SocketHandler.LockClient)
             {
                 try

@@ -61,8 +61,23 @@ namespace AwardsServer.ServerUI
                     winnerFemale = firstFemale.FullName + " " + firstFemale.Tutor + " (" + cat.Value.Votes[firstFemale.AccountName].Count.ToString() + ")";
                 }
 
-                object[] row = new object[] { cat.Value.Prompt, winnerMale, winnerFemale};
+                object[] row = new object[] { cat.Value.ID.ToString() + ": " + cat.Value.Prompt, winnerMale, winnerFemale};
                 dgvWinners.Rows.Add(row);
+            }
+        }
+        public void UpdateCurrentQueue()
+        {
+            dgvQueue.Rows.Clear();
+            lock(SocketHandler.LockClient)
+            { // prevents same-time access
+                int index = 0;
+                foreach(var que in SocketHandler.ClientQueue)
+                {
+                    object[] row = new object[] { index, que.User.ToString("FN LN TT") };
+                    dgvQueue.Rows.Add(row);
+                    index++;
+                }
+                index = 0;
             }
         }
 
@@ -126,25 +141,39 @@ namespace AwardsServer.ServerUI
                 {
                     AttributeValue = option.Description,
                     InputType = variable.FieldType,
-                    VariableName = option.Name,
+                    VariableName = variable.Name,
                     FieldInfo = variable
                 };
+
+                dynamic savedValue = Program.GetOption(hold.VariableName, option.DefaultValue.ToString());
+                if (hold.InputType == typeof(int))
+                {
+                    savedValue = int.Parse(savedValue);
+                } else if (hold.InputType == typeof(bool))
+                {
+                    savedValue = bool.Parse(savedValue);
+
+                }
+                if (savedValue == null)
+                    savedValue = option.DefaultValue;
+                variable.SetValue(null, savedValue);
+                Program.SetOption(hold.VariableName, savedValue.ToString());
                 Control inputCont = null;
                 Label display = new Label();
                 int yValue = 30 + (options.Count * 30);
                 display.Location = new Point(3, yValue);
-                if(option.DefaultValue.GetType() == typeof(int))
+                if(savedValue.GetType() == typeof(int))
                 {
                     inputCont = new NumericUpDown();
-                    ((NumericUpDown)inputCont).Value = (int)option.DefaultValue;
-                } else if (option.DefaultValue.GetType() == typeof(string))
+                    ((NumericUpDown)inputCont).Value = (int)savedValue;
+                } else if (savedValue.GetType() == typeof(string))
                 {
                     inputCont = new TextBox();
-                    ((TextBox)inputCont).Text = (string)option.DefaultValue;
-                } else if (option.DefaultValue.GetType() == typeof(bool))
+                    ((TextBox)inputCont).Text = (string)savedValue;
+                } else if (savedValue.GetType() == typeof(bool))
                 {
                     inputCont = new CheckBox();
-                    ((CheckBox)inputCont).Checked = (bool)option.DefaultValue;
+                    ((CheckBox)inputCont).Checked = (bool)savedValue;
                 }
                 inputCont.Location = new Point(275, yValue);
                 display.Size = new Size(270, 25);
@@ -165,26 +194,44 @@ namespace AwardsServer.ServerUI
             UpdateCategory();
             UpdateWinners();
             UpdateOptions();
+            UpdateCurrentQueue();
         }
 
         private void queueTimer_Tick(object sender, EventArgs e)
         {
-            lock(SocketHandler.LockClient)
+            queueTimer.Interval = Program.Options.Time_Between_Heartbeat * 1000; // since its in seconds
+            lock (SocketHandler.LockClient)
             {
-                foreach (var conn in SocketHandler.CurrentClients)
+                try
                 {
-                    conn.Heartbeat();
-                }
-                foreach (var conn in SocketHandler.ClientQueue)
+                    foreach (var conn in SocketHandler.CurrentClients)
+                    {
+                        conn.Heartbeat();
+                    }
+                    foreach (var conn in SocketHandler.ClientQueue)
+                    {
+                        conn.Heartbeat();
+                    }
+                } catch(Exception ex)
                 {
-                    conn.Heartbeat();
+                    Logging.Log("QueueTimer", ex);
                 }
+            }
+            lock(SocketHandler.LockClient)
+            { 
                 int index = 0;
-                foreach (var conn in SocketHandler.ClientQueue)
+                try
                 {
-                    index++;
-                    conn.Send("QUEUE:" + index.ToString());
+                    foreach (var conn in SocketHandler.ClientQueue)
+                    {
+                        index++;
+                        conn.Send("QUEUE:" + index.ToString());
+                    }
+                } catch (Exception ex)
+                {
+                    Logging.Log("QueueTimer", ex);
                 }
+
             }
         }
 
@@ -197,13 +244,13 @@ namespace AwardsServer.ServerUI
                 } else
                 {
                     hold.FieldInfo.SetValue(null, hold.Value);
+                    SetOption(hold.VariableName, hold.Value.ToString());
                     Logging.Log(Logging.LogSeverity.Warning, $"Updated {hold.VariableName}, now: {hold.FieldInfo.GetValue(null)}");
                 }
             }
         }
-        private int IdStartingEdit = 0;
         private void dgvCategories_CellBeginEdit(object sender, DataGridViewCellCancelEventArgs e)
-        {
+        { // this function isnt actually usefull
             var row = dgvCategories.Rows[e.RowIndex];
             int idVal = (int)(row.Cells[0].Value ?? -1) ;
             string nameVal = (string)row.Cells[1].Value;
@@ -231,6 +278,12 @@ namespace AwardsServer.ServerUI
                 Program.Database.AllCategories.Add(idVal, newC);
                 Database.ExecuteCommand($"INSERT INTO CategoryData (ID, Prompt) VALUES ({newC.ID}, '{newC.Prompt}')");
             }
+        }
+
+        private void UIForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            this.queueTimer.Enabled = false;
+            this.queueTimer = null;
         }
     }
 }

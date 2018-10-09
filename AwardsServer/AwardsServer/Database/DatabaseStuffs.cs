@@ -61,7 +61,11 @@ namespace AwardsServer
             while (reader.Read())
             {
                 User user = new User(reader["UserName"].ToString(), reader["FirstName"].ToString(), reader["LastName"].ToString(), reader["Tutor"].ToString(), char.Parse(reader["Sex"].ToString()));
-                AllStudents.Add(user.AccountName, user);
+                if(user.AccountName.Length != "cheale14".Length)
+                {
+                    Logging.Log(Logging.LogSeverity.Warning, "User " + user.ToString("FN LN TT SX AN") + " has invalid account name");
+                }
+                AllStudents.Add(user.AccountName, user); 
             }
             OleDbCommand command2 = new OleDbCommand();
             command2.Connection = connection;

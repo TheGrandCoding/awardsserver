@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Win32;
+using System.ComponentModel;
+using System.Runtime.InteropServices;
 
 namespace AwardsServer
 {
@@ -28,11 +31,51 @@ namespace AwardsServer
             [Option("Maximum number of students to list in a name query response", "Max students for query", 10)]
             public static int Maximum_Query_Response;
 
-            [Option("Is the same username permitted to be connected at the same time", "Disallow identical usernames", true)]
+            [Option("Is the same username permitted to be connected at the same time", "Allow identical usernames", false)]
             public static bool Simultaneous_Session_Allowed;
 
-            [Option("Maximum before queue beings.", "Queue threshhold", 15)]
+            [Option("Maximum before queue begins.", "Queue threshhold", 15)]
             public static int Maximum_Concurrent_Connections;
+
+            [Option("Time (in seconds) between each heartbeat message is sent", "Time (s) between heartbeat", 5)]
+            public static int Time_Between_Heartbeat;
+        }
+
+        private const string MainRegistry = "HKEY_CURRENT_USER\\AwardsProgram\\Server";
+        public static void SetOption(string key, string value)
+        {
+            Microsoft.Win32.Registry.SetValue(MainRegistry, key, value);
+        }
+        public static T Convert<T>(string input)
+        {
+            try
+            {
+                var converter = TypeDescriptor.GetConverter(typeof(T));
+                if (converter != null)
+                {
+                    // Cast ConvertFromString(string text) : object to (T)
+                    return (T)converter.ConvertFromString(input);
+                }
+                return default(T);
+            }
+            catch (NotSupportedException)
+            {
+                return default(T);
+            }
+        }
+        /*public static T GetOption<T>(string key, T defaultValue)
+        {
+            var item = Microsoft.Win32.Registry.GetValue(MainRegistry, key, defaultValue);
+            if (item == null)
+                item = defaultValue;
+            return Convert<T>(item.ToString());
+        }*/
+        public static string GetOption(string key, string defaultValue)
+        {
+            var item = Microsoft.Win32.Registry.GetValue(MainRegistry, key, defaultValue);
+            if (item == null)
+                return defaultValue;
+            return (string)item;
         }
 
         public static bool TryGetUser(string username, out User user)
@@ -51,8 +94,26 @@ namespace AwardsServer
             return user;
         }
 
+
+        // Console window closing things:
+        private delegate bool ConsoleEventDelegate(int eventType);
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool SetConsoleCtrlHandler(ConsoleEventDelegate callback, bool add);
+        static ConsoleEventDelegate handler;
+        static bool ConsoleEventCallback(int eventType)
+        {
+            if (eventType == 2)
+            {
+                // code to run here
+                Logging.Log(new Logging.LogMessage(Logging.LogSeverity.Severe, "Console window closing.."));
+            }
+            return false;
+        }
+
         static void Main(string[] args)
         {
+            handler = new ConsoleEventDelegate(ConsoleEventCallback);
+            SetConsoleCtrlHandler(handler, true);
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
             Logging.Log(Logging.LogSeverity.Info,  "Loading existing categories...");
             Database = new DatabaseStuffs();

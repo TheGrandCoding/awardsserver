@@ -46,11 +46,6 @@ namespace AwardsServer
             public void AcceptFromQueue()
             {
                 Logging.Log(Logging.LogSeverity.Warning, "Bringing " + this.User.ToString() + " from queue.");
-                lock(LockClient)
-                {
-                    ClientQueue.Remove(this);
-                    CurrentClients.Add(this);
-                }
                 Send("Ready:" + this.User.FirstName);
                 Send("NumCat:" + Program.Database.AllCategories.Count);
                 listenThread = new Thread(Listen);
@@ -185,6 +180,8 @@ namespace AwardsServer
                         if (ClientQueue.Count == 0)
                             break;
                         ClientQueue[0].AcceptFromQueue();
+                        CurrentClients.Add(ClientQueue[0]);
+                        ClientQueue.RemoveAt(0);
                     }
                 }
             }
@@ -324,13 +321,15 @@ namespace AwardsServer
                     }
                     lock(LockClient)
                     {
-                        if(CurrentClients.Count >= Program.Options.Maximum_Concurrent_Connections)
+                        ClientQueue.Add(user);
+                        user.Send("QUEUE:" + ClientQueue.Count);
+                        while(CurrentClients.Count < Program.Options.Maximum_Concurrent_Connections)
                         {
-                            ClientQueue.Add(user);
-                            user.Send("QUEUE:" + ClientQueue.Count);
-                        } else
-                        {
-                            user.AcceptFromQueue();
+                            if (ClientQueue.Count == 0)
+                                break;
+                            ClientQueue[0].AcceptFromQueue();
+                            CurrentClients.Add(ClientQueue[0]);
+                            ClientQueue.RemoveAt(0);
                         }
                     }
                 }

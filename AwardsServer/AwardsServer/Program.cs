@@ -234,6 +234,28 @@ namespace AwardsServer
             return sortedDict.ToList();
         }
 
+        public Tuple<List<User>, int> HighestVoter(char sex)
+        {
+            List<User> tied = new List<User>();
+            int highest = 0;
+            var ordered = this.OrderVotes(sex);
+            foreach(var u in ordered)
+            {
+                if(this.Votes[u].Count > highest)
+                {
+                    highest = this.Votes[u].Count;
+                    Program.TryGetUser(u, out User highestU);
+                    tied = new List<User>(); // need to reset
+                    tied.Add(highestU);
+                } else if (this.Votes[u].Count == highest)
+                {
+                    Program.TryGetUser(u, out User hig);
+                    tied.Add(hig);
+                }
+            }
+            Tuple<List<User>, int> returns = new Tuple<List<User>, int>(tied, highest);
+            return returns;
+        }
 
         /// <summary>
         /// Adds the vote specified, creating a new Dictionary entry if needed

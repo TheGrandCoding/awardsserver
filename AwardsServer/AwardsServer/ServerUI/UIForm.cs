@@ -43,22 +43,34 @@ namespace AwardsServer.ServerUI
             dgvWinners.Rows.Clear();
             foreach(var cat in Database.AllCategories)
             {
-                var sortedMale = cat.Value.OrderVotes('M');
-                var sortedFemale = cat.Value.OrderVotes('F');
+                string winnerMale = "";
+                string winnerFemale = "";
 
-                string winnerMale = "N/A";
-                string winnerFemale = "N/A";
-
-                if(sortedMale.Count > 0)
+                var maleWinners = cat.Value.HighestVoter('M');
+                var femaleWinners = cat.Value.HighestVoter('F');
+                foreach(var maleWin in maleWinners.Item1)
                 {
-                    Program.TryGetUser(sortedMale[0], out User firstMale);
-                    winnerMale = firstMale.FullName + " " + firstMale.Tutor + " (" + cat.Value.Votes[firstMale.AccountName].Count.ToString() + ")";
+                    winnerMale += $"{maleWin.FullName} {maleWin.Tutor}, ";
                 }
-
-                if (sortedFemale.Count > 0)
+                foreach(var femaleWin in femaleWinners.Item1)
                 {
-                    Program.TryGetUser(sortedFemale[0], out User firstFemale);
-                    winnerFemale = firstFemale.FullName + " " + firstFemale.Tutor + " (" + cat.Value.Votes[firstFemale.AccountName].Count.ToString() + ")";
+                    winnerFemale += $"{femaleWin.FullName} {femaleWin.Tutor}, ";
+                }
+                if (maleWinners.Item1.Count > 0)
+                {
+                    winnerMale += $"({maleWinners.Item2})";
+                }
+                else
+                {
+                    winnerMale = "N/A";
+                }
+                if (femaleWinners.Item1.Count > 0)
+                {
+                    winnerFemale += $"({femaleWinners.Item2})";
+                }
+                else
+                {
+                    winnerFemale = "N/A";
                 }
 
                 object[] row = new object[] { cat.Value.ID.ToString() + ": " + cat.Value.Prompt, winnerMale, winnerFemale};

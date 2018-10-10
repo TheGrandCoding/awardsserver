@@ -25,6 +25,11 @@ namespace AwardsServer
             connection.ConnectionString = path;
         }
 
+        public void Disconnect()
+        {
+            connection.Close();
+        }
+
         private void LoadCategories()
         {
             OleDbCommand command = new OleDbCommand();
@@ -52,6 +57,7 @@ namespace AwardsServer
             } catch (Exception ex)
             {
                 Logging.Log(Logging.LogSeverity.Severe, ex.ToString());
+                return;
             }
             LoadCategories();
             OleDbCommand command = new OleDbCommand();
@@ -111,14 +117,13 @@ namespace AwardsServer
                 }
                 reader2.Close();
             }
-            connection.Close();
         }
 
         public void ExecuteCommand(string cmd)
         {
             // probably not very good to be able to do this but hey..
-            if(connection.State == System.Data.ConnectionState.Closed)
-            {
+            if(connection.State == System.Data.ConnectionState.Closed && connection.State != System.Data.ConnectionState.Connecting)
+            { // this technically shouldnt really be ran, considering it doesnt close it above.
                 Connect(); // just to be safe..
                 connection.Open();
             }
@@ -126,7 +131,6 @@ namespace AwardsServer
             command.Connection = connection;
             command.CommandText = cmd;
             command.ExecuteNonQuery();
-            connection.Close();
         }
 
         /// <summary>

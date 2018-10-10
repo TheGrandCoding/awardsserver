@@ -106,6 +106,13 @@ namespace AwardsServer
             {
                 // code to run here
                 Logging.Log(new Logging.LogMessage(Logging.LogSeverity.Severe, "Console window closing.."));
+                try
+                {
+                    Database.Disconnect();
+                } catch (Exception ex)
+                {
+                    Logging.Log("CloseConn", ex);
+                }
             }
             return false;
         }
@@ -122,22 +129,7 @@ namespace AwardsServer
             Logging.Log("Starting...");
             Server = new SocketHandler();
             Logging.Log("Started. Ready to accept new connections.");
-            // some minor testing things below
-                
-
-            /*if(TryGetUser("jakepaul", out User user))
-            {
-                if(TryGetUser("smith101", out User otherUser))
-                {
-                    try
-                    {
-                        Database.AddVoteFor(1, user, otherUser);
-                    } catch (Exception ex)
-                    {
-                        Logging.Log("Testing", ex);
-                    }
-                }
-            }*/
+            
 
             // Open UI form..
             System.Threading.Thread uiThread = new System.Threading.Thread(runUI);

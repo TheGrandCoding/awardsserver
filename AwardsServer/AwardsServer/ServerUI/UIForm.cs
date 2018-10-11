@@ -19,15 +19,16 @@ namespace AwardsServer.ServerUI
             InitializeComponent();
         }
 
-
         public void UpdateStudents()
         {
             dgvStudents.Rows.Clear();
             foreach(var stud in Database.AllStudents)
             {
-                object[] row = new object[] { stud.Value.FirstName, stud.Value.LastName, stud.Value.Tutor, stud.Value.Sex, stud.Value.HasVoted };
+                object[] row = new object[] { stud.Value.AccountName, stud.Value.FirstName, stud.Value.LastName, stud.Value.Tutor, stud.Value.Sex, stud.Value.HasVoted };
                 dgvStudents.Rows.Add(row);
+                dgvStudents.Rows[dgvStudents.Rows.Count - 1].ReadOnly = false;
             }
+            dgvStudents.ReadOnly = false;
         }
         public void UpdateCategory()
         {
@@ -296,6 +297,57 @@ namespace AwardsServer.ServerUI
         {
             this.queueTimer.Enabled = false;
             this.queueTimer = null;
+        }
+
+        private void dgvStudents_CellEndEdit(object sender, DataGridViewCellEventArgs e)
+        {
+            var row = dgvStudents.Rows[e.RowIndex];
+            var newUser = userFromColumns(row.Cells);
+            if(newUser.AccountName != editUser.AccountName)
+            {
+                Database.ExecuteCommand($"UPDATE UserData SET UserName = '{newUser.AccountName}' WHERE UserName = '{editUser.AccountName}'");
+                foreach(var t in Database.AllCategories)
+                {
+                    Database.ExecuteCommand($"UPDATE Category{t.Key} SET UserName = '{newUser.AccountName}' WHERE UserName = '{editUser.AccountName}'");
+                    Database.ExecuteCommand($"UPDATE Category{t.Key} SET VotedFor = '{newUser.AccountName}' WHERE VotedFor = '{editUser.AccountName}'");
+                }
+            }
+            Database.ExecuteCommand($"UPDATE UserData SET FirstName = '{newUser.FirstName}', LastName = '{newUser.LastName}', Tutor = '{newUser.Tutor}', Sex = '{newUser.Sex}' WHERE UserName = '{newUser.AccountName}'");
+        }
+        [Flags]
+        public enum EditCapabilities
+        {
+            None =        0b00000,
+            AccountName = 0b00001,
+            FirstName =   0b00010,
+            LastName =    0b00100,
+            Tutor =       0b01000,
+            Sex =         0b10000,
+
+        }
+        public void DisableStudentEdit(EditCapabilities possibles)
+        {
+            dgvStudents.Columns[0].ReadOnly = !possibles.HasFlag(EditCapabilities.AccountName);
+            dgvStudents.Columns[1].ReadOnly = !possibles.HasFlag(EditCapabilities.FirstName);
+            dgvStudents.Columns[2].ReadOnly = !possibles.HasFlag(EditCapabilities.LastName);
+            dgvStudents.Columns[3].ReadOnly = !possibles.HasFlag(EditCapabilities.Tutor);
+            dgvStudents.Columns[4].ReadOnly = !possibles.HasFlag(EditCapabilities.Sex);
+        }
+
+        private User editUser = null;
+        private void dgvStudents_CellBeginEdit(object sender, DataGridViewCellCancelEventArgs e)
+        {
+            var row = dgvStudents.Rows[e.RowIndex];
+            editUser = userFromColumns(row.Cells);
+        }
+        private User userFromColumns(DataGridViewCellCollection cells)
+        {
+            return new User(cells[0].Value.ToString(),
+                cells[1].Value.ToString(),
+                cells[2].Value.ToString(),
+                cells[3].Value.ToString(),
+                char.Parse(cells[4].Value.ToString())
+                );
         }
     }
 }

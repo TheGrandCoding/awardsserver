@@ -118,19 +118,22 @@ namespace AwardsServer
                 reader2.Close();
             }
         }
-
+        private readonly object _databaseLock = new object();
         public void ExecuteCommand(string cmd)
         {
-            // probably not very good to be able to do this but hey..
-            if(connection.State == System.Data.ConnectionState.Closed && connection.State != System.Data.ConnectionState.Connecting)
-            { // this technically shouldnt really be ran, considering it doesnt close it above.
-                Connect(); // just to be safe..
-                connection.Open();
+            lock(_databaseLock)
+            {
+                // probably not very good to be able to do this but hey..
+                if (connection.State == System.Data.ConnectionState.Closed && connection.State != System.Data.ConnectionState.Connecting)
+                { // this technically shouldnt really be ran, considering it doesnt close it above.
+                    Connect(); // just to be safe..
+                    connection.Open();
+                }
+                OleDbCommand command = new OleDbCommand();
+                command.Connection = connection;
+                command.CommandText = cmd;
+                command.ExecuteNonQuery();
             }
-            OleDbCommand command = new OleDbCommand();
-            command.Connection = connection;
-            command.CommandText = cmd;
-            command.ExecuteNonQuery();
         }
 
         /// <summary>
@@ -148,12 +151,7 @@ namespace AwardsServer
             {
                 throw new ArgumentException("Unknown category id: " + categoryID.ToString(), "categoryID");
             }
-            connection.Open();
-            OleDbCommand command = new OleDbCommand();
-            command.Connection = connection;
-            command.CommandText = $"insert into Category{category.ID} (UserName , VotedFor) values ('{votedBy.AccountName}','{voted.AccountName}')";
-            command.ExecuteNonQuery();
-            connection.Close();
+            ExecuteCommand($"insert into Category{category.ID} (UserName , VotedFor) values ('{votedBy.AccountName}','{voted.AccountName}')");
         }
     }
 }

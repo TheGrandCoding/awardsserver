@@ -54,6 +54,11 @@
             this.Column11 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Column12 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.queueTimer = new System.Windows.Forms.Timer(this.components);
+            this.tabPage6 = new System.Windows.Forms.TabPage();
+            this.dgvCurrentVoters = new System.Windows.Forms.DataGridView();
+            this.dataGridViewTextBoxColumn1 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Column14 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataGridViewTextBoxColumn2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvStudents)).BeginInit();
@@ -64,6 +69,8 @@
             this.tabPage4.SuspendLayout();
             this.tabPage5.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvQueue)).BeginInit();
+            this.tabPage6.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.dgvCurrentVoters)).BeginInit();
             this.SuspendLayout();
             // 
             // tabControl1
@@ -73,6 +80,7 @@
             this.tabControl1.Controls.Add(this.tabPage3);
             this.tabControl1.Controls.Add(this.tabPage4);
             this.tabControl1.Controls.Add(this.tabPage5);
+            this.tabControl1.Controls.Add(this.tabPage6);
             this.tabControl1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tabControl1.Location = new System.Drawing.Point(0, 0);
             this.tabControl1.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
@@ -314,6 +322,55 @@
             this.queueTimer.Interval = 10000;
             this.queueTimer.Tick += new System.EventHandler(this.queueTimer_Tick);
             // 
+            // tabPage6
+            // 
+            this.tabPage6.Controls.Add(this.dgvCurrentVoters);
+            this.tabPage6.Location = new System.Drawing.Point(4, 25);
+            this.tabPage6.Name = "tabPage6";
+            this.tabPage6.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage6.Size = new System.Drawing.Size(792, 421);
+            this.tabPage6.TabIndex = 5;
+            this.tabPage6.Text = "Current Voters";
+            this.tabPage6.UseVisualStyleBackColor = true;
+            // 
+            // dgvCurrentVoters
+            // 
+            this.dgvCurrentVoters.AllowUserToAddRows = false;
+            this.dgvCurrentVoters.AllowUserToDeleteRows = false;
+            this.dgvCurrentVoters.AllowUserToResizeRows = false;
+            this.dgvCurrentVoters.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
+            this.dgvCurrentVoters.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dgvCurrentVoters.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.dataGridViewTextBoxColumn1,
+            this.Column14,
+            this.dataGridViewTextBoxColumn2});
+            this.dgvCurrentVoters.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.dgvCurrentVoters.Location = new System.Drawing.Point(3, 3);
+            this.dgvCurrentVoters.Margin = new System.Windows.Forms.Padding(4);
+            this.dgvCurrentVoters.Name = "dgvCurrentVoters";
+            this.dgvCurrentVoters.ReadOnly = true;
+            this.dgvCurrentVoters.RowHeadersVisible = false;
+            this.dgvCurrentVoters.Size = new System.Drawing.Size(786, 415);
+            this.dgvCurrentVoters.TabIndex = 1;
+            // 
+            // dataGridViewTextBoxColumn1
+            // 
+            this.dataGridViewTextBoxColumn1.HeaderText = "IP";
+            this.dataGridViewTextBoxColumn1.Name = "dataGridViewTextBoxColumn1";
+            this.dataGridViewTextBoxColumn1.ReadOnly = true;
+            // 
+            // Column14
+            // 
+            this.Column14.HeaderText = "Connection";
+            this.Column14.Name = "Column14";
+            this.Column14.ReadOnly = true;
+            // 
+            // dataGridViewTextBoxColumn2
+            // 
+            this.dataGridViewTextBoxColumn2.HeaderText = "Name";
+            this.dataGridViewTextBoxColumn2.Name = "dataGridViewTextBoxColumn2";
+            this.dataGridViewTextBoxColumn2.ReadOnly = true;
+            // 
             // UIForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -335,6 +392,8 @@
             this.tabPage4.ResumeLayout(false);
             this.tabPage5.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.dgvQueue)).EndInit();
+            this.tabPage6.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.dgvCurrentVoters)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -366,5 +425,10 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn Column4;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column5;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column13;
+        private System.Windows.Forms.TabPage tabPage6;
+        private System.Windows.Forms.DataGridView dgvCurrentVoters;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn1;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Column14;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn2;
     }
 }

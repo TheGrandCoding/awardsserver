@@ -132,6 +132,9 @@ namespace AwardsServer
             if (!Database.AllStudents.ContainsKey(st.AccountName))
                 Database.AllStudents.Add(st.AccountName, st);
 #endif
+
+            Logging.Log($"Loaded {Database.AllStudents.Count} students and {Database.AllCategories.Count} categories.");
+
             Logging.Log("Starting...");
             Server = new SocketHandler();
             Logging.Log("Started. Ready to accept new connections.");

@@ -81,16 +81,36 @@ namespace AwardsServer.ServerUI
         public void UpdateCurrentQueue()
         {
             dgvQueue.Rows.Clear();
-            lock(SocketHandler.LockClient)
-            { // prevents same-time access
-                int index = 0;
-                foreach(var que in SocketHandler.ClientQueue)
-                {
-                    object[] row = new object[] { index, que.User.ToString("FN LN TT") };
-                    dgvQueue.Rows.Add(row);
-                    index++;
+            try
+            {
+                lock(SocketHandler.LockClient)
+                { // prevents same-time access
+                    int index = 0;
+                    foreach(var que in SocketHandler.ClientQueue)
+                    {
+                        object[] row = new object[] { index, que.User.ToString("FN LN TT") };
+                        dgvQueue.Rows.Add(row);
+                        index++;
+                    }
+                    index = 0;
                 }
-                index = 0;
+            } catch { }
+        }
+        public void UpdateCurrentlyVoting()
+        {
+            dgvCurrentVoters.Rows.Clear();
+            try
+            {
+                lock (SocketHandler.LockClient)
+                {
+                    foreach(var uu in SocketHandler.CurrentClients)
+                    {
+                        object[] row = new object[] { uu.IPAddress, uu.UserName, uu.User.ToString("AN FN LN TT SX") };
+                        dgvCurrentVoters.Rows.Add(row);
+                    }
+                }
+            } catch
+            {
             }
         }
 
@@ -207,7 +227,10 @@ namespace AwardsServer.ServerUI
             UpdateCategory();
             UpdateWinners();
             UpdateOptions();
+
+            // These may error in execution:
             UpdateCurrentQueue();
+            UpdateCurrentlyVoting();
         }
 
         private void queueTimer_Tick(object sender, EventArgs e)

@@ -26,6 +26,8 @@ namespace AwardsServer
 
             public bool Listening = true; // for the while loop below
 
+            public string IPAddress;
+
             Thread listenThread;
 
             public SocketConnection(TcpClient client, string name)
@@ -121,15 +123,19 @@ namespace AwardsServer
                     {
                         rejectedReason = "Rejected:Errored";
                         Logging.Log($"{UserName}/Submit", ex);
-                    }
-                    if(string.IsNullOrWhiteSpace(rejectedReason))
+                    } finally
                     {
-                        Program.Database.AlreadyVotedNames.Add(this.User.AccountName);
-                        this.Send("Accepted");
-                        Logging.Log(Logging.LogSeverity.Warning, "User has voted", this.User.AccountName);
-                    } else
-                    {
-                        this.Send(rejectedReason);
+                        if (string.IsNullOrWhiteSpace(rejectedReason))
+                        {
+                            Program.Database.AlreadyVotedNames.Add(this.User.AccountName);
+                            this.Send("Accepted");
+                            Logging.Log(Logging.LogSeverity.Warning, "User has voted", this.User.AccountName);
+                        }
+                        else
+                        {
+                            this.Send(rejectedReason);
+                        }
+                        this.Close("Submitted");
                     }
                 } else if(message.StartsWith("QUERY"))
                 {
@@ -218,14 +224,19 @@ namespace AwardsServer
                 }
             }
 
+            public static void WriteConnection(TcpClient client, string message)
+            {
+                message = $"%{message}`";
+                NetworkStream stream = client.GetStream();
+                Byte[] broadcastBytes = Encoding.UTF8.GetBytes(message);
+                stream.Write(broadcastBytes, 0, broadcastBytes.Length);
+            }
+
             public void Send(string message)
             {
                 try
                 {
-                    message = $"%{message}`";
-                    NetworkStream stream = this.Client.GetStream();
-                    Byte[] broadcastBytes = Encoding.UTF8.GetBytes(message);
-                    stream.Write(broadcastBytes, 0, broadcastBytes.Length);
+                    WriteConnection(this.Client, message);
                     Logging.Log( Logging.LogSeverity.Debug, message, $"{UserName}/Send");
                 } catch (Exception ex)
                 {
@@ -295,8 +306,19 @@ namespace AwardsServer
                         continue;
                     }
                     dataFromClient = dataFromClient.Substring(1, dataFromClient.LastIndexOf("`")-1);
-                    
-                    var user = new SocketConnection(clientSocket, dataFromClient); // first message is username.
+                    SocketConnection user = null;
+                    try
+                    {
+                        user = new SocketConnection(clientSocket, dataFromClient);
+                    }catch (ArgumentException ex)
+                    { // user not found
+                        SocketConnection.WriteConnection(clientSocket, "UnknownUser");
+                        continue;
+                    } catch (Exception ex)
+                    {
+                        Logging.Log("NewSock", ex);
+                        continue;
+                    }
                     // as soon as we get a connection, we should disable the ability to edit user info from UI
                     Program.ServerUIForm.PermittedStudentEdits(ServerUI.UIForm.EditCapabilities.None);
                     lock(LockClient)
@@ -313,6 +335,7 @@ namespace AwardsServer
                             }
                         }
                     }
+                    user.IPAddress = ipEnd.Address.ToString();
                     Logging.Log(Logging.LogSeverity.Warning, "New connection: " + ipEnd.Address.ToString() + " -> " + user.User.ToString(), "NewCon");
                     if(Program.Database.AlreadyVotedNames.Contains(user.User.AccountName))
                     {

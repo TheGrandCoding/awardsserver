@@ -24,7 +24,7 @@ namespace AwardsServer.ServerUI
             dgvStudents.Rows.Clear();
             foreach(var stud in Database.AllStudents)
             {
-                object[] row = new object[] { stud.Value.AccountName, stud.Value.FirstName, stud.Value.LastName, stud.Value.Tutor, stud.Value.Sex, stud.Value.HasVoted };
+                object[] row = new object[] { stud.Value.AccountName.ToString(), stud.Value.FirstName.ToString(), stud.Value.LastName.ToString(), stud.Value.Tutor.ToString(), stud.Value.Sex.ToString(), stud.Value.HasVoted ? "Yes" : "No" };
                 dgvStudents.Rows.Add(row);
                 dgvStudents.Rows[dgvStudents.Rows.Count - 1].ReadOnly = false;
             }
@@ -308,10 +308,28 @@ namespace AwardsServer.ServerUI
                 Database.ExecuteCommand($"UPDATE UserData SET UserName = '{newUser.AccountName}' WHERE UserName = '{editUser.AccountName}'");
                 foreach(var t in Database.AllCategories)
                 {
+                    if(t.Value.Votes.ContainsKey(editUser.AccountName))
+                    {
+                        var things = t.Value.Votes[editUser.AccountName];
+                        t.Value.Votes.Remove(editUser.AccountName);
+                        t.Value.Votes.Add(newUser.AccountName, things);
+                    }
+                    foreach(var v in t.Value.Votes)
+                    {
+                        var existing = v.Value.FirstOrDefault(x => x.AccountName == editUser.AccountName);
+                        if(existing != null)
+                        {
+                            v.Value.Remove(existing);
+                            v.Value.Add(newUser);
+                        }
+                    }
                     Database.ExecuteCommand($"UPDATE Category{t.Key} SET UserName = '{newUser.AccountName}' WHERE UserName = '{editUser.AccountName}'");
                     Database.ExecuteCommand($"UPDATE Category{t.Key} SET VotedFor = '{newUser.AccountName}' WHERE VotedFor = '{editUser.AccountName}'");
                 }
+                Database.AllStudents.Remove(editUser.AccountName); // remove the old one..
+                Database.AllStudents.Add(newUser.AccountName, newUser);
             }
+            Database.AllStudents[newUser.AccountName] = newUser;
             Database.ExecuteCommand($"UPDATE UserData SET FirstName = '{newUser.FirstName}', LastName = '{newUser.LastName}', Tutor = '{newUser.Tutor}', Sex = '{newUser.Sex}' WHERE UserName = '{newUser.AccountName}'");
         }
         [Flags]
@@ -323,15 +341,25 @@ namespace AwardsServer.ServerUI
             LastName =    0b00100,
             Tutor =       0b01000,
             Sex =         0b10000,
+            All = AccountName | FirstName | LastName | Tutor | Sex
 
         }
-        public void DisableStudentEdit(EditCapabilities possibles)
+        public void PermittedStudentEdits(EditCapabilities possibles)
         {
+            if(this.InvokeRequired)
+            {
+                this.Invoke(new MethodInvoker(() =>
+                {
+                    PermittedStudentEdits(possibles);
+                }));
+                return;
+            }
             dgvStudents.Columns[0].ReadOnly = !possibles.HasFlag(EditCapabilities.AccountName);
             dgvStudents.Columns[1].ReadOnly = !possibles.HasFlag(EditCapabilities.FirstName);
             dgvStudents.Columns[2].ReadOnly = !possibles.HasFlag(EditCapabilities.LastName);
             dgvStudents.Columns[3].ReadOnly = !possibles.HasFlag(EditCapabilities.Tutor);
             dgvStudents.Columns[4].ReadOnly = !possibles.HasFlag(EditCapabilities.Sex);
+            dgvStudents.Columns[5].ReadOnly = true; // voted.
         }
 
         private User editUser = null;

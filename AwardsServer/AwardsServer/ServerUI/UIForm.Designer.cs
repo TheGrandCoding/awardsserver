@@ -32,6 +32,12 @@
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.dgvStudents = new System.Windows.Forms.DataGridView();
+            this.Column1 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Column2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Column3 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Column4 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Column5 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Column13 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.tabPage2 = new System.Windows.Forms.TabPage();
             this.dgvCategories = new System.Windows.Forms.DataGridView();
             this.Column6 = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -48,12 +54,6 @@
             this.Column11 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Column12 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.queueTimer = new System.Windows.Forms.Timer(this.components);
-            this.Column13 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Column1 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Column2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Column3 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Column5 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Column4 = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvStudents)).BeginInit();
@@ -75,58 +75,86 @@
             this.tabControl1.Controls.Add(this.tabPage5);
             this.tabControl1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tabControl1.Location = new System.Drawing.Point(0, 0);
-            this.tabControl1.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.tabControl1.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(600, 366);
+            this.tabControl1.Size = new System.Drawing.Size(800, 450);
             this.tabControl1.TabIndex = 0;
             // 
             // tabPage1
             // 
             this.tabPage1.Controls.Add(this.dgvStudents);
-            this.tabPage1.Location = new System.Drawing.Point(4, 22);
-            this.tabPage1.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.tabPage1.Location = new System.Drawing.Point(4, 25);
+            this.tabPage1.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.tabPage1.Name = "tabPage1";
-            this.tabPage1.Padding = new System.Windows.Forms.Padding(2, 2, 2, 2);
-            this.tabPage1.Size = new System.Drawing.Size(592, 340);
+            this.tabPage1.Padding = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            this.tabPage1.Size = new System.Drawing.Size(792, 421);
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "Students";
             this.tabPage1.UseVisualStyleBackColor = true;
             // 
             // dgvStudents
             // 
-            this.dgvStudents.AllowUserToAddRows = false;
             this.dgvStudents.AllowUserToDeleteRows = false;
-            this.dgvStudents.AllowUserToResizeColumns = false;
             this.dgvStudents.AllowUserToResizeRows = false;
             this.dgvStudents.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             this.dgvStudents.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dgvStudents.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-            this.Column13,
             this.Column1,
             this.Column2,
             this.Column3,
+            this.Column4,
             this.Column5,
-            this.Column4});
+            this.Column13});
             this.dgvStudents.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.dgvStudents.Location = new System.Drawing.Point(2, 2);
-            this.dgvStudents.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.dgvStudents.Location = new System.Drawing.Point(3, 2);
+            this.dgvStudents.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.dgvStudents.Name = "dgvStudents";
             this.dgvStudents.RowHeadersVisible = false;
             this.dgvStudents.RowTemplate.Height = 24;
-            this.dgvStudents.Size = new System.Drawing.Size(588, 336);
-            this.dgvStudents.TabIndex = 0;
+            this.dgvStudents.Size = new System.Drawing.Size(786, 417);
+            this.dgvStudents.TabIndex = 2;
             this.dgvStudents.CellBeginEdit += new System.Windows.Forms.DataGridViewCellCancelEventHandler(this.dgvStudents_CellBeginEdit);
             this.dgvStudents.CellEndEdit += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvStudents_CellEndEdit);
+            // 
+            // Column1
+            // 
+            this.Column1.HeaderText = "Acc. Name";
+            this.Column1.Name = "Column1";
+            // 
+            // Column2
+            // 
+            this.Column2.HeaderText = "First Name";
+            this.Column2.Name = "Column2";
+            // 
+            // Column3
+            // 
+            this.Column3.HeaderText = "Second Name";
+            this.Column3.Name = "Column3";
+            // 
+            // Column4
+            // 
+            this.Column4.HeaderText = "Tutor";
+            this.Column4.Name = "Column4";
+            // 
+            // Column5
+            // 
+            this.Column5.HeaderText = "Sex";
+            this.Column5.Name = "Column5";
+            // 
+            // Column13
+            // 
+            this.Column13.HeaderText = "Voted";
+            this.Column13.Name = "Column13";
             // 
             // tabPage2
             // 
             this.tabPage2.Controls.Add(this.dgvCategories);
-            this.tabPage2.Location = new System.Drawing.Point(4, 22);
-            this.tabPage2.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.tabPage2.Location = new System.Drawing.Point(4, 25);
+            this.tabPage2.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.tabPage2.Name = "tabPage2";
-            this.tabPage2.Padding = new System.Windows.Forms.Padding(2, 2, 2, 2);
-            this.tabPage2.Size = new System.Drawing.Size(592, 340);
+            this.tabPage2.Padding = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            this.tabPage2.Size = new System.Drawing.Size(792, 421);
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "Categories";
             this.tabPage2.UseVisualStyleBackColor = true;
@@ -141,12 +169,12 @@
             this.Column6,
             this.Column7});
             this.dgvCategories.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.dgvCategories.Location = new System.Drawing.Point(2, 2);
-            this.dgvCategories.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.dgvCategories.Location = new System.Drawing.Point(3, 2);
+            this.dgvCategories.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.dgvCategories.Name = "dgvCategories";
             this.dgvCategories.RowHeadersVisible = false;
             this.dgvCategories.RowTemplate.Height = 24;
-            this.dgvCategories.Size = new System.Drawing.Size(588, 336);
+            this.dgvCategories.Size = new System.Drawing.Size(786, 417);
             this.dgvCategories.TabIndex = 1;
             this.dgvCategories.CellBeginEdit += new System.Windows.Forms.DataGridViewCellCancelEventHandler(this.dgvCategories_CellBeginEdit);
             this.dgvCategories.CellEndEdit += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvCategories_CellEndEdit);
@@ -165,11 +193,11 @@
             // tabPage3
             // 
             this.tabPage3.Controls.Add(this.dgvWinners);
-            this.tabPage3.Location = new System.Drawing.Point(4, 22);
-            this.tabPage3.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.tabPage3.Location = new System.Drawing.Point(4, 25);
+            this.tabPage3.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.tabPage3.Name = "tabPage3";
-            this.tabPage3.Padding = new System.Windows.Forms.Padding(2, 2, 2, 2);
-            this.tabPage3.Size = new System.Drawing.Size(592, 340);
+            this.tabPage3.Padding = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            this.tabPage3.Size = new System.Drawing.Size(792, 421);
             this.tabPage3.TabIndex = 2;
             this.tabPage3.Text = "Winners";
             this.tabPage3.UseVisualStyleBackColor = true;
@@ -186,13 +214,13 @@
             this.Column9,
             this.Column10});
             this.dgvWinners.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.dgvWinners.Location = new System.Drawing.Point(2, 2);
-            this.dgvWinners.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.dgvWinners.Location = new System.Drawing.Point(3, 2);
+            this.dgvWinners.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.dgvWinners.Name = "dgvWinners";
             this.dgvWinners.ReadOnly = true;
             this.dgvWinners.RowHeadersVisible = false;
             this.dgvWinners.RowTemplate.Height = 24;
-            this.dgvWinners.Size = new System.Drawing.Size(588, 336);
+            this.dgvWinners.Size = new System.Drawing.Size(786, 417);
             this.dgvWinners.TabIndex = 2;
             // 
             // Column8
@@ -216,21 +244,21 @@
             // tabPage4
             // 
             this.tabPage4.Controls.Add(this.btnSaveOptions);
-            this.tabPage4.Location = new System.Drawing.Point(4, 22);
-            this.tabPage4.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.tabPage4.Location = new System.Drawing.Point(4, 25);
+            this.tabPage4.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.tabPage4.Name = "tabPage4";
-            this.tabPage4.Padding = new System.Windows.Forms.Padding(2, 2, 2, 2);
-            this.tabPage4.Size = new System.Drawing.Size(592, 340);
+            this.tabPage4.Padding = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            this.tabPage4.Size = new System.Drawing.Size(792, 421);
             this.tabPage4.TabIndex = 3;
             this.tabPage4.Text = "Server Options";
             this.tabPage4.UseVisualStyleBackColor = true;
             // 
             // btnSaveOptions
             // 
-            this.btnSaveOptions.Location = new System.Drawing.Point(4, 5);
-            this.btnSaveOptions.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.btnSaveOptions.Location = new System.Drawing.Point(5, 6);
+            this.btnSaveOptions.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.btnSaveOptions.Name = "btnSaveOptions";
-            this.btnSaveOptions.Size = new System.Drawing.Size(585, 20);
+            this.btnSaveOptions.Size = new System.Drawing.Size(780, 25);
             this.btnSaveOptions.TabIndex = 0;
             this.btnSaveOptions.Text = "Save";
             this.btnSaveOptions.UseVisualStyleBackColor = true;
@@ -239,10 +267,11 @@
             // tabPage5
             // 
             this.tabPage5.Controls.Add(this.dgvQueue);
-            this.tabPage5.Location = new System.Drawing.Point(4, 22);
+            this.tabPage5.Location = new System.Drawing.Point(4, 25);
+            this.tabPage5.Margin = new System.Windows.Forms.Padding(4);
             this.tabPage5.Name = "tabPage5";
-            this.tabPage5.Padding = new System.Windows.Forms.Padding(3, 3, 3, 3);
-            this.tabPage5.Size = new System.Drawing.Size(592, 340);
+            this.tabPage5.Padding = new System.Windows.Forms.Padding(4);
+            this.tabPage5.Size = new System.Drawing.Size(792, 421);
             this.tabPage5.TabIndex = 4;
             this.tabPage5.Text = "Current Queue";
             this.tabPage5.UseVisualStyleBackColor = true;
@@ -259,11 +288,12 @@
             this.Column11,
             this.Column12});
             this.dgvQueue.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.dgvQueue.Location = new System.Drawing.Point(3, 3);
+            this.dgvQueue.Location = new System.Drawing.Point(4, 4);
+            this.dgvQueue.Margin = new System.Windows.Forms.Padding(4);
             this.dgvQueue.Name = "dgvQueue";
             this.dgvQueue.ReadOnly = true;
             this.dgvQueue.RowHeadersVisible = false;
-            this.dgvQueue.Size = new System.Drawing.Size(586, 334);
+            this.dgvQueue.Size = new System.Drawing.Size(784, 413);
             this.dgvQueue.TabIndex = 0;
             // 
             // Column11
@@ -284,49 +314,13 @@
             this.queueTimer.Interval = 10000;
             this.queueTimer.Tick += new System.EventHandler(this.queueTimer_Tick);
             // 
-            // Column13
-            // 
-            this.Column13.HeaderText = "Acc. Name";
-            this.Column13.Name = "Column13";
-            this.Column13.ReadOnly = true;
-            // 
-            // Column1
-            // 
-            this.Column1.HeaderText = "Name";
-            this.Column1.Name = "Column1";
-            this.Column1.ReadOnly = true;
-            // 
-            // Column2
-            // 
-            this.Column2.HeaderText = "Last Name";
-            this.Column2.Name = "Column2";
-            this.Column2.ReadOnly = true;
-            // 
-            // Column3
-            // 
-            this.Column3.HeaderText = "Tutor Group";
-            this.Column3.Name = "Column3";
-            this.Column3.ReadOnly = true;
-            // 
-            // Column5
-            // 
-            this.Column5.HeaderText = "Sex";
-            this.Column5.Name = "Column5";
-            this.Column5.ReadOnly = true;
-            // 
-            // Column4
-            // 
-            this.Column4.HeaderText = "Voted";
-            this.Column4.Name = "Column4";
-            this.Column4.ReadOnly = true;
-            // 
             // UIForm
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(600, 366);
+            this.ClientSize = new System.Drawing.Size(800, 450);
             this.Controls.Add(this.tabControl1);
-            this.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.Name = "UIForm";
             this.Text = "UIForm";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.UIForm_FormClosing);
@@ -351,7 +345,6 @@
         private System.Windows.Forms.TabPage tabPage1;
         private System.Windows.Forms.TabPage tabPage2;
         private System.Windows.Forms.TabPage tabPage3;
-        private System.Windows.Forms.DataGridView dgvStudents;
         private System.Windows.Forms.DataGridView dgvCategories;
         private System.Windows.Forms.DataGridView dgvWinners;
         private System.Windows.Forms.TabPage tabPage4;
@@ -366,11 +359,12 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn Column8;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column9;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column10;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Column13;
+        private System.Windows.Forms.DataGridView dgvStudents;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column1;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column2;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column3;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Column4;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column5;
-        private System.Windows.Forms.DataGridViewCheckBoxColumn Column4;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Column13;
     }
 }

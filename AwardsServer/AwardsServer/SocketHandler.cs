@@ -297,6 +297,8 @@ namespace AwardsServer
                     dataFromClient = dataFromClient.Substring(1, dataFromClient.LastIndexOf("`")-1);
                     
                     var user = new SocketConnection(clientSocket, dataFromClient); // first message is username.
+                    // as soon as we get a connection, we should disable the ability to edit user info from UI
+                    Program.ServerUIForm.PermittedStudentEdits(ServerUI.UIForm.EditCapabilities.None);
                     lock(LockClient)
                     {
                         if (CurrentClients.Select(x => x.UserName).Contains(dataFromClient) || ClientQueue.Select(x => x.UserName).Contains(dataFromClient))

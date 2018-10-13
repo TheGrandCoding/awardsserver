@@ -127,6 +127,14 @@ namespace AwardsServer
             Database = new DatabaseStuffs();
             Database.Connect();
             Database.Load_All_Votes();
+            if(Database.AllStudents.Count == 0)
+            {
+                Logging.Log(Logging.LogSeverity.Error, "No students have been loaded. Assuming that this is an error.");
+                Console.ReadLine();
+                Logging.Log(Logging.LogSeverity.Error, "This error will continue to occur until atleast one student is added to the 'Database.accdb' file");
+                Console.ReadLine();
+                return; // closes
+            }
 #if DEBUG
             var st = new User(Environment.UserName, "Local", "Host", "1010", 'M');
             if (!Database.AllStudents.ContainsKey(st.AccountName))

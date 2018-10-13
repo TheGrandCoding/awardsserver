@@ -54,6 +54,33 @@ namespace AwardsServer
             try
             {
                 connection.Open();
+            } catch (OleDbException ex)
+            {
+                if(ex.Message.Contains("Could not find file"))
+                {
+                    try
+                    {
+                        System.IO.File.WriteAllBytes("Database.accdb", AwardsServer.Properties.Resources.EmptyDatabase);
+                        try
+                        {
+                            connection.Open();
+                            Logging.Log(Logging.LogSeverity.Severe, "Created a new empty database.\r\nYou will need to add students to it before this server will start.");
+                            return; // we dont want it to do anymore here.
+                        } catch (Exception nextEx)
+                        {
+                            Logging.Log(Logging.LogSeverity.Severe, "After attempting to create an empty file, still errored: " + nextEx.ToString());
+                            return;
+                        }
+                    } catch (Exception exx)
+                    {
+                        Logging.Log(Logging.LogSeverity.Severe, exx.ToString());
+                        return;
+                    }
+                } else
+                {
+                    Logging.Log(Logging.LogSeverity.Severe, ex.ToString());
+                    return;
+                }
             } catch (Exception ex)
             {
                 Logging.Log(Logging.LogSeverity.Severe, ex.ToString());

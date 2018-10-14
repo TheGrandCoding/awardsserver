@@ -11,6 +11,7 @@ namespace AwardsServer
 {
     public class Program
     {
+        public static ServerUI.UIForm ServerUIForm;
         public static SocketHandler Server;
         public static DatabaseStuffs Database;
         [AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
@@ -126,6 +127,22 @@ namespace AwardsServer
             Database = new DatabaseStuffs();
             Database.Connect();
             Database.Load_All_Votes();
+            if(Database.AllStudents.Count == 0)
+            {
+                Logging.Log(Logging.LogSeverity.Error, "No students have been loaded. Assuming that this is an error.");
+                Console.ReadLine();
+                Logging.Log(Logging.LogSeverity.Error, "This error will continue to occur until atleast one student is added to the 'Database.accdb' file");
+                Console.ReadLine();
+                return; // closes
+            }
+#if DEBUG
+            var st = new User(Environment.UserName, "Local", "Host", "1010", 'M');
+            if (!Database.AllStudents.ContainsKey(st.AccountName))
+                Database.AllStudents.Add(st.AccountName, st);
+#endif
+
+            Logging.Log($"Loaded {Database.AllStudents.Count} students and {Database.AllCategories.Count} categories.");
+
             Logging.Log("Starting...");
             Server = new SocketHandler();
             Logging.Log("Started. Ready to accept new connections.");
@@ -153,10 +170,23 @@ namespace AwardsServer
         }
         private static void runUI()
         {
+            bool first = false;
             while (Server.Listening)
             {
-                ServerUI.UIForm form = new ServerUI.UIForm();
-                form.ShowDialog();
+                if(ServerUIForm != null)
+                {
+                    ServerUIForm.Dispose();
+                }
+                ServerUIForm = new ServerUI.UIForm();
+                if(!first)
+                {
+                    first = true;
+                    ServerUIForm.PermittedStudentEdits(ServerUI.UIForm.EditCapabilities.All);
+                } else
+                {
+                    ServerUIForm.PermittedStudentEdits(ServerUI.UIForm.EditCapabilities.None);
+                }
+                ServerUIForm.ShowDialog();
                 Logging.Log(Logging.LogSeverity.Error, "UI Form closed.. you cant do that.. reopening");
             }
         }

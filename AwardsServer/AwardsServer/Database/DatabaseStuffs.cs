@@ -54,6 +54,33 @@ namespace AwardsServer
             try
             {
                 connection.Open();
+            } catch (OleDbException ex)
+            {
+                if(ex.Message.Contains("Could not find file"))
+                {
+                    try
+                    {
+                        System.IO.File.WriteAllBytes("Database.accdb", AwardsServer.Properties.Resources.EmptyDatabase);
+                        try
+                        {
+                            connection.Open();
+                            Logging.Log(Logging.LogSeverity.Severe, "Created a new empty database.\r\nYou will need to add students to it before this server will start.");
+                            return; // we dont want it to do anymore here.
+                        } catch (Exception nextEx)
+                        {
+                            Logging.Log(Logging.LogSeverity.Severe, "After attempting to create an empty file, still errored: " + nextEx.ToString());
+                            return;
+                        }
+                    } catch (Exception exx)
+                    {
+                        Logging.Log(Logging.LogSeverity.Severe, exx.ToString());
+                        return;
+                    }
+                } else
+                {
+                    Logging.Log(Logging.LogSeverity.Severe, ex.ToString());
+                    return;
+                }
             } catch (Exception ex)
             {
                 Logging.Log(Logging.LogSeverity.Severe, ex.ToString());
@@ -118,19 +145,22 @@ namespace AwardsServer
                 reader2.Close();
             }
         }
-
+        private readonly object _databaseLock = new object();
         public void ExecuteCommand(string cmd)
         {
-            // probably not very good to be able to do this but hey..
-            if(connection.State == System.Data.ConnectionState.Closed && connection.State != System.Data.ConnectionState.Connecting)
-            { // this technically shouldnt really be ran, considering it doesnt close it above.
-                Connect(); // just to be safe..
-                connection.Open();
+            lock(_databaseLock)
+            {
+                // probably not very good to be able to do this but hey..
+                if (connection.State == System.Data.ConnectionState.Closed && connection.State != System.Data.ConnectionState.Connecting)
+                { // this technically shouldnt really be ran, considering it doesnt close it above.
+                    Connect(); // just to be safe..
+                    connection.Open();
+                }
+                OleDbCommand command = new OleDbCommand();
+                command.Connection = connection;
+                command.CommandText = cmd;
+                command.ExecuteNonQuery();
             }
-            OleDbCommand command = new OleDbCommand();
-            command.Connection = connection;
-            command.CommandText = cmd;
-            command.ExecuteNonQuery();
         }
 
         /// <summary>
@@ -148,12 +178,7 @@ namespace AwardsServer
             {
                 throw new ArgumentException("Unknown category id: " + categoryID.ToString(), "categoryID");
             }
-            connection.Open();
-            OleDbCommand command = new OleDbCommand();
-            command.Connection = connection;
-            command.CommandText = $"insert into Category{category.ID} (UserName , VotedFor) values ('{votedBy.AccountName}','{voted.AccountName}')";
-            command.ExecuteNonQuery();
-            connection.Close();
+            ExecuteCommand($"insert into Category{category.ID} (UserName , VotedFor) values ('{votedBy.AccountName}','{voted.AccountName}')");
         }
     }
 }

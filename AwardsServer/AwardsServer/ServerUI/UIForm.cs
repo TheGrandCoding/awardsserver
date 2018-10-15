@@ -24,7 +24,7 @@ namespace AwardsServer.ServerUI
             dgvStudents.Rows.Clear();
             foreach(var stud in Database.AllStudents)
             {
-                object[] row = new object[] { stud.Value.AccountName.ToString(), stud.Value.FirstName.ToString(), stud.Value.LastName.ToString(), stud.Value.Tutor.ToString(), stud.Value.Sex.ToString(), stud.Value.HasVoted ? "Yes" : "No" };
+                object[] row = new object[] { stud.Value.AccountName.ToString(), stud.Value.FirstName.ToString(), stud.Value.LastName.ToString(), stud.Value.Tutor.ToString(), stud.Value.Sex.ToString(), stud.Value.HasVoted };
                 dgvStudents.Rows.Add(row);
                 dgvStudents.Rows[dgvStudents.Rows.Count - 1].ReadOnly = false;
             }
@@ -386,10 +386,12 @@ namespace AwardsServer.ServerUI
         }
 
         private User editUser = null;
+        private bool startVoted = false;
         private void dgvStudents_CellBeginEdit(object sender, DataGridViewCellCancelEventArgs e)
         {
             var row = dgvStudents.Rows[e.RowIndex];
             editUser = userFromColumns(row.Cells);
+            startVoted = bool.Parse(row.Cells[5].Value);
         }
         private User userFromColumns(DataGridViewCellCollection cells)
         {

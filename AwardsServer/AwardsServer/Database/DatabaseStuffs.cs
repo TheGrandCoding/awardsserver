@@ -102,13 +102,13 @@ namespace AwardsServer
             }
             OleDbCommand command2 = new OleDbCommand();
             command2.Connection = connection;
-            foreach(var cat in AllCategories.Values)
+            foreach(var cat in AllCategories.Values) //looping through every table
             {
-                command2.CommandText = $"select * from Category{cat.ID}";
+                command2.CommandText = $"select * from Category{cat.ID}"; //selecting the *table* (not column)
                 OleDbDataReader reader2 = null;
                 try
                 {
-                    reader2 = command2.ExecuteReader();
+                    reader2 = command2.ExecuteReader(); //see if the table exists
                 }
                 catch (System.Data.OleDb.OleDbException ex)
                 {
@@ -118,7 +118,7 @@ namespace AwardsServer
                         Logging.Log(Logging.LogSeverity.Warning, "Database table for category " + cat.ID + " missing, attempting to create..");
                         OleDbCommand tableCommand = new OleDbCommand();
                         tableCommand.Connection = connection;
-                        tableCommand.CommandText = $"create table Category{cat.ID} (UserName varchar(255), VotedFor varchar(255));";
+                        tableCommand.CommandText = $"create table Category{cat.ID} (UserName varchar(255), VotedFor varchar(255), TimeVoted varchar(103);";
                         tableCommand.ExecuteNonQuery();
                         reader2 = command2.ExecuteReader();
                     }

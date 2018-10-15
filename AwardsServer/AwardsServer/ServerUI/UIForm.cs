@@ -391,7 +391,7 @@ namespace AwardsServer.ServerUI
         {
             var row = dgvStudents.Rows[e.RowIndex];
             editUser = userFromColumns(row.Cells);
-            startVoted = bool.Parse(row.Cells[5].Value);
+            startVoted = bool.Parse(row.Cells[5].Value.ToString());
         }
         private User userFromColumns(DataGridViewCellCollection cells)
         {

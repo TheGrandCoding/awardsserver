@@ -302,6 +302,7 @@ namespace AwardsServer
             {
                 Votes[voted.AccountName].Add(votedBy); //add a vote to an existing voter
             } else
+
             {
                 Votes.Add(voted.AccountName, new List<User>() { votedBy }); //create a new voter + add their vote
             }

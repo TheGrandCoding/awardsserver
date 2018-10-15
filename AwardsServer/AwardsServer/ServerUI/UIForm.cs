@@ -114,15 +114,18 @@ namespace AwardsServer.ServerUI
             }
         }
 
+        /// <summary>
+        /// Holds information regarding an Option.
+        /// </summary>
         private struct OptionHold
         {
-            public string VariableName;
-            public string AttributeValue;
+            public string VariableName; // name of the variable
+            public string AttributeValue; // name as given by the [Option] attribute above the variable
 
-            public Control InputControl;
-            public Label NameControl;
+            public Control InputControl; // control the user edits
+            public Label NameControl; // control that is a label
 
-            public FieldInfo FieldInfo;
+            public FieldInfo FieldInfo; // the variable itself in the Options class.
 
             public object Value
             {

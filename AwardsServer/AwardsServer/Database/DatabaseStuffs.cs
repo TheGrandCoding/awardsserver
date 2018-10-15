@@ -11,25 +11,52 @@ using System.Data.OleDb;
 
 namespace AwardsServer
 { 
+    /// <summary>
+    /// Class to hold all information related to the Database
+    /// </summary>
     public class DatabaseStuffs
     {
-        public Dictionary<string, User> AllStudents = new Dictionary<string, User>(); // would be AccountName:User again
-        public Dictionary<int, Category> AllCategories = new Dictionary<int, Category>(); // int is the Category's ID.
+        /// <summary>
+        /// Holds Student information.
+        /// Can be accessed by student's username, eg:
+        /// <code>
+        /// User meh = Database.AllStudents["cheale14"];
+        /// string name = meh.FirstName;
+        /// </code>
+        /// </summary>
+        public Dictionary<string, User> AllStudents = new Dictionary<string, User>();
+        /// <summary>
+        /// Hold's each category and its information, Key for dictionary is the Category's ID.
+        /// </summary>
+        public Dictionary<int, Category> AllCategories = new Dictionary<int, Category>(); 
 
+        /// <summary>
+        /// List of people that have already voted. 
+        /// This is added to when a person votes, AND when it loads the database at the start
+        /// </summary>
         public List<string> AlreadyVotedNames = new List<string>();
 
         public static OleDbConnection connection = new OleDbConnection();
+        /// <summary>
+        /// Sets the connection string.
+        /// </summary>
         public void Connect()
         {
             string path = @"Provider = Microsoft.ACE.OLEDB.12.0;Data Source = DataBase.accdb; Persist Security Info = False;";
             connection.ConnectionString = path;
         }
 
+        /// <summary>
+        /// Closes the database's connection.
+        /// </summary>
         public void Disconnect()
         {
             connection.Close();
         }
 
+        /// <summary>
+        /// Loads each category's information from the CategoryData table.
+        /// </summary>
         private void LoadCategories()
         {
             OleDbCommand command = new OleDbCommand();
@@ -43,6 +70,9 @@ namespace AwardsServer
             }
         }
 
+        /// <summary>
+        /// Loads all of the student data.
+        /// </summary>
         public void Load_All_Votes()
         {
             // this should read from a database
@@ -128,7 +158,7 @@ namespace AwardsServer
                         Logging.Log(Logging.LogSeverity.Warning, "Database table for category " + cat.ID + " missing, attempting to create..");
                         OleDbCommand tableCommand = new OleDbCommand();
                         tableCommand.Connection = connection;
-                        tableCommand.CommandText = $"create table Category{cat.ID} (UserName varchar(255), VotedFor varchar(255), TimeVoted varchar(103);";
+                        tableCommand.CommandText = $"create table Category{cat.ID} (UserName varchar(255), VotedFor varchar(255), TimeVoted varchar(103));";
                         tableCommand.ExecuteNonQuery();
                         reader2 = command2.ExecuteReader();
                     }
@@ -156,6 +186,10 @@ namespace AwardsServer
             }
         }
         private readonly object _databaseLock = new object();
+        /// <summary>
+        /// Executes a SQL command.
+        /// </summary>
+        /// <param name="cmd">Command to execute.</param>
         public void ExecuteCommand(string cmd)
         {
             lock(_databaseLock)

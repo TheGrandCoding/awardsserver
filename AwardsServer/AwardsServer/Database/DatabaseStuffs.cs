@@ -171,12 +171,12 @@ namespace AwardsServer
                     Program.TryGetUser(reader2["VotedFor"].ToString(), out UserVotedFor);
                     if(VotedBy == null)
                     {
-                        Logging.Log(Logging.LogSeverity.Error, $"User '{reader2["UserName"]}' changed, disgarding vote for '{reader2["VotedFor"]}' in category {cat.ID}");
+                        Logging.Log(Logging.LogSeverity.Error, $"User '{reader2["UserName"]}' changed, discarding vote for '{reader2["VotedFor"]}' in category {cat.ID}");
                         continue;
                     }
                     if (UserVotedFor == null)
                     {
-                        Logging.Log(Logging.LogSeverity.Error, $"User '{reader2["VotedFor"]}' changed, disgarding vote by '{reader2["UserName"]}' in category {cat.ID}");
+                        Logging.Log(Logging.LogSeverity.Error, $"User '{reader2["VotedFor"]}' changed, discarding vote by '{reader2["UserName"]}' in category {cat.ID}");
                         continue;
                     }
                     AlreadyVotedNames.Add(VotedBy.AccountName);
@@ -222,7 +222,7 @@ namespace AwardsServer
             {
                 throw new ArgumentException("Unknown category id: " + categoryID.ToString(), "categoryID");
             }
-            ExecuteCommand($"insert into Category{category.ID} (UserName , VotedFor) values ('{votedBy.AccountName}','{voted.AccountName}')");
+            ExecuteCommand($"insert into Category{category.ID} (UserName , VotedFor, TimeVoted) values ('{votedBy.AccountName}','{voted.AccountName}','{DateTime.Now}')");
         }
     }
 }

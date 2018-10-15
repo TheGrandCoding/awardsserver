@@ -51,41 +51,51 @@ namespace AwardsServer
             // place them into the classes above, then return it.
             // so essentially: this is returning all of the categories, with existing votes already placed into them.
             // (it should also load the AllStudents and AllCategories lists..)
-            try
+            if(connection.State == System.Data.ConnectionState.Closed)
             {
-                connection.Open();
-            } catch (OleDbException ex)
-            {
-                if(ex.Message.Contains("Could not find file"))
+                try
                 {
-                    try
+                    connection.Open();
+                }
+                catch (OleDbException ex)
+                {
+                    if (ex.Message.Contains("Could not find file"))
                     {
-                        System.IO.File.WriteAllBytes("Database.accdb", AwardsServer.Properties.Resources.EmptyDatabase);
                         try
                         {
-                            connection.Open();
-                            Logging.Log(Logging.LogSeverity.Severe, "Created a new empty database.\r\nYou will need to add students to it before this server will start.");
-                            return; // we dont want it to do anymore here.
-                        } catch (Exception nextEx)
+                            System.IO.File.WriteAllBytes("Database.accdb", AwardsServer.Properties.Resources.EmptyDatabase);
+                            try
+                            {
+                                connection.Open();
+                                Logging.Log(Logging.LogSeverity.Severe, "Created a new empty database.\r\nYou will need to add students to it before this server will start.");
+                                return; // we dont want it to do anymore here.
+                            }
+                            catch (Exception nextEx)
+                            {
+                                Logging.Log(Logging.LogSeverity.Severe, "After attempting to create an empty file, still errored: " + nextEx.ToString());
+                                return;
+                            }
+                        }
+                        catch (Exception exx)
                         {
-                            Logging.Log(Logging.LogSeverity.Severe, "After attempting to create an empty file, still errored: " + nextEx.ToString());
+                            Logging.Log(Logging.LogSeverity.Severe, exx.ToString());
                             return;
                         }
-                    } catch (Exception exx)
+                    }
+                    else
                     {
-                        Logging.Log(Logging.LogSeverity.Severe, exx.ToString());
+                        Logging.Log(Logging.LogSeverity.Severe, ex.ToString());
                         return;
                     }
-                } else
+                }
+                catch (Exception ex)
                 {
                     Logging.Log(Logging.LogSeverity.Severe, ex.ToString());
                     return;
                 }
-            } catch (Exception ex)
-            {
-                Logging.Log(Logging.LogSeverity.Severe, ex.ToString());
-                return;
             }
+            AllCategories = new Dictionary<int, Category>();
+            AllStudents = new Dictionary<string, User>();
             LoadCategories();
             OleDbCommand command = new OleDbCommand();
             command.Connection = connection;

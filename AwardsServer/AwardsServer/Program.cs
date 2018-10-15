@@ -298,12 +298,12 @@ namespace AwardsServer
             {
                 throw new ArgumentException("Both users are the same object, or share the same name");
             }
-            if(Votes.ContainsKey(voted.AccountName))
+            if(Votes.ContainsKey(voted.AccountName)) 
             {
-                Votes[voted.AccountName].Add(votedBy);
+                Votes[voted.AccountName].Add(votedBy); //add a vote to an existing voter
             } else
             {
-                Votes.Add(voted.AccountName, new List<User>() { votedBy });
+                Votes.Add(voted.AccountName, new List<User>() { votedBy }); //create a new voter + add their vote
             }
         }
         public override string ToString()

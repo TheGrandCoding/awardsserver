@@ -146,7 +146,7 @@ namespace AwardsServer.ServerUI
                     } else if(InputControl is ComboBox)
                     {
                         ComboBox tt = (ComboBox)InputControl;
-                        var obj = tt.SelectedText;
+                        var obj = tt.Text;
                         // type should only be enum, considering we wont (shouldnt?) be displaying lists.
                         if(InputType.IsEnum)
                         {
@@ -174,7 +174,7 @@ namespace AwardsServer.ServerUI
         List<OptionHold> options = new List<OptionHold>();
 
         public void UpdateOptions()
-        {
+        { // yeah, i have no idea how to comment all this lol
             foreach(var opt in options)
             {
                 opt.Clear();
@@ -202,7 +202,9 @@ namespace AwardsServer.ServerUI
                 } else if (hold.InputType == typeof(bool))
                 {
                     savedValue = bool.Parse(savedValue);
-
+                } else if (hold.InputType.IsEnum)
+                {
+                    savedValue = Enum.Parse(hold.InputType, savedValue);
                 }
                 if (savedValue == null)
                     savedValue = option.DefaultValue;
@@ -227,9 +229,20 @@ namespace AwardsServer.ServerUI
                 } else if (savedValue.GetType().IsEnum)
                 {
                     inputCont = new ComboBox();
-                    var names = Enum.GetNames(savedValue.GetType());
+                    string[] names = Enum.GetNames(savedValue.GetType());
+                    var saved = savedValue.ToString();
+                    int index = -1;
+                    foreach(var i in names)
+                    {
+                        index++;
+                        if(i == saved)
+                        {
+                            break;
+                        }
+                    }
                     ComboBox tt = (ComboBox)inputCont;
                     tt.Items.AddRange(names);
+                    tt.SelectedIndex = index;
                 } 
 
 

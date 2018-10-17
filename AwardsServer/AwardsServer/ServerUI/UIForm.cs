@@ -24,7 +24,7 @@ namespace AwardsServer.ServerUI
             dgvStudents.Rows.Clear();
             foreach(var stud in Database.AllStudents)
             {
-                object[] row = new object[] { stud.Value.AccountName.ToString(), stud.Value.FirstName.ToString(), stud.Value.LastName.ToString(), stud.Value.Tutor.ToString(), stud.Value.Sex.ToString(), stud.Value.HasVoted ? "Yes" : "No" };
+                object[] row = new object[] { stud.Value.AccountName.ToString(), stud.Value.FirstName.ToString(), stud.Value.LastName.ToString(), stud.Value.Tutor.ToString(), stud.Value.Sex.ToString(), stud.Value.HasVoted };
                 dgvStudents.Rows.Add(row);
                 dgvStudents.Rows[dgvStudents.Rows.Count - 1].ReadOnly = false;
             }
@@ -114,15 +114,18 @@ namespace AwardsServer.ServerUI
             }
         }
 
+        /// <summary>
+        /// Holds information regarding an Option.
+        /// </summary>
         private struct OptionHold
         {
-            public string VariableName;
-            public string AttributeValue;
+            public string VariableName; // name of the variable
+            public string AttributeValue; // name as given by the [Option] attribute above the variable
 
-            public Control InputControl;
-            public Label NameControl;
+            public Control InputControl; // control the user edits
+            public Label NameControl; // control that is a label
 
-            public FieldInfo FieldInfo;
+            public FieldInfo FieldInfo; // the variable itself in the Options class.
 
             public object Value
             {
@@ -354,18 +357,35 @@ namespace AwardsServer.ServerUI
             }
             Database.AllStudents[newUser.AccountName] = newUser;
             Database.ExecuteCommand($"UPDATE UserData SET FirstName = '{newUser.FirstName}', LastName = '{newUser.LastName}', Tutor = '{newUser.Tutor}', Sex = '{newUser.Sex}' WHERE UserName = '{newUser.AccountName}'");
+            bool curVote = bool.Parse(row.Cells[5].Value.ToString());
+            if(curVote == false && startVoted == true)
+            {
+                if(MessageBox.Show($"Are you sure you want to remove {newUser.ToString("FN LN (TT)")}'s votes?", "Warning", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
+                {
+                    foreach (var category in Database.AllCategories)
+                    {
+                        Database.ExecuteCommand($"DELETE FROM Category{category.Key} WHERE UserName = '{newUser.AccountName}'");
+                    }
+                    Logging.Log(Logging.LogSeverity.Warning, "Reloading all database information");
+                    Database.Load_All_Votes();
+                }
+            } else
+            {
+                row.Cells[5].Value = startVoted;
+            }
         }
         [Flags]
         public enum EditCapabilities
         {
-            None =        0b00000,
-            AccountName = 0b00001,
-            FirstName =   0b00010,
-            LastName =    0b00100,
-            Tutor =       0b01000,
-            Sex =         0b10000,
-            All = AccountName | FirstName | LastName | Tutor | Sex
-
+            None =        0b000000,
+            AccountName = 0b000001,
+            FirstName =   0b000010,
+            LastName =    0b000100,
+            Tutor =       0b001000,
+            Sex =         0b010000,
+            Voted =       0b100000,
+            All = AccountName | FirstName | LastName | Tutor | Sex | Voted,
+            NoneImportant = FirstName | LastName | Tutor
         }
         public void PermittedStudentEdits(EditCapabilities possibles)
         {
@@ -382,14 +402,16 @@ namespace AwardsServer.ServerUI
             dgvStudents.Columns[2].ReadOnly = !possibles.HasFlag(EditCapabilities.LastName);
             dgvStudents.Columns[3].ReadOnly = !possibles.HasFlag(EditCapabilities.Tutor);
             dgvStudents.Columns[4].ReadOnly = !possibles.HasFlag(EditCapabilities.Sex);
-            dgvStudents.Columns[5].ReadOnly = true; // voted.
+            dgvStudents.Columns[5].ReadOnly = !possibles.HasFlag(EditCapabilities.Voted);
         }
 
         private User editUser = null;
+        private bool startVoted = false;
         private void dgvStudents_CellBeginEdit(object sender, DataGridViewCellCancelEventArgs e)
         {
             var row = dgvStudents.Rows[e.RowIndex];
             editUser = userFromColumns(row.Cells);
+            startVoted = bool.Parse(row.Cells[5].Value.ToString());
         }
         private User userFromColumns(DataGridViewCellCollection cells)
         {

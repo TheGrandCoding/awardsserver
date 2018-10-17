@@ -11,25 +11,52 @@ using System.Data.OleDb;
 
 namespace AwardsServer
 { 
+    /// <summary>
+    /// Class to hold all information related to the Database
+    /// </summary>
     public class DatabaseStuffs
     {
-        public Dictionary<string, User> AllStudents = new Dictionary<string, User>(); // would be AccountName:User again
-        public Dictionary<int, Category> AllCategories = new Dictionary<int, Category>(); // int is the Category's ID.
+        /// <summary>
+        /// Holds Student information.
+        /// Can be accessed by student's username, eg:
+        /// <code>
+        /// User meh = Database.AllStudents["cheale14"];
+        /// string name = meh.FirstName;
+        /// </code>
+        /// </summary>
+        public Dictionary<string, User> AllStudents = new Dictionary<string, User>();
+        /// <summary>
+        /// Hold's each category and its information, Key for dictionary is the Category's ID.
+        /// </summary>
+        public Dictionary<int, Category> AllCategories = new Dictionary<int, Category>(); 
 
+        /// <summary>
+        /// List of people that have already voted. 
+        /// This is added to when a person votes, AND when it loads the database at the start
+        /// </summary>
         public List<string> AlreadyVotedNames = new List<string>();
 
         public static OleDbConnection connection = new OleDbConnection();
+        /// <summary>
+        /// Sets the connection string.
+        /// </summary>
         public void Connect()
         {
             string path = @"Provider = Microsoft.ACE.OLEDB.12.0;Data Source = DataBase.accdb; Persist Security Info = False;";
             connection.ConnectionString = path;
         }
 
+        /// <summary>
+        /// Closes the database's connection.
+        /// </summary>
         public void Disconnect()
         {
             connection.Close();
         }
 
+        /// <summary>
+        /// Loads each category's information from the CategoryData table.
+        /// </summary>
         private void LoadCategories()
         {
             OleDbCommand command = new OleDbCommand();
@@ -43,6 +70,9 @@ namespace AwardsServer
             }
         }
 
+        /// <summary>
+        /// Loads all of the student data.
+        /// </summary>
         public void Load_All_Votes()
         {
             // this should read from a database
@@ -51,41 +81,51 @@ namespace AwardsServer
             // place them into the classes above, then return it.
             // so essentially: this is returning all of the categories, with existing votes already placed into them.
             // (it should also load the AllStudents and AllCategories lists..)
-            try
+            if(connection.State == System.Data.ConnectionState.Closed)
             {
-                connection.Open();
-            } catch (OleDbException ex)
-            {
-                if(ex.Message.Contains("Could not find file"))
+                try
                 {
-                    try
+                    connection.Open();
+                }
+                catch (OleDbException ex)
+                {
+                    if (ex.Message.Contains("Could not find file"))
                     {
-                        System.IO.File.WriteAllBytes("Database.accdb", AwardsServer.Properties.Resources.EmptyDatabase);
                         try
                         {
-                            connection.Open();
-                            Logging.Log(Logging.LogSeverity.Severe, "Created a new empty database.\r\nYou will need to add students to it before this server will start.");
-                            return; // we dont want it to do anymore here.
-                        } catch (Exception nextEx)
+                            System.IO.File.WriteAllBytes("Database.accdb", AwardsServer.Properties.Resources.EmptyDatabase);
+                            try
+                            {
+                                connection.Open();
+                                Logging.Log(Logging.LogSeverity.Severe, "Created a new empty database.\r\nYou will need to add students to it before this server will start.");
+                                return; // we dont want it to do anymore here.
+                            }
+                            catch (Exception nextEx)
+                            {
+                                Logging.Log(Logging.LogSeverity.Severe, "After attempting to create an empty file, still errored: " + nextEx.ToString());
+                                return;
+                            }
+                        }
+                        catch (Exception exx)
                         {
-                            Logging.Log(Logging.LogSeverity.Severe, "After attempting to create an empty file, still errored: " + nextEx.ToString());
+                            Logging.Log(Logging.LogSeverity.Severe, exx.ToString());
                             return;
                         }
-                    } catch (Exception exx)
+                    }
+                    else
                     {
-                        Logging.Log(Logging.LogSeverity.Severe, exx.ToString());
+                        Logging.Log(Logging.LogSeverity.Severe, ex.ToString());
                         return;
                     }
-                } else
+                }
+                catch (Exception ex)
                 {
                     Logging.Log(Logging.LogSeverity.Severe, ex.ToString());
                     return;
                 }
-            } catch (Exception ex)
-            {
-                Logging.Log(Logging.LogSeverity.Severe, ex.ToString());
-                return;
             }
+            AllCategories = new Dictionary<int, Category>();
+            AllStudents = new Dictionary<string, User>();
             LoadCategories();
             OleDbCommand command = new OleDbCommand();
             command.Connection = connection;
@@ -102,13 +142,13 @@ namespace AwardsServer
             }
             OleDbCommand command2 = new OleDbCommand();
             command2.Connection = connection;
-            foreach(var cat in AllCategories.Values)
+            foreach(var cat in AllCategories.Values) //looping through every table
             {
-                command2.CommandText = $"select * from Category{cat.ID}";
+                command2.CommandText = $"select * from Category{cat.ID}"; //selecting the *table* (not column)
                 OleDbDataReader reader2 = null;
                 try
                 {
-                    reader2 = command2.ExecuteReader();
+                    reader2 = command2.ExecuteReader(); //see if the table exists
                 }
                 catch (System.Data.OleDb.OleDbException ex)
                 {
@@ -118,7 +158,7 @@ namespace AwardsServer
                         Logging.Log(Logging.LogSeverity.Warning, "Database table for category " + cat.ID + " missing, attempting to create..");
                         OleDbCommand tableCommand = new OleDbCommand();
                         tableCommand.Connection = connection;
-                        tableCommand.CommandText = $"create table Category{cat.ID} (UserName varchar(255), VotedFor varchar(255));";
+                        tableCommand.CommandText = $"create table Category{cat.ID} (UserName varchar(255), VotedFor varchar(255), TimeVoted varchar(103));";
                         tableCommand.ExecuteNonQuery();
                         reader2 = command2.ExecuteReader();
                     }
@@ -131,12 +171,12 @@ namespace AwardsServer
                     Program.TryGetUser(reader2["VotedFor"].ToString(), out UserVotedFor);
                     if(VotedBy == null)
                     {
-                        Logging.Log(Logging.LogSeverity.Error, $"User '{reader2["UserName"]}' changed, disgarding vote for '{reader2["VotedFor"]}' in category {cat.ID}");
+                        Logging.Log(Logging.LogSeverity.Error, $"User '{reader2["UserName"]}' changed, discarding vote for '{reader2["VotedFor"]}' in category {cat.ID}");
                         continue;
                     }
                     if (UserVotedFor == null)
                     {
-                        Logging.Log(Logging.LogSeverity.Error, $"User '{reader2["VotedFor"]}' changed, disgarding vote by '{reader2["UserName"]}' in category {cat.ID}");
+                        Logging.Log(Logging.LogSeverity.Error, $"User '{reader2["VotedFor"]}' changed, discarding vote by '{reader2["UserName"]}' in category {cat.ID}");
                         continue;
                     }
                     AlreadyVotedNames.Add(VotedBy.AccountName);
@@ -146,6 +186,10 @@ namespace AwardsServer
             }
         }
         private readonly object _databaseLock = new object();
+        /// <summary>
+        /// Executes a SQL command.
+        /// </summary>
+        /// <param name="cmd">Command to execute.</param>
         public void ExecuteCommand(string cmd)
         {
             lock(_databaseLock)
@@ -178,7 +222,7 @@ namespace AwardsServer
             {
                 throw new ArgumentException("Unknown category id: " + categoryID.ToString(), "categoryID");
             }
-            ExecuteCommand($"insert into Category{category.ID} (UserName , VotedFor) values ('{votedBy.AccountName}','{voted.AccountName}')");
+            ExecuteCommand($"insert into Category{category.ID} (UserName , VotedFor, TimeVoted) values ('{votedBy.AccountName}','{voted.AccountName}','{DateTime.Now}')");
         }
     }
 }

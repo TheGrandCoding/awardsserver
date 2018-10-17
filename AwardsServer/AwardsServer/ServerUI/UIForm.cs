@@ -140,7 +140,21 @@ namespace AwardsServer.ServerUI
                     {
                         CheckBox tt = (CheckBox)InputControl;
                         return tt.Checked;
-                    } else
+                    } else if(InputControl is ComboBox)
+                    {
+                        ComboBox tt = (ComboBox)InputControl;
+                        var obj = tt.SelectedText;
+                        // type should only be enum, considering we wont (shouldnt?) be displaying lists.
+                        if(InputType.IsEnum)
+                        {
+                            var enumer = Enum.Parse(InputType, obj.ToString());
+                            return enumer;
+                        } else
+                        {
+                            throw new NotImplementedException("Cannot use ComboBox and non-Enum");
+                        }
+                    }
+                    else
                     {
                         return null;
                     }
@@ -207,7 +221,15 @@ namespace AwardsServer.ServerUI
                 {
                     inputCont = new CheckBox();
                     ((CheckBox)inputCont).Checked = (bool)savedValue;
-                }
+                } else if (savedValue.GetType().IsEnum)
+                {
+                    inputCont = new ComboBox();
+                    var names = Enum.GetNames(savedValue.GetType());
+                    ComboBox tt = (ComboBox)inputCont;
+                    tt.Items.AddRange(names);
+                } 
+
+
                 inputCont.Location = new Point(275, yValue);
                 display.Size = new Size(270, 25);
                 inputCont.Tag = hold.VariableName;

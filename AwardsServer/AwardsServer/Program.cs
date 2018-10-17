@@ -40,6 +40,15 @@ namespace AwardsServer
 
             [Option("Time (in seconds) between each heartbeat message is sent", "Time (s) between heartbeat", 5)]
             public static int Time_Between_Heartbeat;
+
+            [Option("Whether it should display when a message is recieved", "Whether console shows message recieved", true)]
+            public static bool Display_Recieve_Client;
+
+            [Option("Whether it should display when a message is sent", "Whether console shows sent messages", true)]
+            public static bool Display_Send_Client;
+
+            [Option("Any severity below this is not shown in the UI", "Lowest severity displayed", Logging.LogSeverity.Debug)]
+            public static Logging.LogSeverity Only_Show_Above_Severity;
         }
 
         private const string MainRegistry = "HKEY_CURRENT_USER\\AwardsProgram\\Server";

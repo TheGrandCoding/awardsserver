@@ -97,7 +97,21 @@ namespace AwardsServer
                             Console.ForegroundColor = ConsoleColor.DarkGray;
                         break;
                 }
-                Console.Out.WriteLineAsync(logText);       // Write the log text to the console
+                bool shouldDisplay = true;
+                if(msg.Severity < Program.Options.Only_Show_Above_Severity)
+                {
+                    shouldDisplay = false;
+                }
+                if(msg.Source.EndsWith("/Rec") && !Program.Options.Display_Recieve_Client)
+                {
+                    shouldDisplay = false;
+                }
+                if(msg.Source.EndsWith("/Send") && !Program.Options.Display_Send_Client)
+                {
+                    shouldDisplay = false;
+                }
+                if(shouldDisplay)
+                    Console.Out.WriteLineAsync(logText);       // Write the log text to the console
                 Console.ForegroundColor = ConsoleColor.Blue;
             }
         }

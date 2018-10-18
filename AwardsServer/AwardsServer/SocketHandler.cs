@@ -313,6 +313,7 @@ namespace AwardsServer
                     }catch (ArgumentException ex)
                     { // user not found
                         SocketConnection.WriteConnection(clientSocket, "UnknownUser");
+                        Logging.Log("UnknUser", ex);
                         continue;
                     } catch (Exception ex)
                     {

@@ -61,7 +61,7 @@ namespace AwardsServer
         {
             OleDbCommand command = new OleDbCommand();
             command.Connection = connection;
-            command.CommandText = "select * from CategoryData";
+            command.CommandText = "SELECT * FROM CategoryData";
             OleDbDataReader reader = command.ExecuteReader();
             while (reader.Read())
             {
@@ -129,7 +129,7 @@ namespace AwardsServer
             LoadCategories();
             OleDbCommand command = new OleDbCommand();
             command.Connection = connection;
-            command.CommandText = "select * from UserData";
+            command.CommandText = "SELECT * FROM UserData";
             OleDbDataReader reader = command.ExecuteReader();
             while (reader.Read())
             {
@@ -144,7 +144,7 @@ namespace AwardsServer
             command2.Connection = connection;
             foreach(var cat in AllCategories.Values) //looping through every table
             {
-                command2.CommandText = $"select * from Category{cat.ID}"; //selecting the *table* (not column)
+                command2.CommandText = $"SELECT * FROM Category{cat.ID}"; //selecting the *table* (not column)
                 OleDbDataReader reader2 = null;
                 try
                 {
@@ -158,7 +158,7 @@ namespace AwardsServer
                         Logging.Log(Logging.LogSeverity.Warning, "Database table for category " + cat.ID + " missing, attempting to create..");
                         OleDbCommand tableCommand = new OleDbCommand();
                         tableCommand.Connection = connection;
-                        tableCommand.CommandText = $"create table Category{cat.ID} (UserName varchar(255), VotedFor varchar(255), TimeVoted varchar(103));";
+                        tableCommand.CommandText = $"CREATE TABLE Category{cat.ID} (UserName varchar(255), VotedFor varchar(255), TimeVoted varchar(103));";
                         tableCommand.ExecuteNonQuery();
                         reader2 = command2.ExecuteReader();
                     }
@@ -222,7 +222,7 @@ namespace AwardsServer
             {
                 throw new ArgumentException("Unknown category id: " + categoryID.ToString(), "categoryID");
             }
-            ExecuteCommand($"insert into Category{category.ID} (UserName , VotedFor, TimeVoted) values ('{votedBy.AccountName}','{voted.AccountName}','{DateTime.Now}')");
+            ExecuteCommand($"INSERT INTO Category{category.ID} (UserName , VotedFor, TimeVoted) VALUES ('{votedBy.AccountName}','{voted.AccountName}','{DateTime.Now}')");
         }
     }
 }

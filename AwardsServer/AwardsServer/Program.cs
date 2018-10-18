@@ -196,7 +196,7 @@ namespace AwardsServer
                     ServerUIForm.PermittedStudentEdits(ServerUI.UIForm.EditCapabilities.None);
                 }
                 ServerUIForm.ShowDialog();
-                Logging.Log(Logging.LogSeverity.Error, "UI Form closed.. you cant do that.. reopening");
+                Logging.Log(Logging.LogSeverity.Debug, "UI Form closed.. you cant do that.. reopening");
             }
         }
     }

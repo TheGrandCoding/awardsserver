@@ -127,7 +127,7 @@ namespace AwardsServer.ServerUI
 
             public FieldInfo FieldInfo; // the variable itself in the Options class.
 
-            public object Value
+            public object Value // gets value, from input, via parsing it depending on its input/type
             {
                 get
                 {
@@ -179,22 +179,28 @@ namespace AwardsServer.ServerUI
             {
                 opt.Clear();
             }
-            options = new List<OptionHold>();
+            options = new List<OptionHold>(); // resets all the options
+            // gets all the variables on the class
             var variables = typeof(Program.Options).GetFields();
             foreach(var variable in variables)
             {
+                // gets option attribute from the variable itself
                 Program.OptionAttribute option = variable.GetCustomAttribute<OptionAttribute>(false);
                 if (option == null)
                     continue;
-                variable.SetValue(null, option.DefaultValue); // null since it is static
+                // sets the value to its default, so it isnt 'null'
+                variable.SetValue(null, option.DefaultValue); // null since the Options class is static
                 OptionHold hold = new OptionHold()
                 {
                     AttributeValue = option.Description,
                     InputType = variable.FieldType,
                     VariableName = variable.Name,
                     FieldInfo = variable
-                };
+                }; // holds option (get it?) related information
 
+                // dynamic = compiler doesnt check to see if the functions exist
+                // means the type can change, so its much easier to set its value
+                // this gets it from the Registry, defaulting to the DefaultValue
                 dynamic savedValue = Program.GetOption(hold.VariableName, option.DefaultValue.ToString());
                 if (hold.InputType == typeof(int))
                 {
@@ -208,8 +214,11 @@ namespace AwardsServer.ServerUI
                 }
                 if (savedValue == null)
                     savedValue = option.DefaultValue;
+                // now, sets the value from the one we have saved.
                 variable.SetValue(null, savedValue);
+                // saves it in the Registry.
                 Program.SetOption(hold.VariableName, savedValue.ToString());
+                // From below, is setting the UI controls and such
                 Control inputCont = null;
                 Label display = new Label();
                 int yValue = 30 + (options.Count * 30);
@@ -227,7 +236,7 @@ namespace AwardsServer.ServerUI
                     inputCont = new CheckBox();
                     ((CheckBox)inputCont).Checked = (bool)savedValue;
                 } else if (savedValue.GetType().IsEnum)
-                {
+                { // enums are complicated
                     inputCont = new ComboBox();
                     string[] names = Enum.GetNames(savedValue.GetType());
                     var saved = savedValue.ToString();

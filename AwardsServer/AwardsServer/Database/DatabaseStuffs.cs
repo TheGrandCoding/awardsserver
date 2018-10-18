@@ -129,7 +129,7 @@ namespace AwardsServer
             LoadCategories();
             OleDbCommand command = new OleDbCommand();
             command.Connection = connection;
-            command.CommandText = "select * from UserData";
+            command.CommandText = "SELECT * FROM UserData";
             OleDbDataReader reader = command.ExecuteReader();
             while (reader.Read())
             {
@@ -144,7 +144,7 @@ namespace AwardsServer
             command2.Connection = connection;
             foreach(var cat in AllCategories.Values) //looping through every table
             {
-                command2.CommandText = $"select * from Category{cat.ID}"; //selecting the *table* (not column)
+                command2.CommandText = $"SELECT * FROM Category{cat.ID}"; //selecting the *table* (not column)
                 OleDbDataReader reader2 = null;
                 try
                 {

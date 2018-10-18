@@ -61,7 +61,7 @@ namespace AwardsServer
         {
             OleDbCommand command = new OleDbCommand();
             command.Connection = connection;
-            command.CommandText = "select * from CategoryData";
+            command.CommandText = "SELECT * FROM CategoryData";
             OleDbDataReader reader = command.ExecuteReader();
             while (reader.Read())
             {

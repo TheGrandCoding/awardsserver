@@ -253,8 +253,6 @@ namespace AwardsServer.ServerUI
                     tt.Items.AddRange(names);
                     tt.SelectedIndex = index;
                 } 
-
-
                 inputCont.Location = new Point(275, yValue);
                 display.Size = new Size(270, 25);
                 inputCont.Tag = hold.VariableName;

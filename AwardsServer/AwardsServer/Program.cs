@@ -35,7 +35,7 @@ namespace AwardsServer
             [Option("Is the same username permitted to be connected at the same time", "Allow identical usernames", false)]
             public static bool Simultaneous_Session_Allowed;
 
-            [Option("Maximum before queue begins.", "Queue threshhold", 15)]
+            [Option("Maximum before queue begins.\n(Don't set the queue to 0 at the start)", "Queue threshhold", 15)]
             public static int Maximum_Concurrent_Connections;
 
             [Option("Time (in seconds) between each heartbeat message is sent", "Time (s) between heartbeat", 5)]

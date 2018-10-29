@@ -466,5 +466,10 @@ namespace AwardsServer.ServerUI
                 char.Parse(cells[4].Value.ToString())
                 );
         }
+
+        private void dgvStudents_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+
+        }
     }
 }

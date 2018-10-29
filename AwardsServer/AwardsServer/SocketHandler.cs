@@ -309,7 +309,7 @@ namespace AwardsServer
                     SocketConnection user = null;
                     try
                     {
-                        user = new SocketConnection(clientSocket, dataFromClient);
+                        user = new SocketConnection(clientSocket, dataFromClient.ToLower());
                     }catch (ArgumentException ex)
                     { // user not found
                         SocketConnection.WriteConnection(clientSocket, "UnknownUser");

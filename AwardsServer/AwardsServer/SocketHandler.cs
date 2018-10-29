@@ -148,10 +148,19 @@ namespace AwardsServer
                     {
                         if (student.Sex == sex)
                         {
-                            if (student.ToString().Contains(message))
+                            bool shouldGo = false;
+                            if(student.ToString().StartsWith(message))
+                            {
+                                shouldGo = true;
+                            }
+                            else if (student.ToString().IndexOf(message, StringComparison.OrdinalIgnoreCase) >= 0)
+                            {
+                                shouldGo = true;
+                            }
+                            if (shouldGo)
                             {
                                 count++;
-                                if(count >= Program.Options.Maximum_Query_Response)
+                                if (count >= Program.Options.Maximum_Query_Response)
                                 {
                                     break;
                                 }

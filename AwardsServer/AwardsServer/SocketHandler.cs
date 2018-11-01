@@ -94,7 +94,10 @@ namespace AwardsServer
                         string[] cats = message.Split('#');
                         for(int index = 0; index < cats.Length; index++)
                         {
-                            string[] catSplit = cats[index].Split(';');
+                            string thing = cats[index];
+                            if (string.IsNullOrWhiteSpace(thing))
+                                continue;
+                            string[] catSplit = thing.Split(';');
                             string maleWin = catSplit[0];
                             string femaleWin = catSplit[1];
                             if(Program.TryGetUser(maleWin, out User target))

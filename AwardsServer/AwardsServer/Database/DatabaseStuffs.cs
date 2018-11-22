@@ -138,7 +138,7 @@ namespace AwardsServer
                 {
                     Logging.Log(Logging.LogSeverity.Warning, "User " + user.ToString("FN LN TT SX AN") + " has invalid account name");
                 }
-                AllStudents.Add(user.AccountName, user); 
+                AllStudents.Add(user.AccountName.ToLower(), user); 
             }
             OleDbCommand command2 = new OleDbCommand();
             command2.Connection = connection;

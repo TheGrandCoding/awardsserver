@@ -302,6 +302,22 @@ namespace AwardsServer.ServerUI
                     Logging.Log("QueueTimer", ex);
                 }
             }
+            while(SocketHandler.CurrentClients.Count < Options.Maximum_Concurrent_Connections && SocketHandler.ClientQueue.Count > 0)
+            {
+                try
+                {
+                    var client = SocketHandler.ClientQueue.FirstOrDefault();
+                    if (client == null)
+                        break;
+                    SocketHandler.ClientQueue.Remove(client);
+                    SocketHandler.CurrentClients.Add(client);
+                    client.AcceptFromQueue();
+                }
+                catch (Exception ex)
+                {
+                    Logging.Log("QueueWhenZero", ex);
+                }
+            }
             lock(SocketHandler.LockClient)
             { 
                 int index = 0;

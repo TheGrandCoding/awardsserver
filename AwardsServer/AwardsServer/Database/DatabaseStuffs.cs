@@ -126,6 +126,7 @@ namespace AwardsServer
             }
             AllCategories = new Dictionary<int, Category>();
             AllStudents = new Dictionary<string, User>();
+            AlreadyVotedNames = new List<string>();
             LoadCategories();
             OleDbCommand command = new OleDbCommand();
             command.Connection = connection;

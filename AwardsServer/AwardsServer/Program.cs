@@ -45,7 +45,7 @@ namespace AwardsServer
             [Option("Allow student data to be modified even after someone joins", "Allow data modify", false)]
             public static bool Allow_Modifications_When_Voting;
 
-            [Option("Maximum before queue begins.\n(Don't set the queue to 0 at the start)", "Queue threshhold", 15)]
+            [Option("Maximum before queue begins.", "Queue threshhold", 15)]
             public static int Maximum_Concurrent_Connections;
 
             [Option("Time (in seconds) between each heartbeat message is sent", "Time (s) between heartbeat", 5)]
@@ -155,7 +155,7 @@ namespace AwardsServer
                 return; // closes
             }
 #if DEBUG
-            var st = new User(Environment.UserName, "Local", "Host", "1010", 'M');
+            var st = new User(Environment.UserName.ToLower(), "Local", "Host", "1010", 'M');
             if (!Database.AllStudents.ContainsKey(st.AccountName))
                 Database.AllStudents.Add(st.AccountName, st);
 #endif

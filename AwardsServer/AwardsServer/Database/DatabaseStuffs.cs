@@ -126,6 +126,7 @@ namespace AwardsServer
             }
             AllCategories = new Dictionary<int, Category>();
             AllStudents = new Dictionary<string, User>();
+            AlreadyVotedNames = new List<string>();
             LoadCategories();
             OleDbCommand command = new OleDbCommand();
             command.Connection = connection;
@@ -138,7 +139,7 @@ namespace AwardsServer
                 {
                     Logging.Log(Logging.LogSeverity.Warning, "User " + user.ToString("FN LN TT SX AN") + " has invalid account name");
                 }
-                AllStudents.Add(user.AccountName, user); 
+                AllStudents.Add(user.AccountName.ToLower(), user); 
             }
             OleDbCommand command2 = new OleDbCommand();
             command2.Connection = connection;

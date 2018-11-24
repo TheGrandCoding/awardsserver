@@ -1,32 +1,32 @@
 # Server UI Tabs
 
-Will add the Tabs below.
+Note that in some Tabs, names have been removed or changed.
 
 ## Students
 
-[image]
+![Image of Students](https://github.com/TheGrandCoding/awardsserver/blob/master/images/UI_Students.JPG)
 
 
 ## Categories
 
-[image]
+![Image of Categories](https://github.com/TheGrandCoding/awardsserver/blob/master/images/UI_Categories.JPG)
 
 
 ## Winners
 
-[image]
+![Image of Winners](https://github.com/TheGrandCoding/awardsserver/blob/master/images/UI_Winners.JPG)
 
 
 ## Server Options
 
-[image]
+![Image of Options](https://github.com/TheGrandCoding/awardsserver/blob/master/images/UI_Options.JPG)
 
 
 ## Current Queue
 
-[image]
+![Image of Queue](https://github.com/TheGrandCoding/awardsserver/blob/master/images/UI_CurrentQueue.JPG)
 
 
 ## Current Voters
 
-[image]
+![Image of Voters](https://github.com/TheGrandCoding/awardsserver/blob/master/images/UI_CurrentVoters.JPG)

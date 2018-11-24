@@ -54,7 +54,7 @@ namespace AwardsServer
                 listenThread.Start();
             }
 
-            private void HandleMessage(string message)
+            private void HandleMessage(string message) //when a the server receives a message from the client
             {
                 if(message .StartsWith("GET_CATE:"))
                 { // asking for specific category
@@ -87,22 +87,22 @@ namespace AwardsServer
                     }
                 }*/ else if(message.StartsWith("SUBMIT:"))
                 { // submit all votes.
-                    message = message.Replace("SUBMIT:", "");
+                    message = message.Replace("SUBMIT:", ""); //?? what is the format? SUBMIT:category;thing#category;thing ?
                     string rejectedReason = "";
                     try
                     {
-                        string[] cats = message.Split('#');
-                        for(int index = 0; index < cats.Length; index++)
+                        string[] cats = message.Split('#'); //categories
+                        for(int index = 0; index < cats.Length; index++) //go through every category
                         {
-                            string thing = cats[index];
+                            string thing = cats[index]; //?? a pair of category:winners ?
                             if (string.IsNullOrWhiteSpace(thing))
                                 continue;
-                            string[] catSplit = thing.Split(';');
-                            string maleWin = catSplit[0];
-                            string femaleWin = catSplit[1];
+                            string[] winners = thing.Split(';'); //catsplit = the winners ??
+                            string maleWin = winners[0];
+                            string femaleWin = winners[1];
                             if(Program.TryGetUser(maleWin, out User target))
                             {
-                                if(target.AccountName == this.User.AccountName)
+                                if(target.AccountName == this.User.AccountName) //trying to vote for themself
                                 {
                                     rejectedReason = "Rejected:Self";
                                 } else
@@ -140,23 +140,23 @@ namespace AwardsServer
                         }
                         this.Close("Submitted");
                     }
-                } else if(message.StartsWith("QUERY"))
+                } else if(message.StartsWith("QUERY")) //?? querying for what?
                 {
                     message = message.Replace("QUERY:", "");
                     string response = "";
-                    char sex = char.Parse(message.Substring(0, 1));
-                    message = message.Substring(2);
-                    int count = 0;
+                    char sex = char.Parse(message.Substring(0, 1)); //??
+                    message = message.Substring(2); //would this contain a student's name?
+                    int count = 0; //what would this count ??
                     foreach (var student in Program.Database.AllStudents.Values)
                     {
                         if (student.Sex == sex)
                         {
-                            bool shouldGo = false;
-                            if(student.ToString().StartsWith(message))
+                            bool shouldGo = false; //??
+                            if(student.ToString().StartsWith(message)) 
                             {
                                 shouldGo = true;
                             }
-                            else if (student.ToString().IndexOf(message, StringComparison.OrdinalIgnoreCase) >= 0)
+                            else if (student.ToString().IndexOf(message, StringComparison.OrdinalIgnoreCase) >= 0) //??
                             {
                                 shouldGo = true;
                             }
@@ -167,7 +167,7 @@ namespace AwardsServer
                                 {
                                     break;
                                 }
-                                response += student.ToString("AN-FN-LN-TT") + "#";
+                                response += student.ToString("AN-FN-LN-TT") + "#"; //add the student's name + properties to a list of names to send to the client
                             }
                         }
                     }
@@ -176,7 +176,7 @@ namespace AwardsServer
             }
 
             /// <summary>
-            /// Closes the connection, logs a reason, and updates the queue.
+            /// Closes the connection with a client, logs a reason, and updates the queue.
             /// </summary>
             /// <param name="reason">Reason to disconnect the client</param>
             public void Close(string reason = "unknown")
@@ -198,7 +198,7 @@ namespace AwardsServer
                     CurrentClients.Remove(this);
                     ClientQueue.Remove(this);
                     while(CurrentClients.Count < Program.Options.Maximum_Concurrent_Connections)
-                    {
+                    {//accepting the next people in the queue
                         if (ClientQueue.Count == 0)
                             break;
                         ClientQueue[0].AcceptFromQueue();
@@ -225,7 +225,7 @@ namespace AwardsServer
                         if (string.IsNullOrWhiteSpace(data))
                             continue;
 
-                        foreach(var tempMsg in data.Split('%'))
+                        foreach(var tempMsg in data.Split('%')) //loops through received messages
                         {
                             if (string.IsNullOrWhiteSpace(tempMsg))
                                 continue;
@@ -287,8 +287,7 @@ namespace AwardsServer
         // Handles listening to, recieving information from, and sending information to
         // any clients (ie, the programs) that attempt to communicate.
         private TcpListener ServerListener;
-
-
+        
         public SocketHandler()
         {
             try

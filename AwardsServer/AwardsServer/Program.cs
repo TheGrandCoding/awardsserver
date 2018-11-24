@@ -7,6 +7,8 @@ using Microsoft.Win32;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 
+//get ready for some seemingly obvious questions
+//ctrl-f "??" to find what might be confusing
 namespace AwardsServer
 {
     public class Program
@@ -15,8 +17,8 @@ namespace AwardsServer
         public static SocketHandler Server; // Handles the connection and essentially interfaces with the TCP-side of things
         public static DatabaseStuffs Database; // database related things
 
-        [AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
-        public class OptionAttribute : Attribute
+        [AttributeUsage(AttributeTargets.Field, AllowMultiple = false)] //??
+        public class OptionAttribute : Attribute //what is this for?? does it 'Constructs the information for an Option.'?
         {
             public readonly string Name;
             public readonly string Description;
@@ -62,11 +64,11 @@ namespace AwardsServer
         }
 
         private const string MainRegistry = "HKEY_CURRENT_USER\\AwardsProgram\\Server";
-        public static void SetOption(string key, string value)
+        public static void SetOption(string key, string value) //??
         {
-            Microsoft.Win32.Registry.SetValue(MainRegistry, key, value);
+            Microsoft.Win32.Registry.SetValue(MainRegistry, key, value); //??
         }
-        public static T Convert<T>(string input)
+        public static T Convert<T>(string input) //converts one object type to another ??
         {
             try
             {
@@ -90,7 +92,7 @@ namespace AwardsServer
                 item = defaultValue;
             return Convert<T>(item.ToString());
         }*/
-        public static string GetOption(string key, string defaultValue)
+        public static string GetOption(string key, string defaultValue) //returns... option as a string??
         {
             var item = Microsoft.Win32.Registry.GetValue(MainRegistry, key, defaultValue);
             if (item == null)
@@ -98,7 +100,7 @@ namespace AwardsServer
             return (string)item;
         }
 
-        public static bool TryGetUser(string username, out User user)
+        public static bool TryGetUser(string username, out User user) //checks if the user exits (+assigns them to 'user' if true)??
         {
             user = null;
             if(Database.AllStudents.ContainsKey(username))
@@ -108,7 +110,7 @@ namespace AwardsServer
             }
             return false;
         }
-        public static User GetUser(string username)
+        public static User GetUser(string username) //the above checks if the user exists, this returns the user
         {
             TryGetUser(username, out User user);
             return user;
@@ -116,16 +118,16 @@ namespace AwardsServer
 
 
         // Console window closing things:
-        private delegate bool ConsoleEventDelegate(int eventType);
-        [DllImport("kernel32.dll", SetLastError = true)]
-        private static extern bool SetConsoleCtrlHandler(ConsoleEventDelegate callback, bool add);
-        static ConsoleEventDelegate handler;
-        static bool ConsoleEventCallback(int eventType)
+        private delegate bool ConsoleEventDelegate(int eventType); //?? i mean this is a new level of ??
+        [DllImport("kernel32.dll", SetLastError = true)] //??
+        private static extern bool SetConsoleCtrlHandler(ConsoleEventDelegate callback, bool add); //??
+        static ConsoleEventDelegate handler; //handles... anything??
+        static bool ConsoleEventCallback(int eventType) //why is this used ??
         {
-            if (eventType == 2)
+            if (eventType == 2) //what's event type 2?? -it's the window closing right
             {
                 // code to run here
-                Logging.Log(new Logging.LogMessage(Logging.LogSeverity.Severe, "Console window closing.."));
+                Logging.Log(new Logging.LogMessage(Logging.LogSeverity.Severe, "Console window closing..")); 
                 try
                 {
                     Database.Disconnect();
@@ -141,7 +143,7 @@ namespace AwardsServer
         {
             handler = new ConsoleEventDelegate(ConsoleEventCallback);
             SetConsoleCtrlHandler(handler, true); // this line & above handle the console window closing
-            AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+            AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException; //??
             Logging.Log(Logging.LogSeverity.Info,  "Loading existing categories...");
             Database = new DatabaseStuffs();
             Database.Connect();
@@ -156,8 +158,8 @@ namespace AwardsServer
             }
 #if DEBUG
             var st = new User(Environment.UserName.ToLower(), "Local", "Host", "1010", 'M');
-            if (!Database.AllStudents.ContainsKey(st.AccountName))
-                Database.AllStudents.Add(st.AccountName, st);
+            if (!Database.AllStudents.ContainsKey(st.AccountName)) //if the user is not in the database
+                Database.AllStudents.Add(st.AccountName, st); //add the user
 #endif
 
             Logging.Log($"Loaded {Database.AllStudents.Count} students and {Database.AllCategories.Count} categories.");
@@ -184,20 +186,20 @@ namespace AwardsServer
         }
 
         private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
-        {
+        { //logs any unhandled exceptions
             Logging.Log(new Logging.LogMessage(Logging.LogSeverity.Severe, "Unhandled", (Exception)e.ExceptionObject));
         }
         private static void runUI()
         {
-            bool first = false;
+            bool first = false; //??why
             while (Server.Listening)
             {
-                if(ServerUIForm != null)
+                if(ServerUIForm != null) //if the form is open??
                 {
-                    ServerUIForm.Dispose();
+                    ServerUIForm.Dispose(); // close it??
                 }
                 ServerUIForm = new ServerUI.UIForm();
-                if(!first)
+                if(!first) //does this switch between allowing the user to edit and not ??
                 {
                     first = true;
                     ServerUIForm.PermittedStudentEdits(ServerUI.UIForm.EditCapabilities.All);
@@ -221,15 +223,16 @@ namespace AwardsServer
         public readonly char Sex;
         public bool HasVoted => Program.Database.AlreadyVotedNames.Contains(AccountName);
         public string FullName => FirstName + " " + LastName;
-        public User(string accountName, string firstName, string lastName, string tutor, char sex)
-        {
+
+        public User(string accountName, string firstName, string lastName, string tutor, char sex) 
+        {//creating a new user
             AccountName = accountName;
             FirstName = firstName;
             LastName = lastName;
             Tutor = tutor;
             if(!(sex == 'F' || sex == 'M'))
             {
-                throw new ArgumentException("Must be either 'F' or 'M'", "sex");
+                throw new ArgumentException("Must be either 'F' or 'M'", "sex"); //its 2018 lol jk
             }
             Sex = sex;
         }
@@ -277,7 +280,7 @@ namespace AwardsServer
         /// Returns the keys of the Votes dict from highest to lowest.
         /// </summary>
         /// <returns></returns>
-        public List<string> OrderVotes(char sex)
+        public List<string> SortVotes(char sex) //in ascending order
         {
             var sortedDict = from entry in Votes where Program.GetUser(entry.Key).Sex == sex orderby entry.Value.Count ascending select entry.Key;
             // yay for linq.
@@ -288,13 +291,13 @@ namespace AwardsServer
         /// Returns the person with the highest vote, or the list of people tied to the highest vote
         /// </summary>
         /// <param name="sex">'M' or 'F'</param>
-        public Tuple<List<User>, int> HighestVoter(char sex)
+        public Tuple<List<User>, int> HighestVoter(char sex) //returns the most voted for person
         {
             List<User> tied = new List<User>();
             int highest = 0;
-            var ordered = this.OrderVotes(sex);
-            foreach(var u in ordered)
-            {
+            var sorted = this.SortVotes(sex);
+            foreach(var u in sorted) //necessary in case there's a tie
+            { // could you make a descending list, and stop looping after the num of votes is lower than the first user's (less loops)?
                 if(this.Votes[u].Count > highest)
                 {
                     highest = this.Votes[u].Count;
@@ -316,7 +319,7 @@ namespace AwardsServer
         /// </summary>
         /// <param name="voted">Who was nominated</param>
         /// <param name="votedBy">Person that was doing the voting.</param>
-        public void AddVote(User voted, User votedBy)
+        public void AddVote(User voted, User votedBy) //add a vote to 'voted'
         {
             if (voted.AccountName == votedBy.AccountName)
             {

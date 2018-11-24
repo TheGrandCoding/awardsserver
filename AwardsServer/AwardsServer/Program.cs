@@ -17,8 +17,8 @@ namespace AwardsServer
         public static SocketHandler Server; // Handles the connection and essentially interfaces with the TCP-side of things
         public static DatabaseStuffs Database; // database related things
 
-        [AttributeUsage(AttributeTargets.Field, AllowMultiple = false)] //??
-        public class OptionAttribute : Attribute //what is this for?? does it 'Constructs the information for an Option.'?
+        [AttributeUsage(AttributeTargets.Field, AllowMultiple = false)] //?? - Determines where the below attribute can be used; in our case, we just need it on Fields (ie, variables)
+        public class OptionAttribute : Attribute //what is this for?? does it 'Constructs the information for an Option.'? // the class holds info on the options, and the Attribute allows it to be put in the [ ]
         {
             public readonly string Name;
             public readonly string Description;
@@ -64,11 +64,11 @@ namespace AwardsServer
         }
 
         private const string MainRegistry = "HKEY_CURRENT_USER\\AwardsProgram\\Server";
-        public static void SetOption(string key, string value) //??
+        public static void SetOption(string key, string value) //?? - Sets the registry value, its all saved as strings and casted when read
         {
-            Microsoft.Win32.Registry.SetValue(MainRegistry, key, value); //??
+            Microsoft.Win32.Registry.SetValue(MainRegistry, key, value); //?? - built in function, sets the value thats all i know
         }
-        public static T Convert<T>(string input) //converts one object type to another ??
+        public static T Convert<T>(string input) //converts one object type to another ?? // it does, but not sure if i am actually using it
         {
             try
             {
@@ -85,14 +85,8 @@ namespace AwardsServer
                 return default(T);
             }
         }
-        /*public static T GetOption<T>(string key, T defaultValue)
-        {
-            var item = Microsoft.Win32.Registry.GetValue(MainRegistry, key, defaultValue);
-            if (item == null)
-                item = defaultValue;
-            return Convert<T>(item.ToString());
-        }*/
-        public static string GetOption(string key, string defaultValue) //returns... option as a string??
+
+        public static string GetOption(string key, string defaultValue) //returns... option as a string?? // yep: tries to get value, if not, returns the default
         {
             var item = Microsoft.Win32.Registry.GetValue(MainRegistry, key, defaultValue);
             if (item == null)
@@ -101,7 +95,11 @@ namespace AwardsServer
         }
 
         public static bool TryGetUser(string username, out User user) //checks if the user exits (+assigns them to 'user' if true)??
-        {
+        { // this is similar to a dictionary's "TryGetValue(key, out value)" function
+            // it will attempt to find the key, and set 'value' equal to the saved/stored data
+            // note the "out" word at the top there, that allows the variable to be set within this function
+            // essentially, it will return true and the "user" will become the proper value if the user is found
+            // or if not, it returns false and the "user" is set to null
             user = null;
             if(Database.AllStudents.ContainsKey(username))
             {
@@ -111,20 +109,23 @@ namespace AwardsServer
             return false;
         }
         public static User GetUser(string username) //the above checks if the user exists, this returns the user
-        {
+        { // you should use EITHER this above OR this function - theres no need to use both
+            // i think this function is just used  for a LINQ statment (ie, list.FirstOrDefault(x => ....)), since i couldnt use the above
             TryGetUser(username, out User user);
             return user;
         }
 
 
         // Console window closing things:
+        // Yeah, I just copy-pasted the following
+        // Essentially its registering an event with window's kernal, and listening for when that gets fired
         private delegate bool ConsoleEventDelegate(int eventType); //?? i mean this is a new level of ??
         [DllImport("kernel32.dll", SetLastError = true)] //??
         private static extern bool SetConsoleCtrlHandler(ConsoleEventDelegate callback, bool add); //??
         static ConsoleEventDelegate handler; //handles... anything??
-        static bool ConsoleEventCallback(int eventType) //why is this used ??
+        static bool ConsoleEventCallback(int eventType) //why is this used ?? - this is where the above 'console window closing' callback gets fired
         {
-            if (eventType == 2) //what's event type 2?? -it's the window closing right
+            if (eventType == 2) //what's event type 2?? -it's the window closing right - yes.. again copy/paste so
             {
                 // code to run here
                 Logging.Log(new Logging.LogMessage(Logging.LogSeverity.Severe, "Console window closing..")); 
@@ -143,7 +144,8 @@ namespace AwardsServer
         {
             handler = new ConsoleEventDelegate(ConsoleEventCallback);
             SetConsoleCtrlHandler(handler, true); // this line & above handle the console window closing
-            AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException; //??
+            AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException; //?? - allows us to log any errors that completely crash the server
+            // without the above, any error that is not within a "try..except" would simply cause the console window to close without any log or message.
             Logging.Log(Logging.LogSeverity.Info,  "Loading existing categories...");
             Database = new DatabaseStuffs();
             Database.Connect();
@@ -194,13 +196,13 @@ namespace AwardsServer
             bool first = false; //??why
             while (Server.Listening)
             {
-                if(ServerUIForm != null) //if the form is open??
+                if(ServerUIForm != null) // since the user can close it, we need to check if it is open first
                 {
-                    ServerUIForm.Dispose(); // close it??
+                    ServerUIForm.Dispose(); // and if it is open, then we should close the form
                 }
-                ServerUIForm = new ServerUI.UIForm();
-                if(!first) //does this switch between allowing the user to edit and not ??
-                {
+                ServerUIForm = new ServerUI.UIForm(); // and make a new one
+                if(!first) // this allows the user to close the ui form ONCE, before they have all edit abilities removed
+                { // since the data/etc only updates when it is closed, it may be desired to close it and edit again
                     first = true;
                     ServerUIForm.PermittedStudentEdits(ServerUI.UIForm.EditCapabilities.All);
                 } else

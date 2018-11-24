@@ -12,14 +12,21 @@ namespace AwardsServer
     public class Program
     {
         public static ServerUI.UIForm ServerUIForm;
-        public static SocketHandler Server;
-        public static DatabaseStuffs Database;
+        public static SocketHandler Server; // Handles the connection and essentially interfaces with the TCP-side of things
+        public static DatabaseStuffs Database; // database related things
+
         [AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
         public class OptionAttribute : Attribute
         {
             public readonly string Name;
             public readonly string Description;
             public readonly object DefaultValue;
+            /// <summary>
+            /// Constructs the information for an Option.
+            /// </summary>
+            /// <param name="description">Displayed on UI Form: what this option does</param>
+            /// <param name="name">Internal/short name for this option</param>
+            /// <param name="defaultValue">Default value for the option</param>
             public OptionAttribute(string description, string name, object defaultValue)
             {
                 Name = name;
@@ -34,6 +41,9 @@ namespace AwardsServer
 
             [Option("Is the same username permitted to be connected at the same time", "Allow identical usernames", false)]
             public static bool Simultaneous_Session_Allowed;
+
+            [Option("Allow student data to be modified even after someone joins", "Allow data modify", false)]
+            public static bool Allow_Modifications_When_Voting;
 
             [Option("Maximum before queue begins.\n(Don't set the queue to 0 at the start)", "Queue threshhold", 15)]
             public static int Maximum_Concurrent_Connections;
@@ -130,7 +140,7 @@ namespace AwardsServer
         static void Main(string[] args)
         {
             handler = new ConsoleEventDelegate(ConsoleEventCallback);
-            SetConsoleCtrlHandler(handler, true);
+            SetConsoleCtrlHandler(handler, true); // this line & above handle the console window closing
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
             Logging.Log(Logging.LogSeverity.Info,  "Loading existing categories...");
             Database = new DatabaseStuffs();
@@ -152,7 +162,7 @@ namespace AwardsServer
 
             Logging.Log($"Loaded {Database.AllStudents.Count} students and {Database.AllCategories.Count} categories.");
 
-            Logging.Log("Starting...");
+            Logging.Log("Starting socket listener...");
             Server = new SocketHandler();
             Logging.Log("Started. Ready to accept new connections.");
             
@@ -196,7 +206,7 @@ namespace AwardsServer
                     ServerUIForm.PermittedStudentEdits(ServerUI.UIForm.EditCapabilities.None);
                 }
                 ServerUIForm.ShowDialog();
-                Logging.Log(Logging.LogSeverity.Debug, "UI Form closed.. you cant do that.. reopening");
+                Logging.Log(Logging.LogSeverity.Debug, "UI Form closed; reopening to regenerate data. If you want to close the server, close the Console");
             }
         }
     }
@@ -255,7 +265,7 @@ namespace AwardsServer
         {
             ID = System.Threading.Interlocked.Increment(ref __id);
             if (id > -1)
-            {
+            { // allows you to manually set the ID (eg, from database)
                 ID = id;
             }
             Votes = new Dictionary<string, List<User>>();
@@ -270,9 +280,14 @@ namespace AwardsServer
         public List<string> OrderVotes(char sex)
         {
             var sortedDict = from entry in Votes where Program.GetUser(entry.Key).Sex == sex orderby entry.Value.Count ascending select entry.Key;
+            // yay for linq.
             return sortedDict.ToList();
         }
 
+        /// <summary>
+        /// Returns the person with the highest vote, or the list of people tied to the highest vote
+        /// </summary>
+        /// <param name="sex">'M' or 'F'</param>
         public Tuple<List<User>, int> HighestVoter(char sex)
         {
             List<User> tied = new List<User>();

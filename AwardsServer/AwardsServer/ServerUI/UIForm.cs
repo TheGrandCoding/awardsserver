@@ -29,6 +29,10 @@ namespace AwardsServer.ServerUI
                 dgvStudents.Rows[dgvStudents.Rows.Count - 1].ReadOnly = false;
             }
             dgvStudents.ReadOnly = false;
+            if(Program.Options.Allow_Modifications_When_Voting)
+            {
+                PermittedStudentEdits(EditCapabilities.All);
+            }
         }
         public void UpdateCategory()
         {

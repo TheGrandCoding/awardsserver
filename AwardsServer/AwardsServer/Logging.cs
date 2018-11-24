@@ -71,14 +71,15 @@ namespace AwardsServer
                 int spaces = longest.Length;
                 spaces -= msg.Severity.ToString().Length;
 
-                int startLength = "04:37:08.[Info] App: ".Length;
-
-                string spaceGap = String.Concat(Enumerable.Repeat(" ", spaces));
+                int startLength = "04:37:08.[Info] App: ".Length; // these make it look nice in the console 
+                                                                  // by making it line up
+                string spaceGap = String.Concat(Enumerable.Repeat(" ", spaces)); 
                 //for(int i = 0; i < spaces; i++) { spaceGap += " "; }
 
                 string logText = $"{DateTime.Now.ToString("hh:mm:ss.fff")}{spaceGap}[{msg.Severity}] {msg.Source}: {msg.Error?.ToString() ?? msg.Message}";
                 File.AppendAllText(_logFile, logText + "\r\n");     // Write the log text to a file
                 logText = logText.Replace("\n", "\n    ..." + (new string(' ', startLength)));
+                // again, makes it look fancy by colour and stuff
                 switch (msg.Severity)
                 {
                     case LogSeverity.Severe:

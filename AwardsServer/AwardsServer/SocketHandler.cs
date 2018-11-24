@@ -35,9 +35,9 @@ namespace AwardsServer
                 Client = client;
                 UserName = name;
                 if(Program.TryGetUser(name, out User)) {
-                    // nothing
+                    // nothing (already sets variable so..)
                 } else
-                {
+                { // this is handled in the newclient thread thingy
                     throw new ArgumentException("User not found: '" + name + "'");
                 }
             }
@@ -175,6 +175,10 @@ namespace AwardsServer
                 }
             }
 
+            /// <summary>
+            /// Closes the connection, logs a reason, and updates the queue.
+            /// </summary>
+            /// <param name="reason">Reason to disconnect the client</param>
             public void Close(string reason = "unknown")
             {
                 Logging.Log(Logging.LogSeverity.Warning, $"Closing {UserName}({this.User?.ToString() ?? "n/a"}) due to {reason}");
@@ -204,6 +208,9 @@ namespace AwardsServer
                 }
             }
 
+            /// <summary>
+            /// Listens to any incoming messages from the client connection
+            /// </summary>
             private void Listen()
             {
                 while(Listening)
@@ -236,6 +243,11 @@ namespace AwardsServer
                 }
             }
 
+            /// <summary>
+            /// Sends the message, but with zero error checking
+            /// </summary>
+            /// <param name="client">Client to recieve the message</param>
+            /// <param name="message">Message to send</param>
             public static void WriteConnection(TcpClient client, string message)
             {
                 message = $"%{message}`";
@@ -244,6 +256,10 @@ namespace AwardsServer
                 stream.Write(broadcastBytes, 0, broadcastBytes.Length);
             }
 
+            /// <summary>
+            /// Sends a message to the connection, with error checking built in.
+            /// </summary>
+            /// <param name="message">Message to try to send</param>
             public void Send(string message)
             {
                 try
@@ -333,7 +349,8 @@ namespace AwardsServer
                         continue;
                     }
                     // as soon as we get a connection, we should disable the ability to edit user info from UI
-                    Program.ServerUIForm.PermittedStudentEdits(ServerUI.UIForm.EditCapabilities.None);
+                    if(!Program.Options.Allow_Modifications_When_Voting)
+                        Program.ServerUIForm.PermittedStudentEdits(ServerUI.UIForm.EditCapabilities.None);
                     lock(LockClient)
                     {
                         if (CurrentClients.Select(x => x.UserName).Contains(dataFromClient) || ClientQueue.Select(x => x.UserName).Contains(dataFromClient))
@@ -343,7 +360,7 @@ namespace AwardsServer
                                 user.Send("REJECT:Already");
                                 user.Close("Already Connected");
                             } else
-                            {
+                            { // considering we shouldnt have a person connected multiple times, this shouldnt really be called anyway
                                 user.UserName += rnd.Next(0, 999).ToString("000"); // technically possible for this to collide.. but unlikely
                             }
                         }

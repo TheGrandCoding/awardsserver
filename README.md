@@ -58,21 +58,21 @@ A list of some errors that may occur, what causes them, and how to fix them.
 **Issue:** again, requires server restart.  
 **Related:** this will also occur if `<name2>` is modified. 
 
-### The "Microsoft.ACE.OLEDB.12.0" provider is not registered
-**Full text:** `System.InvalidOperationException: The 'Microsoft.ACE.OLEDB.12.0' provider is not registered on the local machine`
-**Cause:** You don't have the required Microsoft component packages that support the version of the database provider that we use.
-**Solution:** Download the needed packages. I won't directly link to any, since I dont want to be responsile for any viruses
+### The "Microsoft.ACE.OLEDB.12.0" provider is not registered  
+**Full text:** `System.InvalidOperationException: The 'Microsoft.ACE.OLEDB.12.0' provider is not registered on the local machine`  
+**Cause:** You don't have the required Microsoft component packages that support the version of the database provider that we use.  
+**Solution:** Download the needed packages. I won't directly link to any, since I dont want to be responsile for any viruses  
 
 
 - - -
 
 ## Common Warnings
 
-### User <name> has invalid account name
-**Full text:** `User '<first_name> <last_name> <tutor> <sex> <account_name> has invalid account name'`
-**Cause:** Account names are expected to have the same number of charactors as 'cheale14'
-**Solution:** Check that the account name given is correct. If it is, the warning can be ignored.
-**Is Critical?** Not particularly.
+### User <name> has invalid account name  
+**Full text:** `User '<first_name> <last_name> <tutor> <sex> <account_name> has invalid account name'`  
+**Cause:** Account names are expected to have the same number of charactors as 'cheale14'  
+**Solution:** Check that the account name given is correct. If it is, the warning can be ignored.  
+**Is Critical?** Not particularly.  
 
 Other errors may be added.
 

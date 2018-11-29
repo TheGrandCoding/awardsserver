@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.Win32;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
+using System.Windows.Forms;
 
 //get ready for some seemingly obvious questions
 //ctrl-f "??" to find what might be confusing
@@ -140,6 +141,7 @@ namespace AwardsServer
             return false;
         }
 
+        public static event EventHandler<string> ConsoleInput;
         static void Main(string[] args)
         {
             handler = new ConsoleEventDelegate(ConsoleEventCallback);
@@ -174,16 +176,41 @@ namespace AwardsServer
             // Open UI form..
             System.Threading.Thread uiThread = new System.Threading.Thread(runUI);
             uiThread.Start();
-
+            ConsoleInput += Program_ConsoleInput; // listens to event only *after* we have started everything
             while(Server.Listening)
             {
-                Console.ReadLine();
+                var str = Console.ReadLine(); // reads line and stores to var
+                ConsoleInput?.Invoke(null, str); // invokes any places that are listening to the event, passing the input
             }
             Logging.Log(Logging.LogSeverity.Severe, "Server has exited its main listening loop");
             Logging.Log(Logging.LogSeverity.Error, "Server closed.");
             while(true)
             { // pause at end so they can read console
                 Console.ReadLine();
+            }
+        }
+
+        private static void Program_ConsoleInput(object sender, string e)
+        {
+            if (e.StartsWith("/"))
+                e = e.Substring(1);
+            e = e.ToLower();
+            if(e == "remove_all_votes")
+            {
+                if(MessageBox.Show("Are you sure you want to REMOVE EVERY SINGLE VOTE?", "Remove All Votes", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                {
+                    foreach(var cat in Database.AllCategories)
+                    {
+                        Database.ExecuteCommand($"DELETE FROM Category{cat.Key} WHERE True = True"); // removes all records
+                    }
+                    Database.Load_All_Votes();
+                    Logging.Log("Removed all users votes.");
+                    try
+                    {
+                        ServerUIForm.Close();
+                        ServerUIForm.Dispose(); // close the UI so it reloads
+                    } catch { } // dont need to error catch this
+                }
             }
         }
 

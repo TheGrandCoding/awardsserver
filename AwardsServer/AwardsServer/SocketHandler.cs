@@ -28,6 +28,8 @@ namespace AwardsServer
 
             public string IPAddress;
 
+            public DateTime StartedTime;
+
             Thread listenThread;
 
             public SocketConnection(TcpClient client, string name)
@@ -47,6 +49,7 @@ namespace AwardsServer
             /// </summary>
             public void AcceptFromQueue()
             {
+                StartedTime = DateTime.Now;
                 Logging.Log(Logging.LogSeverity.Warning, "Bringing " + this.User.ToString() + " from queue.");
                 Send("Ready:" + this.User.FirstName);
                 Send("NumCat:" + Program.Database.AllCategories.Count);
@@ -132,9 +135,11 @@ namespace AwardsServer
                     {
                         if (string.IsNullOrWhiteSpace(rejectedReason))
                         {
+                            var now = DateTime.Now;
+                            var ts = now - this.StartedTime;
                             Program.Database.AlreadyVotedNames.Add(this.User.AccountName);
                             this.Send("Accepted");
-                            Logging.Log(Logging.LogSeverity.Warning, "User has voted", this.User.AccountName);
+                            Logging.Log(Logging.LogSeverity.Warning, $"User has voted (took: {ts})", this.User.AccountName);
                         }
                         else
                         {
@@ -181,6 +186,13 @@ namespace AwardsServer
                         }
                     }
                     this.Send("Q_RES:" + response);
+                } else if(message.StartsWith("QUES:"))
+                {
+                    try
+                    {
+                        message = message.Substring(5);
+                    } catch { }
+                    Logging.Log(Logging.LogSeverity.Severe, "Category: " + message, this.UserName);
                 }
             }
 
@@ -281,6 +293,19 @@ namespace AwardsServer
                     this.Close("SendErrored");
                 }
             }
+public static string GetLocalIPAddress()
+{
+    var host = Dns.GetHostEntry(Dns.GetHostName());
+    foreach (var ip in host.AddressList)
+    {
+        if (ip.AddressFamily == AddressFamily.InterNetwork)
+        {
+            return ip.ToString();
+        }
+    }
+    throw new Exception("No network adapters with an IPv4 address in the system!");
+}
+
 
             /// <summary>
             /// Sends message to ensure the client is still connected.
@@ -307,6 +332,8 @@ namespace AwardsServer
                 Logging.Log(Logging.LogSeverity.Warning, $"Listening to new connections at {((IPEndPoint)ServerListener.LocalEndpoint).Address.ToString()}:{((IPEndPoint)ServerListener.LocalEndpoint).Port}");
                 Thread newThread = new Thread(NewConnections);
                 newThread.Start();
+                                        
+
             } catch (Exception ex)
             {
                 Logging.Log("Server", ex);

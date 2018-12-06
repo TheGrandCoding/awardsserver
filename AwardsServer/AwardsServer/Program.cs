@@ -195,11 +195,11 @@ namespace AwardsServer
             if (e.StartsWith("/"))
                 e = e.Substring(1);
             e = e.ToLower();
-            if(e == "remove_all_votes")
+            if (e == "remove_all_votes")
             {
-                if(MessageBox.Show("Are you sure you want to REMOVE EVERY SINGLE VOTE?", "Remove All Votes", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                if (MessageBox.Show("Are you sure you want to REMOVE EVERY SINGLE VOTE?", "Remove All Votes", MessageBoxButtons.YesNo) == DialogResult.Yes)
                 {
-                    foreach(var cat in Database.AllCategories)
+                    foreach (var cat in Database.AllCategories)
                     {
                         Database.ExecuteCommand($"DELETE FROM Category{cat.Key} WHERE True = True"); // removes all records
                     }
@@ -211,6 +211,22 @@ namespace AwardsServer
                         ServerUIForm.Dispose(); // close the UI so it reloads
                     } catch { } // dont need to error catch this
                 }
+            } else if(e == "copy_winners")
+            {
+                string text = "Y11 Awards as of " + DateTime.Now.ToShortDateString();
+                text += "\r\nPrompt: Male Winners -- Female Winners\r\n";
+                foreach(var category in Database.AllCategories.Values)
+                {
+                    var maleWinner = category.HighestVoter('M');
+                    var maleWinners = maleWinner.Item1;
+                    var femaleWinner = category.HighestVoter('F');
+                    var femaleWinners = femaleWinner.Item1;
+                    string temp = $"{category.Prompt}: {string.Join(", ", maleWinners)} -- {string.Join(", ", femaleWinners)}\r\n";
+                    text += temp;
+
+                }
+                Logging.Log(Logging.LogSeverity.Severe,text);
+                System.IO.File.WriteAllText("test.html", text.Replace("\r\n", "<br>"));
             }
         }
 

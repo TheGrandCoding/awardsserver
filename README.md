@@ -18,22 +18,22 @@ If the above is not true, then you will need to make sure the "Allow student dat
 Head over to the [Categories][] tab.  
 You should be able to double click and edit the prompt of the category to edit and change it  
 If you want to add a category, then you can use the far bottom-right empty cell and double click that.  
-**Note: you cannot edit the ID of a category.**
+**Note: you cannot edit the ID of a category.**  
 
 #### Removing a Student's vote
-On the [Students][] tab, you can uncheck the 'Voted' tickbox, then hit enter, and confirm that is what you want to do.
+On the [Students][] tab, you can uncheck the 'Voted' tickbox, then hit enter, and confirm that is what you want to do.  
 
 #### View the Winners
-On the [Winners][] tab, you can see, for each category, the:
-- Male winner
-- Female winner
-- For both, the number of votes given to that person, in the bracket.
+On the [Winners][] tab, you can see, for each category, the:  
+- Male winner  
+- Female winner  
+- For both, the number of votes given to that person, in the bracket.  
 
 If there are multiple winners, they are all displayed.
 
 - - -
 
-### Common Errors
+## Common Errors
 
 A list of some errors that may occur, what causes them, and how to fix them.
 
@@ -58,10 +58,37 @@ A list of some errors that may occur, what causes them, and how to fix them.
 **Issue:** again, requires server restart.  
 **Related:** this will also occur if `<name2>` is modified.  
 
+### The "Microsoft.ACE.OLEDB.12.0" provider is not registered
+**Full text:** `System.InvalidOperationException: The 'Microsoft.ACE.OLEDB.12.0' provider is not registered on the local machine`  
+**Cause:** You don't have the required Microsoft component packages that support the version of the database provider that we use.  
+**Solution:** Download the needed packages. I won't directly link to any, since I dont want to be responsile for any viruses  
+
+
 - - -
 
-Other errors may be added.
+## Common Warnings
 
+### User <name> has invalid account name
+**Full text:** `User '<first_name> <last_name> <tutor> <sex> <account_name> has invalid account name'`  
+**Cause:** Account names are expected to have the same number of charactors as 'cheale14'  
+**Solution:** Check that the account name given is correct. If it is, the warning can be ignored.  
+**Is Critical?** Not particularly.  
+
+Other errors may be added
+
+- - -
+
+## Console Commands
+
+### remove_all_votes
+**Syntax:** `remove_all_votes`  
+**Paramaters:** none  
+**Action:** removes all votes by students, with confirmation  
+
+### copy_winners
+**Syntax:** `copy_winners`  
+**Paramaters:** none  
+**Action:** prints the winners in a format of `[PROMPT]: [Male Winners] -- [Female Winners]` to both the log text/console and a HTML file  
 
 
 

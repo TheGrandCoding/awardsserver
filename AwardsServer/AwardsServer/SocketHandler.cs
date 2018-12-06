@@ -28,6 +28,8 @@ namespace AwardsServer
 
             public string IPAddress;
 
+            public DateTime StartedTime;
+
             Thread listenThread;
 
             public SocketConnection(TcpClient client, string name)
@@ -47,6 +49,7 @@ namespace AwardsServer
             /// </summary>
             public void AcceptFromQueue()
             {
+                StartedTime = DateTime.Now;
                 Logging.Log(Logging.LogSeverity.Warning, "Bringing " + this.User.ToString() + " from queue.");
                 Send("Ready:" + this.User.FirstName);
                 Send("NumCat:" + Program.Database.AllCategories.Count);
@@ -54,7 +57,7 @@ namespace AwardsServer
                 listenThread.Start();
             }
 
-            private void HandleMessage(string message)
+            private void HandleMessage(string message) //when a the server receives a message from the client
             {
                 if(message .StartsWith("GET_CATE:"))
                 { // asking for specific category
@@ -87,22 +90,24 @@ namespace AwardsServer
                     }
                 }*/ else if(message.StartsWith("SUBMIT:"))
                 { // submit all votes.
-                    message = message.Replace("SUBMIT:", "");
+                    message = message.Replace("SUBMIT:", ""); //?? what is the format? SUBMIT:category;thing#category;thing ?
+                    // SUBMIT:male;female#male;female#male;female ....
+                    // the male;female pairs are in order, so we should just be able to increment a counter as we go thorugh each
                     string rejectedReason = "";
                     try
                     {
-                        string[] cats = message.Split('#');
-                        for(int index = 0; index < cats.Length; index++)
+                        string[] cats = message.Split('#'); //categories
+                        for(int index = 0; index < cats.Length; index++) //go through every category
                         {
-                            string thing = cats[index];
+                            string thing = cats[index]; //?? a pair of male:female winners
                             if (string.IsNullOrWhiteSpace(thing))
-                                continue;
-                            string[] catSplit = thing.Split(';');
-                            string maleWin = catSplit[0];
-                            string femaleWin = catSplit[1];
+                                continue; // but if we havnt given a winner for this category, it may be empty
+                            string[] winners = thing.Split(';'); // these are "male;female", so yes
+                            string maleWin = winners[0];
+                            string femaleWin = winners[1];
                             if(Program.TryGetUser(maleWin, out User target))
                             {
-                                if(target.AccountName == this.User.AccountName)
+                                if(target.AccountName == this.User.AccountName) //trying to vote for themself
                                 {
                                     rejectedReason = "Rejected:Self";
                                 } else
@@ -130,9 +135,11 @@ namespace AwardsServer
                     {
                         if (string.IsNullOrWhiteSpace(rejectedReason))
                         {
+                            var now = DateTime.Now;
+                            var ts = now - this.StartedTime;
                             Program.Database.AlreadyVotedNames.Add(this.User.AccountName);
                             this.Send("Accepted");
-                            Logging.Log(Logging.LogSeverity.Warning, "User has voted", this.User.AccountName);
+                            Logging.Log(Logging.LogSeverity.Warning, $"User has voted (took: {ts})", this.User.AccountName);
                         }
                         else
                         {
@@ -140,24 +147,31 @@ namespace AwardsServer
                         }
                         this.Close("Submitted");
                     }
-                } else if(message.StartsWith("QUERY"))
+                } else if(message.StartsWith("QUERY")) //?? querying for what? - when user types in someone's name, query any student that contains that name
                 {
                     message = message.Replace("QUERY:", "");
                     string response = "";
-                    char sex = char.Parse(message.Substring(0, 1));
-                    message = message.Substring(2);
-                    int count = 0;
+                    // format:
+                    // SEX:ENTERED_TEXT
+                    // where 'SEX' is either M or F
+                    // so the below takes the first charactor, which is M or F
+                    char sex = char.Parse(message.Substring(0, 1)); //??
+                    message = message.Substring(2); //would this contain a student's name? - this would be what the user typed in
+                    // its substring(2) '2' because we need to ignore first M/F and the :
+                    int count = 0; //what would this count ?? - allows us to limit number of names to respond with (so we dont crash the network)
                     foreach (var student in Program.Database.AllStudents.Values)
                     {
                         if (student.Sex == sex)
                         {
-                            bool shouldGo = false;
-                            if(student.ToString().StartsWith(message))
+                            bool shouldGo = false; // shouldGo: does the name match the query? if so, SHOULD we GO and send it
+                            // yes i know its not best naming but /shrug
+                            if(student.ToString().StartsWith(message)) 
                             {
                                 shouldGo = true;
                             }
-                            else if (student.ToString().IndexOf(message, StringComparison.OrdinalIgnoreCase) >= 0)
-                            {
+                            else if (student.ToString().IndexOf(message, StringComparison.OrdinalIgnoreCase) >= 0) //?? - essentially looking to see if the name contains the query, ignoring any case
+                            { // it is actually just returning an index of where the query string is within the student's name (same as like list.Indexof)
+                                // the >=0 is because if it does not contain ^, then it returns -1 instead
                                 shouldGo = true;
                             }
                             if (shouldGo)
@@ -167,16 +181,23 @@ namespace AwardsServer
                                 {
                                     break;
                                 }
-                                response += student.ToString("AN-FN-LN-TT") + "#";
+                                response += student.ToString("AN-FN-LN-TT") + "#"; //add the student's name + properties to a list of names to send to the client
                             }
                         }
                     }
                     this.Send("Q_RES:" + response);
+                } else if(message.StartsWith("QUES:"))
+                {
+                    try
+                    {
+                        message = message.Substring(5);
+                    } catch { }
+                    Logging.Log(Logging.LogSeverity.Severe, "Category: " + message, this.UserName);
                 }
             }
 
             /// <summary>
-            /// Closes the connection, logs a reason, and updates the queue.
+            /// Closes the connection with a client, logs a reason, and updates the queue.
             /// </summary>
             /// <param name="reason">Reason to disconnect the client</param>
             public void Close(string reason = "unknown")
@@ -198,7 +219,7 @@ namespace AwardsServer
                     CurrentClients.Remove(this);
                     ClientQueue.Remove(this);
                     while(CurrentClients.Count < Program.Options.Maximum_Concurrent_Connections)
-                    {
+                    {//accepting the next people in the queue
                         if (ClientQueue.Count == 0)
                             break;
                         ClientQueue[0].AcceptFromQueue();
@@ -225,7 +246,7 @@ namespace AwardsServer
                         if (string.IsNullOrWhiteSpace(data))
                             continue;
 
-                        foreach(var tempMsg in data.Split('%'))
+                        foreach(var tempMsg in data.Split('%')) //loops through received messages
                         {
                             if (string.IsNullOrWhiteSpace(tempMsg))
                                 continue;
@@ -272,6 +293,19 @@ namespace AwardsServer
                     this.Close("SendErrored");
                 }
             }
+public static string GetLocalIPAddress()
+{
+    var host = Dns.GetHostEntry(Dns.GetHostName());
+    foreach (var ip in host.AddressList)
+    {
+        if (ip.AddressFamily == AddressFamily.InterNetwork)
+        {
+            return ip.ToString();
+        }
+    }
+    throw new Exception("No network adapters with an IPv4 address in the system!");
+}
+
 
             /// <summary>
             /// Sends message to ensure the client is still connected.
@@ -287,8 +321,7 @@ namespace AwardsServer
         // Handles listening to, recieving information from, and sending information to
         // any clients (ie, the programs) that attempt to communicate.
         private TcpListener ServerListener;
-
-
+        
         public SocketHandler()
         {
             try
@@ -299,6 +332,8 @@ namespace AwardsServer
                 Logging.Log(Logging.LogSeverity.Warning, $"Listening to new connections at {((IPEndPoint)ServerListener.LocalEndpoint).Address.ToString()}:{((IPEndPoint)ServerListener.LocalEndpoint).Port}");
                 Thread newThread = new Thread(NewConnections);
                 newThread.Start();
+                                        
+
             } catch (Exception ex)
             {
                 Logging.Log("Server", ex);

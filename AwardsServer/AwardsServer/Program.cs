@@ -62,6 +62,9 @@ namespace AwardsServer
 
             [Option("Any severity below this is not shown in the UI", "Lowest severity displayed", Logging.LogSeverity.Debug)]
             public static Logging.LogSeverity Only_Show_Above_Severity;
+
+            [Option("Relative/Absolute path for the file used to contain the Server's IP", "Path of ServerIP file", @"..\..\..\ServerIP")]
+            public static string ServerIP_File_Path;
         }
 
         private const string MainRegistry = "HKEY_CURRENT_USER\\AwardsProgram\\Server";
@@ -116,6 +119,22 @@ namespace AwardsServer
             return user;
         }
 
+        /// <summary>
+        /// Returns the current computer's local ip address within its current network
+        /// </summary>
+        public static string GetLocalIPAddress()
+        {
+            var host = System.Net.Dns.GetHostEntry(System.Net.Dns.GetHostName());
+            foreach (var ip in host.AddressList)
+            {
+                if (ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                {
+                    return ip.ToString();
+                }
+            }
+            throw new Exception("No network adapters with an IPv4 address in the system!");
+        }
+
 
         // Console window closing things:
         // Yeah, I just copy-pasted the following
@@ -167,6 +186,7 @@ namespace AwardsServer
 #endif
 
             Logging.Log($"Loaded {Database.AllStudents.Count} students and {Database.AllCategories.Count} categories.");
+            
 
             Logging.Log("Starting socket listener...");
             Server = new SocketHandler();
@@ -176,6 +196,7 @@ namespace AwardsServer
             // Open UI form..
             System.Threading.Thread uiThread = new System.Threading.Thread(runUI);
             uiThread.Start();
+
             ConsoleInput += Program_ConsoleInput; // listens to event only *after* we have started everything
             while(Server.Listening)
             {

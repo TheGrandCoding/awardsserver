@@ -161,7 +161,7 @@ namespace AwardsServer
                     int count = 0; //what would this count ?? - allows us to limit number of names to respond with (so we dont crash the network)
                     foreach (var student in Program.Database.AllStudents.Values)
                     {
-                        if (student.Sex == sex)
+                        if (student.Sex == sex || student.Sex == 'U')
                         {
                             bool shouldGo = false; // shouldGo: does the name match the query? if so, SHOULD we GO and send it
                             // yes i know its not best naming but /shrug
@@ -181,7 +181,7 @@ namespace AwardsServer
                                 {
                                     break;
                                 }
-                                response += student.ToString("AN-FN-LN-TT") + "#"; //add the student's name + properties to a list of names to send to the client
+                                response += student.ToString("AN-FN-LN-TT-SX") + "#"; //add the student's name + properties to a list of names to send to the client
                             }
                         }
                     }

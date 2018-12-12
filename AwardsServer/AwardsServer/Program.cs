@@ -181,7 +181,7 @@ namespace AwardsServer
                 return; // closes
             }
 #if DEBUG
-            var st = new User(Environment.UserName.ToLower(), "Local", "Host", "1010", 'M');
+            var st = new User(Environment.UserName.ToLower(), "Local", "Host", "1010", 'U');
             if (!Database.AllStudents.ContainsKey(st.AccountName)) //if the user is not in the database
                 Database.AllStudents.Add(st.AccountName, st); //add the user
 #endif
@@ -297,9 +297,9 @@ namespace AwardsServer
             FirstName = firstName;
             LastName = lastName;
             Tutor = tutor;
-            if(!(sex == 'F' || sex == 'M'))
+            if(!(sex == 'F' || sex == 'M' || sex == 'U'))
             {
-                throw new ArgumentException("Must be either 'F' or 'M'", "sex"); //its 2018 lol jk
+                throw new ArgumentException("Must be either 'F' or 'M' or 'U'", "sex"); //its 2018 lol jk
             }
             Sex = sex;
         }
@@ -349,7 +349,7 @@ namespace AwardsServer
         /// <returns></returns>
         public List<string> SortVotes(char sex) //in ascending order
         {
-            var sortedDict = from entry in Votes where Program.GetUser(entry.Key).Sex == sex orderby entry.Value.Count ascending select entry.Key;
+            var sortedDict = from entry in Votes where (Program.GetUser(entry.Key).Sex == sex || Program.GetUser(entry.Key).Sex == 'U') orderby entry.Value.Count ascending select entry.Key;
             // yay for linq.
             return sortedDict.ToList();
         }

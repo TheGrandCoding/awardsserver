@@ -10,6 +10,7 @@ using System.Windows.Forms;
 
 //get ready for some seemingly obvious questions
 //ctrl-f "??" to find what might be confusing
+// 
 namespace AwardsServer
 {
     public class Program
@@ -62,6 +63,9 @@ namespace AwardsServer
 
             [Option("Any severity below this is not shown in the UI", "Lowest severity displayed", Logging.LogSeverity.Debug)]
             public static Logging.LogSeverity Only_Show_Above_Severity;
+
+            [Option("Relative/Absolute path for the file used to contain the Server's IP", "Path of ServerIP file", @"..\..\..\ServerIP")]
+            public static string ServerIP_File_Path;
         }
 
         private const string MainRegistry = "HKEY_CURRENT_USER\\AwardsProgram\\Server";
@@ -116,6 +120,22 @@ namespace AwardsServer
             return user;
         }
 
+        /// <summary>
+        /// Returns the current computer's local ip address within its current network
+        /// </summary>
+        public static string GetLocalIPAddress()
+        {
+            var host = System.Net.Dns.GetHostEntry(System.Net.Dns.GetHostName());
+            foreach (var ip in host.AddressList)
+            {
+                if (ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                {
+                    return ip.ToString();
+                }
+            }
+            throw new Exception("No network adapters with an IPv4 address in the system!");
+        }
+
 
         // Console window closing things:
         // Yeah, I just copy-pasted the following
@@ -161,12 +181,13 @@ namespace AwardsServer
                 return; // closes
             }
 #if DEBUG
-            var st = new User(Environment.UserName.ToLower(), "Local", "Host", "1010", 'M');
+            var st = new User(Environment.UserName.ToLower(), "Local", "Host", "1010", 'U');
             if (!Database.AllStudents.ContainsKey(st.AccountName)) //if the user is not in the database
                 Database.AllStudents.Add(st.AccountName, st); //add the user
 #endif
 
             Logging.Log($"Loaded {Database.AllStudents.Count} students and {Database.AllCategories.Count} categories.");
+            
 
             Logging.Log("Starting socket listener...");
             Server = new SocketHandler();
@@ -176,6 +197,7 @@ namespace AwardsServer
             // Open UI form..
             System.Threading.Thread uiThread = new System.Threading.Thread(runUI);
             uiThread.Start();
+
             ConsoleInput += Program_ConsoleInput; // listens to event only *after* we have started everything
             while(Server.Listening)
             {
@@ -275,9 +297,9 @@ namespace AwardsServer
             FirstName = firstName;
             LastName = lastName;
             Tutor = tutor;
-            if(!(sex == 'F' || sex == 'M'))
+            if(!(sex == 'F' || sex == 'M' || sex == 'U'))
             {
-                throw new ArgumentException("Must be either 'F' or 'M'", "sex"); //its 2018 lol jk
+                throw new ArgumentException("Must be either 'F' or 'M' or 'U'", "sex"); //its 2018 lol jk
             }
             Sex = sex;
         }
@@ -327,7 +349,7 @@ namespace AwardsServer
         /// <returns></returns>
         public List<string> SortVotes(char sex) //in ascending order
         {
-            var sortedDict = from entry in Votes where Program.GetUser(entry.Key).Sex == sex orderby entry.Value.Count ascending select entry.Key;
+            var sortedDict = from entry in Votes where (Program.GetUser(entry.Key).Sex == sex || Program.GetUser(entry.Key).Sex == 'U') orderby entry.Value.Count ascending select entry.Key;
             // yay for linq.
             return sortedDict.ToList();
         }

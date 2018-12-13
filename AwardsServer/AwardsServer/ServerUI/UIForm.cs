@@ -269,6 +269,20 @@ namespace AwardsServer.ServerUI
             }
         }
 
+        public void SetLocalIP()
+        {
+            try
+            {
+                var path = Options.ServerIP_File_Path;
+                var ip = GetLocalIPAddress();
+                if(!string.IsNullOrWhiteSpace(path) && !string.IsNullOrWhiteSpace(ip))
+                    System.IO.File.WriteAllText(Options.ServerIP_File_Path, GetLocalIPAddress());
+            }
+            catch (Exception ex)
+            {
+                Logging.Log("ServerIPFile", ex);
+            }
+        }
 
         private void UIForm_Load(object sender, EventArgs e)
         {
@@ -276,6 +290,7 @@ namespace AwardsServer.ServerUI
             UpdateCategory();
             UpdateWinners();
             UpdateOptions();
+            SetLocalIP(); // must come after options since it relies on it
 
             // These may error in execution:
             UpdateCurrentQueue();

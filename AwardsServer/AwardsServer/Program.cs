@@ -25,17 +25,20 @@ namespace AwardsServer
             public readonly string Name;
             public readonly string Description;
             public readonly object DefaultValue;
+            public readonly bool ReadOnly;
             /// <summary>
             /// Constructs the information for an Option.
             /// </summary>
             /// <param name="description">Displayed on UI Form: what this option does</param>
             /// <param name="name">Internal/short name for this option</param>
             /// <param name="defaultValue">Default value for the option</param>
-            public OptionAttribute(string description, string name, object defaultValue)
+            /// <param name="readOnly">Determines whether the option can be edited in the UI (note, can still be edited in code, and via registry)</param>
+            public OptionAttribute(string description, string name, object defaultValue, bool readOnly = false)
             {
                 Name = name;
                 Description = description;
                 DefaultValue = defaultValue;
+                ReadOnly = readOnly;
             }
         }
         public static class Options
@@ -64,7 +67,7 @@ namespace AwardsServer
             [Option("Any severity below this is not shown in the UI", "Lowest severity displayed", Logging.LogSeverity.Debug)]
             public static Logging.LogSeverity Only_Show_Above_Severity;
 
-            [Option("Relative/Absolute path for the file used to contain the Server's IP", "Path of ServerIP file", @"..\..\..\ServerIP")]
+            [Option("Relative/Absolute path for the file used to contain the Server's IP", "Path of ServerIP file", @"..\..\..\ServerIP", true)]
             public static string ServerIP_File_Path;
         }
 

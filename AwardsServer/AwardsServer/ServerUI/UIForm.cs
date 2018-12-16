@@ -265,6 +265,7 @@ namespace AwardsServer.ServerUI
                 hold.InputControl = inputCont;
                 hold.NameControl = display;
                 display.Text = option.Description;
+                inputCont.Enabled = !option.ReadOnly;
                 options.Add(hold);
             }
         }

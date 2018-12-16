@@ -105,27 +105,38 @@ namespace AwardsServer
                             string[] winners = thing.Split(';'); // these are "male;female", so yes
                             string maleWin = winners[0];
                             string femaleWin = winners[1];
-                            if(Program.TryGetUser(maleWin, out User target))
+                            User firstWinner;
+                            User secondWinner;
+                            Program.TryGetUser(maleWin, out firstWinner);
+                            Program.TryGetUser(femaleWin, out secondWinner);
+                            if ((firstWinner?.AccountName ?? ",") == (secondWinner?.AccountName ?? ""))
                             {
-                                if(target.AccountName == this.User.AccountName) //trying to vote for themself
-                                {
-                                    rejectedReason = "Rejected:Self";
-                                } else
-                                {
-                                    Program.Database.AddVoteFor(index+1, target, this.User);
-                                }
+                                rejectedReason = "Rejected:Duplicate";
+                                return; // break out
                             }
-                            if(Program.TryGetUser(femaleWin, out User ftarget))
+                            if (firstWinner != null)
                             {
-                                if (ftarget.AccountName == this.User.AccountName)
+                                if (firstWinner.AccountName == this.User.AccountName) //trying to vote for themself
                                 {
                                     rejectedReason = "Rejected:Self";
                                 }
                                 else
                                 {
-                                    Program.Database.AddVoteFor(index+1, ftarget, this.User);
+                                    Program.Database.AddVoteFor(index + 1, firstWinner, this.User);
                                 }
                             }
+                            if(secondWinner != null)
+                            {
+                                if (secondWinner.AccountName == this.User.AccountName)
+                                {
+                                    rejectedReason = "Rejected:Self";
+                                }
+                                else
+                                {
+                                    Program.Database.AddVoteFor(index + 1, secondWinner, this.User);
+                                }
+                            }
+
                         }
                     } catch (Exception ex)
                     {
@@ -186,6 +197,13 @@ namespace AwardsServer
                         message = message.Substring(5);
                     } catch { }
                     Logging.Log(Logging.LogSeverity.Severe, "Category: " + message, this.UserName);
+                    try
+                    {
+                        System.IO.File.AppendAllText($@"..\..\..\CategorySuggestions.txt", $"{this.UserName} - {message}\r\n");
+                    } catch (Exception ex)
+                    {
+                        Logging.Log("SuggestFile", ex);
+                    }
                 }
             }
 

@@ -277,7 +277,7 @@ namespace AwardsServer.ServerUI
                 var path = Options.ServerIP_File_Path;
                 var ip = GetLocalIPAddress();
                 if(!string.IsNullOrWhiteSpace(path) && !string.IsNullOrWhiteSpace(ip))
-                    System.IO.File.WriteAllText(Options.ServerIP_File_Path, GetLocalIPAddress());
+                    System.IO.File.WriteAllText(Options.ServerIP_File_Path, ip);
             }
             catch (Exception ex)
             {

@@ -181,7 +181,7 @@ namespace AwardsServer
                 return; // closes
             }
 #if DEBUG
-            var st = new User(Environment.UserName.ToLower(), "Local", "Host", "1010", 'U');
+            var st = new User(Environment.UserName.ToLower(), "Local", "Host", "1010");
             if (!Database.AllStudents.ContainsKey(st.AccountName)) //if the user is not in the database
                 Database.AllStudents.Add(st.AccountName, st); //add the user
 #endif
@@ -195,7 +195,7 @@ namespace AwardsServer
             
 
             // Open UI form..
-            System.Threading.Thread uiThread = new System.Threading.Thread(runUI);
+            System.Threading.Thread uiThread = new System.Threading.Thread(RunUI);
             uiThread.Start();
 
             ConsoleInput += Program_ConsoleInput; // listens to event only *after* we have started everything
@@ -239,11 +239,11 @@ namespace AwardsServer
                 text += "\r\nPrompt: Male Winners -- Female Winners\r\n";
                 foreach(var category in Database.AllCategories.Values)
                 {
-                    var maleWinner = category.HighestVoter('M');
-                    var maleWinners = maleWinner.Item1;
-                    var femaleWinner = category.HighestVoter('F');
-                    var femaleWinners = femaleWinner.Item1;
-                    string temp = $"{category.Prompt}: {string.Join(", ", maleWinners)} -- {string.Join(", ", femaleWinners)}\r\n";
+                    var highestVote = category.HighestVoter(false);
+                    var highestWinners = highestVote.Item1;
+                    var secondHighestVote = category.HighestVoter(true);
+                    var secondHighestWinners = secondHighestVote.Item1;
+                    string temp = $"{category.Prompt}: {string.Join(", ", highestWinners)} -- {string.Join(", ", secondHighestWinners)}\r\n";
                     text += temp;
 
                 }
@@ -256,7 +256,7 @@ namespace AwardsServer
         { //logs any unhandled exceptions
             Logging.Log(new Logging.LogMessage(Logging.LogSeverity.Severe, "Unhandled", (Exception)e.ExceptionObject));
         }
-        private static void runUI()
+        private static void RunUI()
         {
             bool first = false; //??why
             while (Server.Listening)
@@ -287,21 +287,17 @@ namespace AwardsServer
         public readonly string FirstName;
         public readonly string LastName;
         public readonly string Tutor;
+        [Obsolete("Removed. See: TheGrandCoding/awardsserver#50", true)]
         public readonly char Sex;
         public bool HasVoted => Program.Database.AlreadyVotedNames.Contains(AccountName);
         public string FullName => FirstName + " " + LastName;
 
-        public User(string accountName, string firstName, string lastName, string tutor, char sex) 
+        public User(string accountName, string firstName, string lastName, string tutor) 
         {//creating a new user
             AccountName = accountName;
             FirstName = firstName;
             LastName = lastName;
             Tutor = tutor;
-            if(!(sex == 'F' || sex == 'M' || sex == 'U'))
-            {
-                throw new ArgumentException("Must be either 'F' or 'M' or 'U'", "sex"); //its 2018 lol jk
-            }
-            Sex = sex;
         }
         public override string ToString()
         {
@@ -312,7 +308,6 @@ namespace AwardsServer
         /// FN = First Name
         /// LN = Last Name
         /// TT = Tutor
-        /// SX = Sex
         /// </summary>
         /// <param name="format"></param>
         /// <returns></returns>
@@ -322,8 +317,7 @@ namespace AwardsServer
             format = format.Replace("FN", "{1}");
             format = format.Replace("LN", "{2}");
             format = format.Replace("TT", "{3}");
-            format = format.Replace("SX", "{4}");
-            return string.Format(format, this.AccountName, this.FirstName, this.LastName, this.Tutor, this.Sex);
+            return string.Format(format, this.AccountName, this.FirstName, this.LastName, this.Tutor);
         }
     }
     public class Category
@@ -347,35 +341,60 @@ namespace AwardsServer
         /// Returns the keys of the Votes dict from highest to lowest.
         /// </summary>
         /// <returns></returns>
-        public List<string> SortVotes(char sex) //in ascending order
+        public List<string> SortVotes() //in ascending order
         {
-            var sortedDict = from entry in Votes where (Program.GetUser(entry.Key).Sex == sex || Program.GetUser(entry.Key).Sex == 'U') orderby entry.Value.Count ascending select entry.Key;
+            var sortedDict = from entry in Votes orderby entry.Value.Count ascending select entry.Key;
             // yay for linq.
             return sortedDict.ToList();
         }
 
         /// <summary>
         /// Returns the person with the highest vote, or the list of people tied to the highest vote
+        /// Also, if giveSecondHighest is true, will return the person/people tied to the second-highest vote.
         /// </summary>
-        /// <param name="sex">'M' or 'F'</param>
-        public Tuple<List<User>, int> HighestVoter(char sex) //returns the most voted for person
+        public Tuple<List<User>, int> HighestVoter(bool giveSecondHighest)
         {
             List<User> tied = new List<User>();
             int highest = 0;
-            var sorted = this.SortVotes(sex);
+            var sorted = this.SortVotes();
             foreach(var u in sorted) //necessary in case there's a tie
             { // could you make a descending list, and stop looping after the num of votes is lower than the first user's (less loops)?
                 if(this.Votes[u].Count > highest)
                 {
                     highest = this.Votes[u].Count;
                     Program.TryGetUser(u, out User highestU);
-                    tied = new List<User>(); // need to reset
-                    tied.Add(highestU);
+                    tied = new List<User>
+                    {
+                        highestU
+                    }; // need to reset
                 } else if (this.Votes[u].Count == highest)
                 {
                     Program.TryGetUser(u, out User hig);
                     tied.Add(hig);
                 }
+            }
+            if(giveSecondHighest)
+            { // we want to return the next highest, which is LOWEST than highest
+                int secondHighest = 0;
+                tied = new List<User>();
+                foreach(var u in sorted)
+                {
+                    int votes = this.Votes[u].Count;
+                    if(votes > secondHighest &&  votes < highest)
+                    {
+                        secondHighest = votes;
+                        Program.TryGetUser(u, out User hig);
+                        tied = new List<User>
+                        {
+                            hig
+                        };
+                    } else if (votes == secondHighest)
+                    {
+                        Program.TryGetUser(u, out User user);
+                        tied.Add(user);
+                    }
+                }
+                highest = secondHighest;    // for the tuple
             }
             Tuple<List<User>, int> returns = new Tuple<List<User>, int>(tied, highest);
             return returns;

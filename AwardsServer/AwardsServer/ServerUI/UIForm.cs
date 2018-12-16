@@ -24,7 +24,7 @@ namespace AwardsServer.ServerUI
             dgvStudents.Rows.Clear();
             foreach(var stud in Database.AllStudents)
             {
-                object[] row = new object[] { stud.Value.AccountName.ToString(), stud.Value.FirstName.ToString(), stud.Value.LastName.ToString(), stud.Value.Tutor.ToString(), stud.Value.Sex.ToString(), stud.Value.HasVoted };
+                object[] row = new object[] { stud.Value.AccountName.ToString(), stud.Value.FirstName.ToString(), stud.Value.LastName.ToString(), stud.Value.Tutor.ToString(), stud.Value.HasVoted };
                 dgvStudents.Rows.Add(row);
                 dgvStudents.Rows[dgvStudents.Rows.Count - 1].ReadOnly = false;
             }
@@ -48,37 +48,37 @@ namespace AwardsServer.ServerUI
             dgvWinners.Rows.Clear();
             foreach(var cat in Database.AllCategories)
             {
-                string winnerMale = "";
-                string winnerFemale = "";
+                string firstWinner = "";
+                string secondWinner = "";
 
-                var maleWinners = cat.Value.HighestVoter('M');
-                var femaleWinners = cat.Value.HighestVoter('F');
-                foreach(var maleWin in maleWinners.Item1)
+                var highestWinners = cat.Value.HighestVoter(false);
+                var secondHighestWinners = cat.Value.HighestVoter(true);
+                foreach(var maleWin in highestWinners.Item1)
                 {
-                    winnerMale += $"{maleWin.FullName} {maleWin.Tutor}, ";
+                    firstWinner += $"{maleWin.FullName} {maleWin.Tutor}, ";
                 }
-                foreach(var femaleWin in femaleWinners.Item1)
+                foreach(var femaleWin in secondHighestWinners.Item1)
                 {
-                    winnerFemale += $"{femaleWin.FullName} {femaleWin.Tutor}, ";
+                    secondWinner += $"{femaleWin.FullName} {femaleWin.Tutor}, ";
                 }
-                if (maleWinners.Item1.Count > 0)
+                if (highestWinners.Item1.Count > 0)
                 {
-                    winnerMale += $"({maleWinners.Item2})";
+                    firstWinner += $"({highestWinners.Item2})";
                 }
                 else
                 {
-                    winnerMale = "N/A";
+                    firstWinner = "N/A";
                 }
-                if (femaleWinners.Item1.Count > 0)
+                if (secondHighestWinners.Item1.Count > 0)
                 {
-                    winnerFemale += $"({femaleWinners.Item2})";
+                    secondWinner += $"({secondHighestWinners.Item2})";
                 }
                 else
                 {
-                    winnerFemale = "N/A";
+                    secondWinner = "N/A";
                 }
 
-                object[] row = new object[] { cat.Value.ID.ToString() + ": " + cat.Value.Prompt, winnerMale, winnerFemale};
+                object[] row = new object[] { cat.Value.ID.ToString("00") + ": " + cat.Value.Prompt, firstWinner, secondWinner};
                 dgvWinners.Rows.Add(row);
             }
         }
@@ -109,7 +109,7 @@ namespace AwardsServer.ServerUI
                 {
                     foreach(var uu in SocketHandler.CurrentClients)
                     {
-                        object[] row = new object[] { uu.IPAddress, uu.UserName, uu.User.ToString("AN FN LN TT SX") };
+                        object[] row = new object[] { uu.IPAddress, uu.UserName, uu.User.ToString("AN FN LN TT") };
                         dgvCurrentVoters.Rows.Add(row);
                     }
                 }
@@ -433,7 +433,7 @@ namespace AwardsServer.ServerUI
                 Database.AllStudents.Add(newUser.AccountName, newUser);
             }
             Database.AllStudents[newUser.AccountName] = newUser;
-            Database.ExecuteCommand($"UPDATE UserData SET FirstName = '{newUser.FirstName}', LastName = '{newUser.LastName}', Tutor = '{newUser.Tutor}', Sex = '{newUser.Sex}' WHERE UserName = '{newUser.AccountName}'");
+            Database.ExecuteCommand($"UPDATE UserData SET FirstName = '{newUser.FirstName}', LastName = '{newUser.LastName}', Tutor = '{newUser.Tutor}' WHERE UserName = '{newUser.AccountName}'");
             bool curVote = bool.Parse(row.Cells[5].Value.ToString());
             if(curVote == false && startVoted == true)
             {
@@ -459,9 +459,8 @@ namespace AwardsServer.ServerUI
             FirstName =   0b000010,
             LastName =    0b000100,
             Tutor =       0b001000,
-            Sex =         0b010000,
-            Voted =       0b100000,
-            All = AccountName | FirstName | LastName | Tutor | Sex | Voted,
+            Voted =       0b010000,
+            All = AccountName | FirstName | LastName | Tutor | Voted,
             NoneImportant = FirstName | LastName | Tutor
         }
         public void PermittedStudentEdits(EditCapabilities possibles)
@@ -478,8 +477,7 @@ namespace AwardsServer.ServerUI
             dgvStudents.Columns[1].ReadOnly = !possibles.HasFlag(EditCapabilities.FirstName);
             dgvStudents.Columns[2].ReadOnly = !possibles.HasFlag(EditCapabilities.LastName);
             dgvStudents.Columns[3].ReadOnly = !possibles.HasFlag(EditCapabilities.Tutor);
-            dgvStudents.Columns[4].ReadOnly = !possibles.HasFlag(EditCapabilities.Sex);
-            dgvStudents.Columns[5].ReadOnly = !possibles.HasFlag(EditCapabilities.Voted);
+            dgvStudents.Columns[4].ReadOnly = !possibles.HasFlag(EditCapabilities.Voted);
         }
 
         private User editUser = null;
@@ -495,8 +493,7 @@ namespace AwardsServer.ServerUI
             return new User(cells[0].Value.ToString(),
                 cells[1].Value.ToString(),
                 cells[2].Value.ToString(),
-                cells[3].Value.ToString(),
-                char.Parse(cells[4].Value.ToString())
+                cells[3].Value.ToString()
                 );
         }
 

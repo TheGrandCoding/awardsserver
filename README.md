@@ -6,6 +6,27 @@ Central component to the [Awards Program](https://github.com/TheGrandCoding/awar
 You will need to run the AwardsServer.exe prior to any clients voting.  
 Then, each [Client](https://github.com/TheGrandCoding/awardsprogram) should be run, with the correct IP having been corrected.
 
+
+### Configuration
+
+| Variable Name                   | Short Description                                                                                                            | Default Value                         | Notes                                                                                |
+|---------------------------------|------------------------------------------------------------------------------------------------------------------------------|---------------------------------------|--------------------------------------------------------------------------------------|
+| Maximum_Query_Response          | Maximum number of students given in response to a client's QUERY                                                             | 10                                    | N/A                                                                                  |
+| Simultaneous_Session_Allowed    | Can the same student be connected twice                                                                                      | False                                 | If True, will randomly add 3 numbers to name                                         |
+| Allow_Modifications_When_Voting | Allow GUI's tables to be double-click-edited even after a person connects                                                    | False                                 | Default is false, because editing account names etc while connected may cause issues |
+| Maximum_Concurrent_Connections  | This many people can be voting at once. After this amount, a queue begins.                                                   | 15                                    | This can be edited once started, will update dependant on the Heartbeat below.       |
+| Time_Between_Heartbeat          | Seconds between each connection is sent a message to confirm it is connected                                                 | 5                                     | Will also refresh the queue at this interval                                         |
+| Display_Recieve_Client          | Display messages that are sent by a client                                                                                   | true                                  | If "Only_Show_Above_Severity" is anything above Debug, this Option is useless        |
+| Display_Send_Client             | Display messages sent by the server to clients                                                                               | true                                  | If "Only_Show_Above_Severity" is anything above Debug, this Option is useless        |
+| Only_Show_Above_Severity        | Only display messages in the console that are above the selected severity. Note that messages are still logged to text file. | Debug                                 | Order, from lowest -> highest: Debug Info Warning Error Severe                       |
+| ServerIP_File_Path              | Location of the "ServerIP" file, which contains the Server's local IP address for github update-use                          | "..\..\..\ServerIP" Three folders up. | [This file is on github](https://raw.githubusercontent.com/TheGrandCoding/awardsserver/master/AwardsServer/ServerIP), and is used by the clients to get the latest IP              |
+|                                 |                                                                                                                              |                                       |                                                                                      |
+|                                 |                                                                                                                              |                                       |                                                                                      |
+|                                 |                                                                                                                              |                                       |                                                                                      |
+|                                 |                                                                                                                              |                                       |                                                                                      |
+|                                 |                                                                                                                              |                                       |                                                                                      |
+
+
 - - -
 
 ### Further things

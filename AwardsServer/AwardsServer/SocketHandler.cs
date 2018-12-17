@@ -105,27 +105,38 @@ namespace AwardsServer
                             string[] winners = thing.Split(';'); // these are "male;female", so yes
                             string maleWin = winners[0];
                             string femaleWin = winners[1];
-                            if(Program.TryGetUser(maleWin, out User target))
+                            User firstWinner;
+                            User secondWinner;
+                            Program.TryGetUser(maleWin, out firstWinner);
+                            Program.TryGetUser(femaleWin, out secondWinner);
+                            if ((firstWinner?.AccountName ?? ",") == (secondWinner?.AccountName ?? ""))
                             {
-                                if(target.AccountName == this.User.AccountName) //trying to vote for themself
-                                {
-                                    rejectedReason = "Rejected:Self";
-                                } else
-                                {
-                                    Program.Database.AddVoteFor(index+1, target, this.User);
-                                }
+                                rejectedReason = "Rejected:Duplicate";
+                                return; // break out
                             }
-                            if(Program.TryGetUser(femaleWin, out User ftarget))
+                            if (firstWinner != null)
                             {
-                                if (ftarget.AccountName == this.User.AccountName)
+                                if (firstWinner.AccountName == this.User.AccountName) //trying to vote for themself
                                 {
                                     rejectedReason = "Rejected:Self";
                                 }
                                 else
                                 {
-                                    Program.Database.AddVoteFor(index+1, ftarget, this.User);
+                                    Program.Database.AddVoteFor(index + 1, firstWinner, this.User);
                                 }
                             }
+                            if(secondWinner != null)
+                            {
+                                if (secondWinner.AccountName == this.User.AccountName)
+                                {
+                                    rejectedReason = "Rejected:Self";
+                                }
+                                else
+                                {
+                                    Program.Database.AddVoteFor(index + 1, secondWinner, this.User);
+                                }
+                            }
+
                         }
                     } catch (Exception ex)
                     {
@@ -152,37 +163,30 @@ namespace AwardsServer
                     message = message.Replace("QUERY:", "");
                     string response = "";
                     // format:
-                    // SEX:ENTERED_TEXT
-                    // where 'SEX' is either M or F
-                    // so the below takes the first charactor, which is M or F
-                    char sex = char.Parse(message.Substring(0, 1)); //??
-                    message = message.Substring(2); //would this contain a student's name? - this would be what the user typed in
+                    // ENTERED_TEXT
                     // its substring(2) '2' because we need to ignore first M/F and the :
                     int count = 0; //what would this count ?? - allows us to limit number of names to respond with (so we dont crash the network)
                     foreach (var student in Program.Database.AllStudents.Values)
                     {
-                        if (student.Sex == sex)
+                        bool shouldGo = false; // shouldGo: does the name match the query? if so, SHOULD we GO and send it
+                        // yes i know its not best naming but /shrug
+                        if(student.ToString().StartsWith(message)) 
                         {
-                            bool shouldGo = false; // shouldGo: does the name match the query? if so, SHOULD we GO and send it
-                            // yes i know its not best naming but /shrug
-                            if(student.ToString().StartsWith(message)) 
+                            shouldGo = true;
+                        }
+                        else if (student.ToString().IndexOf(message, StringComparison.OrdinalIgnoreCase) >= 0) //?? - essentially looking to see if the name contains the query, ignoring any case
+                        { // it is actually just returning an index of where the query string is within the student's name (same as like list.Indexof)
+                            // the >=0 is because if it does not contain ^, then it returns -1 instead
+                            shouldGo = true;
+                        }
+                        if (shouldGo)
+                        {
+                            count++;
+                            if (count >= Program.Options.Maximum_Query_Response)
                             {
-                                shouldGo = true;
+                                break;
                             }
-                            else if (student.ToString().IndexOf(message, StringComparison.OrdinalIgnoreCase) >= 0) //?? - essentially looking to see if the name contains the query, ignoring any case
-                            { // it is actually just returning an index of where the query string is within the student's name (same as like list.Indexof)
-                                // the >=0 is because if it does not contain ^, then it returns -1 instead
-                                shouldGo = true;
-                            }
-                            if (shouldGo)
-                            {
-                                count++;
-                                if (count >= Program.Options.Maximum_Query_Response)
-                                {
-                                    break;
-                                }
-                                response += student.ToString("AN-FN-LN-TT") + "#"; //add the student's name + properties to a list of names to send to the client
-                            }
+                            response += student.ToString("AN-FN-LN-TT") + "#"; //add the student's name + properties to a list of names to send to the client
                         }
                     }
                     this.Send("Q_RES:" + response);
@@ -193,6 +197,13 @@ namespace AwardsServer
                         message = message.Substring(5);
                     } catch { }
                     Logging.Log(Logging.LogSeverity.Severe, "Category: " + message, this.UserName);
+                    try
+                    {
+                        System.IO.File.AppendAllText($@"..\..\..\CategorySuggestions.txt", $"{this.UserName} - {message}\r\n");
+                    } catch (Exception ex)
+                    {
+                        Logging.Log("SuggestFile", ex);
+                    }
                 }
             }
 

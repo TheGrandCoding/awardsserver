@@ -134,10 +134,10 @@ namespace AwardsServer
             OleDbDataReader reader = command.ExecuteReader();
             while (reader.Read())
             {
-                User user = new User(reader["UserName"].ToString(), reader["FirstName"].ToString(), reader["LastName"].ToString(), reader["Tutor"].ToString(), char.Parse(reader["Sex"].ToString()));
+                User user = new User(reader["UserName"].ToString(), reader["FirstName"].ToString(), reader["LastName"].ToString(), reader["Tutor"].ToString());
                 if(user.AccountName.Length != "cheale14".Length)
                 {
-                    Logging.Log(Logging.LogSeverity.Warning, "User " + user.ToString("FN LN TT SX AN") + " has invalid account name");
+                    Logging.Log(Logging.LogSeverity.Warning, "User " + user.ToString("FN LN TT AN") + " has invalid account name");
                 }
                 AllStudents.Add(user.AccountName.ToLower(), user); 
             }

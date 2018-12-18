@@ -435,7 +435,7 @@ namespace AwardsServer.ServerUI
             }
             Database.AllStudents[newUser.AccountName] = newUser;
             Database.ExecuteCommand($"UPDATE UserData SET FirstName = '{newUser.FirstName}', LastName = '{newUser.LastName}', Tutor = '{newUser.Tutor}' WHERE UserName = '{newUser.AccountName}'");
-            bool curVote = bool.Parse(row.Cells[5].Value.ToString());
+            bool curVote = bool.Parse(row.Cells[4].Value.ToString());
             if(curVote == false && startVoted == true)
             {
                 if(MessageBox.Show($"Are you sure you want to remove {newUser.ToString("FN LN (TT)")}'s votes?", "Warning", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
@@ -487,7 +487,7 @@ namespace AwardsServer.ServerUI
         {
             var row = dgvStudents.Rows[e.RowIndex];
             editUser = userFromColumns(row.Cells);
-            startVoted = bool.Parse(row.Cells[5].Value.ToString());
+            //startVoted = bool.Parse(row.Cells[5].Value.ToString());
         }
         private User userFromColumns(DataGridViewCellCollection cells)
         {

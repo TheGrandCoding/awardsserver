@@ -246,7 +246,7 @@ namespace AwardsServer
                     var highestWinners = highestVote.Item1;
                     var secondHighestVote = category.HighestVoter(true);
                     var secondHighestWinners = secondHighestVote.Item1;
-                    string temp = $"{category.Prompt}: {string.Join(", ", highestWinners)} -- {string.Join(", ", secondHighestWinners)}\r\n";
+                    string temp = $"{category.Prompt}: {string.Join(", ", highestWinners.Select(x => x.ToString("FN LN (TT)")))} -- {string.Join(", ", secondHighestWinners.Select(x => x.ToString("FN LN (TT)")))}\r\n";
                     text += temp;
 
                 }
@@ -294,6 +294,11 @@ namespace AwardsServer
         public readonly char Sex;
         public bool HasVoted => Program.Database.AlreadyVotedNames.Contains(AccountName);
         public string FullName => FirstName + " " + LastName;
+
+        /// <summary>
+        /// A list of values that indicate special options.
+        /// </summary>
+        public List<string> Flags;
 
         public User(string accountName, string firstName, string lastName, string tutor) 
         {//creating a new user

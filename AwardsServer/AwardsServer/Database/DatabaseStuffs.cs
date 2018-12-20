@@ -135,7 +135,10 @@ namespace AwardsServer
             while (reader.Read())
             {
                 User user = new User(reader["UserName"].ToString(), reader["FirstName"].ToString(), reader["LastName"].ToString(), reader["Tutor"].ToString());
-                if(user.AccountName.Length != "cheale14".Length)
+                string rawflags = reader["Flags"].ToString();
+                var flags = rawflags.Split(';').Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x.ToLower());
+                user.Flags = flags.ToList();
+                if(user.AccountName.Length != "cheale14".Length && !user.Flags.Contains("ignore_length"))
                 {
                     Logging.Log(Logging.LogSeverity.Warning, "User " + user.ToString("FN LN TT AN") + " has invalid account name");
                 }

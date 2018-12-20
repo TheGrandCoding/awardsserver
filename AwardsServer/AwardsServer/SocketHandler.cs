@@ -170,13 +170,17 @@ namespace AwardsServer
                     {
                         bool shouldGo = false; // shouldGo: does the name match the query? if so, SHOULD we GO and send it
                         // yes i know its not best naming but /shrug
-                        if(student.ToString().StartsWith(message)) 
+                        message = message.ToLower();
+                        if(student.ToString().ToLower().StartsWith(message)) 
                         {
                             shouldGo = true;
                         }
-                        else if (student.ToString().IndexOf(message, StringComparison.OrdinalIgnoreCase) >= 0) //?? - essentially looking to see if the name contains the query, ignoring any case
+                        else if (student.LastName.ToLower().StartsWith(message)) //?? - essentially looking to see if the name contains the query, ignoring any case
                         { // it is actually just returning an index of where the query string is within the student's name (same as like list.Indexof)
                             // the >=0 is because if it does not contain ^, then it returns -1 instead
+                            shouldGo = true;
+                        } else if(student.FirstName.ToLower().StartsWith(message))
+                        {
                             shouldGo = true;
                         }
                         if (shouldGo)

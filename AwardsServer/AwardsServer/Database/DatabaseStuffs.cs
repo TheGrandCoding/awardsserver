@@ -139,6 +139,18 @@ namespace AwardsServer
                 {
                     Logging.Log(Logging.LogSeverity.Warning, "User " + user.ToString("FN LN TT AN") + " has invalid account name");
                 }
+                if(user.AccountName.ToLower() != user.AccountName)
+                {
+                    ExecuteCommand($"UPDATE UserData SET UserName = '{user.AccountName.ToLower()}' WHERE UserName = '{user.AccountName}'");
+                }
+                if(user.ToString().Contains("-"))
+                {
+                    Logging.Log(Logging.LogSeverity.Severe, "Remove the  '-' from " + user.ToString() + " 's name(s).");
+                    Console.ReadLine();
+                    Logging.Log(Logging.LogSeverity.Severe, "Unable to continue because the '-' is a special charactor");
+                    Environment.Exit(1);
+                    //ExecuteCommand($"UPDATE UserData SET FirstName = '{user.FirstName.Replace("-", " ")}', LastName = '{user.LastName.Replace("-", " ")}' WHERE AccountName = '{user.AccountName}'");
+                }
                 AllStudents.Add(user.AccountName.ToLower(), user); 
             }
             OleDbCommand command2 = new OleDbCommand();

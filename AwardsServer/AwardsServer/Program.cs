@@ -171,6 +171,8 @@ namespace AwardsServer
             SetConsoleCtrlHandler(handler, true); // this line & above handle the console window closing
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException; //?? - allows us to log any errors that completely crash the server
             // without the above, any error that is not within a "try..except" would simply cause the console window to close without any log or message.
+            Logging.Log(Logging.LogSeverity.Severe, "[README] Available at: https://y11awards.page.link/readme");
+            Logging.Log(Logging.LogSeverity.Severe, "[ISSUES] Reportable at: https://y11awards.page.link/issues");
             Logging.Log(Logging.LogSeverity.Info,  "Loading existing categories...");
             Database = new DatabaseStuffs();
             Database.Connect();

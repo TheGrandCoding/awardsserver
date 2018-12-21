@@ -64,6 +64,12 @@
     <Compile Include="SocketHandler.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\..\CODEOWNERS">
+      <Link>CODEOWNERS</Link>
+    </None>
+    <None Include="..\..\README.md">
+      <Link>README.md</Link>
+    </None>
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
@@ -76,7 +82,6 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <None Include="README.md" />
     <None Include="Resources\EmptyDatabase.accdb" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -69,5 +69,46 @@ namespace AwardsServer.Properties {
                 return ((byte[])(obj));
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &lt;!-- This is in the HTML body already --&gt;
+        ///&lt;form action=&quot;/&quot;&gt;
+        ///  Account Name:&lt;br&gt;
+        ///  &lt;input type=&quot;text&quot; name=&quot;accn&quot; value=&quot;Enter your login account name&quot;&gt;
+        ///  &lt;br&gt;
+        ///  Last name:&lt;br&gt;
+        ///  &lt;input type=&quot;text&quot; name=&quot;lName&quot; value=&quot;Enter your last name (case matters)&quot;&gt;
+        ///  &lt;br&gt;
+        ///  Tutor:&lt;br&gt;
+        ///  &lt;input type=&quot;text&quot; name=&quot;tutor&quot; value=&quot;Enter the tutor you are in&quot;&gt;
+        ///  &lt;br&gt;&lt;br&gt;
+        ///  &lt;input type=&quot;submit&quot; value=&quot;Submit&quot;&gt;
+        ///&lt;/form&gt; .
+        /// </summary>
+        internal static string WebAuthentificationPage {
+            get {
+                return ResourceManager.GetString("WebAuthentificationPage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to alert(&quot;Hello!&quot;);.
+        /// </summary>
+        internal static string WebScripts {
+            get {
+                return ResourceManager.GetString("WebScripts", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to label {
+        ///    color: red;
+        ///}.
+        /// </summary>
+        internal static string WebStyles {
+            get {
+                return ResourceManager.GetString("WebStyles", resourceCulture);
+            }
+        }
     }
 }

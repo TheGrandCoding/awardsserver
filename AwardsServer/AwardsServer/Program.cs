@@ -18,6 +18,7 @@ namespace AwardsServer
         public static ServerUI.UIForm ServerUIForm;
         public static SocketHandler Server; // Handles the connection and essentially interfaces with the TCP-side of things
         public static DatabaseStuffs Database; // database related things
+        public static ServerUI.WebsiteHandler WebServer;
 
         [AttributeUsage(AttributeTargets.Field, AllowMultiple = false)] //?? - Determines where the below attribute can be used; in our case, we just need it on Fields (ie, variables)
         public class OptionAttribute : Attribute //what is this for?? does it 'Constructs the information for an Option.'? // the class holds info on the options, and the Attribute allows it to be put in the [ ]
@@ -197,6 +198,9 @@ namespace AwardsServer
             Logging.Log("Starting socket listener...");
             Server = new SocketHandler();
             Logging.Log("Started. Ready to accept new connections.");
+            Logging.Log("Starting web server...");
+            WebServer = new ServerUI.WebsiteHandler();
+            Logging.Log("Started web server!");
             
 
             // Open UI form..
@@ -410,6 +414,26 @@ namespace AwardsServer
             return returns;
         }
 
+
+        /// <summary>
+        /// Returns the two votes made by the inputted user
+        /// </summary>
+        /// <param name="votingUser">User who you want the votes for</param>
+        /// <returns>Two user, or null</returns>
+        public Tuple<User, User> GetVotesBy(User votingUser)
+        {
+            List<User> voted = new List<User>();
+            foreach(var vote in Votes)
+            {
+                if(vote.Value.Contains(votingUser))
+                {
+                    voted.Add(Program.GetUser(vote.Key));
+                }
+            }
+            // "OrDefault" means it will return null instead of erroring.
+            return new Tuple<User, User>(voted.ElementAtOrDefault(0), voted.ElementAtOrDefault(1));
+        }
+
         /// <summary>
         /// Adds the vote specified, creating a new Dictionary entry if needed
         /// </summary>
@@ -435,4 +459,28 @@ namespace AwardsServer
             return $"{ID}: {Votes.Count} {Prompt}";
         }
     }
+
+    /// <summary>
+    /// Database manually entered flags
+    /// </summary>
+    public static class Flags
+    {
+        /// <summary>
+        /// Supresses the warning about account name length being different from 'cheale14'
+        /// </summary>
+        public const string Ignore_Length = "ignore-length";
+        /// <summary>
+        /// Permits an account to dispay their votes by going to the server's ip in web browser
+        /// </summary>
+        public const string View_Online = "view-online";
+        /// <summary>
+        /// Overrides the above, and prevents the above from happening
+        /// </summary>
+        public const string Disallow_View_Online = "disallow-view-online";
+        /// <summary>
+        /// Indicates the person is a non-Students
+        /// </summary>
+        public const string Coundon_Staff = "cc-staff";
+    }
+
 }

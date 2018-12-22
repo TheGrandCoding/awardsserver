@@ -138,7 +138,7 @@ namespace AwardsServer
                 string rawflags = reader["Flags"].ToString();
                 var flags = rawflags.Split(';').Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x.ToLower());
                 user.Flags = flags.ToList();
-                if(user.AccountName.Length != "cheale14".Length && !user.Flags.Contains("ignore_length"))
+                if(user.AccountName.Length != "cheale14".Length && !user.Flags.Contains(Flags.Ignore_Length))
                 {
                     Logging.Log(Logging.LogSeverity.Warning, "User " + user.ToString("FN LN TT AN") + " has invalid account name");
                 }

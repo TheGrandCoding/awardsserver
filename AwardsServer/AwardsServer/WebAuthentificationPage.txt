@@ -1,0 +1,13 @@
+<!-- This is in the HTML body already -->
+<form action="/">
+  Account Name:<br>
+  <input type="text" name="accn" value="Enter your login account name">
+  <br>
+  Last name:<br>
+  <input type="text" name="lName" value="Enter your last name (case matters)">
+  <br>
+  Tutor:<br>
+  <input type="text" name="tutor" value="Enter the tutor you are in">
+  <br><br>
+  <input type="submit" value="Submit">
+</form> 

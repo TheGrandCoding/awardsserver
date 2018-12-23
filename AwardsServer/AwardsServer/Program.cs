@@ -68,6 +68,9 @@ namespace AwardsServer
             [Option("Any severity below this is not shown in the UI", "Lowest severity displayed", Logging.LogSeverity.Debug)]
             public static Logging.LogSeverity Only_Show_Above_Severity;
 
+            [Option("Allow someone other than server to see the winners", "Allow see redacted", false)]
+            public static bool Allow_NonLocalHost_WebConnections;
+
             [Option("Relative/Absolute path for the file used to contain the Server's IP", "Path of ServerIP file", @"..\..\..\ServerIP", true)]
             public static string ServerIP_File_Path;
         }

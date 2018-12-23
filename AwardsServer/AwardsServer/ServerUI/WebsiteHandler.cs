@@ -254,10 +254,14 @@ namespace AwardsServer.ServerUI
                     headers.Add("Content-Type", "text/javascript");
                 } else if(pathUntilTokens == "/all")
                 {
-                    string cssClass = (ipEnd.Address.ToString() == Program.GetLocalIPAddress() || ipEnd.Address.ToString() == "127.0.0.1") ? "" : "class=\"hidden\"";
+                    string cssClass = (ipEnd.Address.ToString() == Program.GetLocalIPAddress() || ipEnd.Address.ToString() == "127.0.0.1" || Program.Options.Allow_NonLocalHost_WebConnections) ? "" : "class=\"hidden\"";
                     // anyone can access the info
                     // but, we hide some data via css
                     // which isnt particularly secure.. might change in future.
+                    // however: I have set the javascript to remove any information within a [REDACTED] element
+                    // which means that it is in no way secure - its still being sent
+                    // BUT it is impossible to get the data using just Inspect element, which will prevent access from most/all
+
                     RESPONSE_CODE = 200; RESPONSE_TITLE = "Y11: All Data";
                     string htmlPage = Properties.Resources.WebAllDataPage; // this is the base template, which data will be added into
                     int notVoted = Program.Database.AllStudents.Count; // start with all students added
@@ -288,6 +292,26 @@ namespace AwardsServer.ServerUI
                         string format = $"<tr {tempClass}><td>{category.Prompt}</td><td {cssClass}>{votes}</td><td {cssClass}>{category.Votes.Count}</td></tr>";
                         categoryTable += format;
                     }
+                    categoryTable += "</table>";
+
+                    string winnersTable = "<table><tr><th>Category</th><th>First Winner</th><th>Second Winner</th></tr>";
+                    foreach (var category in Program.Database.AllCategories.Values)
+                    {
+                        var highestVote = category.HighestVoter(false);
+                        var highestWinners = highestVote.Item1;
+                        var secondHighestVote = category.HighestVoter(true);
+                        var secondHighestWinners = secondHighestVote.Item1;
+                        string first = $"{string.Join(", ", highestWinners.Select(x => x.ToString("FN LN (TT)")))}";
+                        if (string.IsNullOrWhiteSpace(first)) first = "N/A";
+                        string second = $"{string.Join(", ", secondHighestWinners.Select(x => x.ToString("FN LN (TT)")))}";
+                        if (string.IsNullOrWhiteSpace(second)) second = "N/A";
+                        string format = "<tr><td>{1}</td><td {0}>{4}: {2}</td><td {0}>{5}: {3}</td></tr>";
+                        format = string.Format(format, cssClass, category.Prompt, first, second, $"<strong>{highestVote.Item2}</strong>", $"<strong>{secondHighestVote.Item2}</strong>");
+                        winnersTable += format;
+                    }
+                    winnersTable += "</table>";
+
+
                     // replaces data from the templace, see the WebAllDataPage.txt
                     Dictionary<string, string> ReplaceValues = new Dictionary<string, string>()
                     {
@@ -295,12 +319,12 @@ namespace AwardsServer.ServerUI
                         { "[[NUM_VOTED]]", alreadyVoted.ToString() },
                         { "[[NUM_VOTING]]", currentlyVoting.ToString() },
                         { "[[HIDENOT]]", cssClass },
-                        { "[[CATEGORY_TABLE]]", categoryTable }
+                        { "[[CATEGORY_TABLE]]", categoryTable },
+                        { "[[WINNER_TABLE]]", winnersTable }
 
                     };
                     foreach(var keypair in ReplaceValues) { htmlPage = htmlPage.Replace(keypair.Key, keypair.Value); }
 
-                    // TODO: display winners (or [REDACTED])
                     RESPONSE_BODY = htmlPage;
                 }
                 else

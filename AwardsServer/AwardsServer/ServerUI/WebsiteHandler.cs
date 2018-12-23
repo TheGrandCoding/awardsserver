@@ -49,7 +49,7 @@ namespace AwardsServer.ServerUI
         /// <param name="headers">Any headers to add or overwrite</param>
         /// <param name="pageTitle">Titled of the page, displayed in the tab thingy</param>
         /// <param name="forceDisableTextBuild">"Lets just ignore HTML, send it raw!" - Disregards any HTML formatting, and only sends as per HTTP</param>
-        private void RespondHTTP(TcpClient client, string body, int httpCode = 200, Dictionary<string,string> headers = null, string pageTitle = "Y11 Awards", bool forceDisableTextBuild = false)
+        private void RespondHTTP(TcpClient client, string body, int httpCode = 200, Dictionary<string,string> headers = null, string pageTitle = "Y11 Awards", bool forceDisableTextBuild = false, string additionalHead = "")
         {
             List<string> response_text = new List<string>()
             {
@@ -60,6 +60,7 @@ namespace AwardsServer.ServerUI
                 "<script src=\"/WebScripts.js\"></script>", // also in resources
                 "<meta charset=\"UTF-8\">",
                 $"<title>{pageTitle}</title>",
+                additionalHead,
                 "</head>",
                 "<body>",
                 body,
@@ -115,29 +116,13 @@ namespace AwardsServer.ServerUI
         {
             //RespondHTTP(client, "<label>No response content</label>", 500, pageTitle: "Error");
 
-            string[] perLine = request.Split('\n');
+            string[] perLine = request.Replace("\r", "").Split('\n');
             // example: 'GET / HTTP/1.1'
             string pathWanted = perLine[0];
-            string authorization = "";
-            foreach (string line in perLine)
-            {
-                if (line.StartsWith("Authorization"))
-                {
-                    // Gets the authorisation.
-                    // Ie, username/password.
-                    // This doesnt seem to work for me, but i've included it anyway
-                    string[] authSplit = line.Split(' ');
-                    byte[] data = Convert.FromBase64String(authSplit[2]);
-                    string decodedString = Encoding.UTF8.GetString(data);
-                    authorization = decodedString;
-                    break;
-                }
-            }
             string[] pathSplit = pathWanted.Split(' '); // since URL's shouldnt contain spaces..
             pathWanted = pathSplit[1];
             pathWanted = Uri.UnescapeDataString(pathWanted); // now we decode the url, so it may contain spaces
             string pathUntilTokens = pathWanted;
-            Log(ipEnd.ToString() + " requested " + pathWanted + $"{(authorization == "" ? "" : "  -Auth: " + authorization)}");
             Dictionary<string, string> tokens = new Dictionary<string, string>();
             if (pathWanted.Contains("?"))
             { // finds dictionary of any 'tokens' ie:
@@ -164,12 +149,45 @@ namespace AwardsServer.ServerUI
                     tokens.Add(name, value);
                 }
             }
-            if(tokens.TryGetValue("accn", out string accountName) && tokens.TryGetValue("lName", out string lastName) && tokens.TryGetValue("tutor", out string tutor))
+            string authorization = "";
+            foreach (string line in perLine)
+            {
+                if (pathUntilTokens.EndsWith(".css") || pathUntilTokens.EndsWith(".js")) break;
+                if (line.StartsWith("Authorization"))
+                {
+                    // Gets the authorisation.
+                    // Ie, username/password.
+                    // This doesnt seem to work for me, but i've included it anyway
+                    string[] authSplit = line.Split(' ');
+                    byte[] data = Convert.FromBase64String(authSplit[2]);
+                    string decodedString = Encoding.UTF8.GetString(data);
+                    authorization = decodedString;
+                    break;
+                }
+                else if (line.StartsWith("Cookie: Auth="))
+                {
+                    var name = Uri.UnescapeDataString(line).Substring("Cookie: Auth=".Length);
+                    string[] split = name.Split(' ');
+                    string an = split[0];
+                    string ln = split[1].Split('-')[0];
+                    string tt = split[1].Split('-')[1];
+                    var student = (Program.Database.AllStudents.Values.FirstOrDefault(x => x.AccountName == an && x.LastName == ln && tt.ToLower() == x.Tutor.ToLower()));
+                    if (student == null)
+                    {
+                        RespondHTTP(client, "<label class=\"error\">Authentification was rejected.<br>You may need to clear your cookies</label><br>" + Properties.Resources.WebAuthentificationPage, 401);
+                        return;
+                    }
+                    authorization = $"{student.AccountName} {student.LastName}-{student.Tutor}";
+                    break;
+                }
+            }
+            Log(ipEnd.ToString() + " requested " + pathWanted + $"{(authorization == "" ? "" : "  -Auth: " + authorization)}");
+            if(string.IsNullOrWhiteSpace(authorization) && tokens.TryGetValue("accn", out string accountName) && tokens.TryGetValue("lName", out string lastName) && tokens.TryGetValue("tutor", out string tutor))
             { // information is parsed, and placed into auth string
                 authorization = $"{accountName} {lastName}-{tutor}";
             }
             User currentStudent = null;
-            if(pathUntilTokens == "/")
+            if(!(pathUntilTokens.EndsWith(".css") || pathUntilTokens.EndsWith(".js")))
             { // only runs on a page that might need authentification - Which for now is just the landing page
                 if (string.IsNullOrWhiteSpace(authorization))
                 { // they have not given any authorisation at all - so we respond with a nice form to do so
@@ -216,8 +234,15 @@ namespace AwardsServer.ServerUI
             List<string> urlPath = pathUntilTokens.Split('/').Where(x => String.IsNullOrWhiteSpace(x) == false).ToList();
             string RESPONSE_BODY = "<label>An internal error occured while attempting to process your request</label>";
             string RESPONSE_TITLE = "Y11 Awards"; // default valuess
+            string OPTIONAL_HEAD_TEXT = "";
             int RESPONSE_CODE = 500;
             var headers = new Dictionary<string, string>();
+            if(currentStudent != null) 
+                headers.Add("Set-Cookie", $"Auth={currentStudent.AccountName} {currentStudent.LastName}-{currentStudent.Tutor};MaxAge=3600");
+            if(pathUntilTokens == "/" && pathWanted.Contains("?accn=") && currentStudent != null)
+            {
+                headers.Add("Location", $"http://{Program.GetLocalIPAddress()}/");
+            }
             bool forceIgnoreWebpage = false;
             try
             {
@@ -254,14 +279,23 @@ namespace AwardsServer.ServerUI
                     headers.Add("Content-Type", "text/javascript");
                 } else if(pathUntilTokens == "/all")
                 {
-                    string cssClass = (ipEnd.Address.ToString() == Program.GetLocalIPAddress() || ipEnd.Address.ToString() == "127.0.0.1" || Program.Options.Allow_NonLocalHost_WebConnections) ? "" : "class=\"hidden\"";
+                    if(currentStudent == null)
+                    {
+                        // we should redirect them to get authenticated.
+                        OPTIONAL_HEAD_TEXT = $"<meta http-equiv=\"refresh\" content=\"5; URL = http://{Program.GetLocalIPAddress()}/\" />";
+                        RESPONSE_BODY = $"<label class=\"error\">You need to be authenticated.<br>You will be redirected shortly.<br><br>If not, head to http://{Program.GetLocalIPAddress()}/</label>";
+                        RESPONSE_CODE = 401;
+                        return;
+                    }
+
+
+                    string cssClass = ((ipEnd.Address.ToString() == Program.GetLocalIPAddress() || ipEnd.Address.ToString() == "127.0.0.1" || Program.Options.Allow_NonLocalHost_WebConnections || currentStudent.Flags.Contains(Flags.Coundon_Staff))) ? "" : "class=\"hidden\"";
                     // anyone can access the info
                     // but, we hide some data via css
                     // which isnt particularly secure.. might change in future.
                     // however: I have set the javascript to remove any information within a [REDACTED] element
                     // which means that it is in no way secure - its still being sent
                     // BUT it is impossible to get the data using just Inspect element, which will prevent access from most/all
-
                     RESPONSE_CODE = 200; RESPONSE_TITLE = "Y11: All Data";
                     string htmlPage = Properties.Resources.WebAllDataPage; // this is the base template, which data will be added into
                     int notVoted = Program.Database.AllStudents.Count; // start with all students added
@@ -326,6 +360,11 @@ namespace AwardsServer.ServerUI
                     foreach(var keypair in ReplaceValues) { htmlPage = htmlPage.Replace(keypair.Key, keypair.Value); }
 
                     RESPONSE_BODY = htmlPage;
+                    // This is commented out because it works.
+                    // I've added this in because i'm aware that technically speaking
+                    // another <DOCTYPE html> and <head> and <body> elements are being put into the preexisting <body> location
+                    // but google chrome seems to work it out.. and it works. So there's that.
+                    // forceIgnoreWebpage = true;
                 }
                 else
                 { // unknown/not set up request
@@ -334,9 +373,11 @@ namespace AwardsServer.ServerUI
             } catch (Exception ex)
             {
                 Log(ex.ToString(), Logging.LogSeverity.Error);
+                RESPONSE_BODY = "<label>An error occured while processing your request.<br>It has been logged.<br>For your fun, the error was:</lable><br><label class=\"error\">" + ex.Message + "</label>";
+                RESPONSE_CODE = 500;
             } finally
             { // always always always respond in atleast some way
-                RespondHTTP(client, RESPONSE_BODY, RESPONSE_CODE, (headers.Count == 0 ? null : headers), RESPONSE_TITLE, forceIgnoreWebpage);
+                RespondHTTP(client, RESPONSE_BODY, RESPONSE_CODE, (headers.Count == 0 ? null : headers), RESPONSE_TITLE, forceIgnoreWebpage, OPTIONAL_HEAD_TEXT);
             }
 
 

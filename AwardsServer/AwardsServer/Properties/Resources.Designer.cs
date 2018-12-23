@@ -71,8 +71,36 @@ namespace AwardsServer.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to &lt;!DOCTYPE html&gt;
+        ///&lt;html&gt;
+        ///&lt;head&gt;
+        ///&lt;script type=&quot;text/javascript&quot; src=&quot;https://www.gstatic.com/charts/loader.js&quot;&gt;&lt;/script&gt;
+        ///&lt;/head&gt;
+        ///&lt;body&gt;
+        ///
+        ///&lt;h1&gt;Y11 Awards - Compiled Data&lt;/h1&gt;
+        ///
+        ///&lt;div id=&quot;piechart&quot;&gt;&lt;/div&gt;
+        ///
+        ///&lt;script type=&quot;text/javascript&quot;&gt;
+        ///// Load google charts
+        ///google.charts.load(&apos;current&apos;, {&apos;packages&apos;:[&apos;corechart&apos;]});
+        ///google.charts.setOnLoadCallback(drawChart);
+        ///
+        ///// Draw the chart and set the chart values
+        ///function drawChart() {
+        ///  var data = google.visualization.arrayToDataTable([
+        ///  [&apos;Votes&apos;, &apos;Type&apos; [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string WebAllDataPage {
+            get {
+                return ResourceManager.GetString("WebAllDataPage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to &lt;!-- This is in the HTML body already --&gt;
-        ///&lt;form action=&quot;/&quot;&gt;
+        ///&lt;form action=&quot;/&quot; style=&quot;width: 100%;&quot;&gt;
         ///  Account Name:&lt;br&gt;
         ///  &lt;input type=&quot;text&quot; name=&quot;accn&quot; value=&quot;Enter your login account name&quot;&gt;
         ///  &lt;br&gt;
@@ -92,7 +120,7 @@ namespace AwardsServer.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to alert(&quot;Hello!&quot;);.
+        ///   Looks up a localized string similar to // currently does nothing.
         /// </summary>
         internal static string WebScripts {
             get {
@@ -101,8 +129,31 @@ namespace AwardsServer.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to label {
+        ///   Looks up a localized string similar to .error {
         ///    color: red;
+        ///}
+        ///
+        ///input {
+        ///    width: 100%;
+        ///    height: 30px;
+        ///}
+        ///
+        ///table {
+        ///    width: 100%;
+        ///    height: 100%;
+        ///}
+        ///td {
+        ///    border: 1px solid black;
+        ///}
+        ///tr {
+        ///    border: 1px solid black;
+        ///}
+        ///th {
+        ///    font-style: oblique;
+        ///    color: blue;
+        ///}
+        ///.tblEven {
+        ///    background-color: lightgray;
         ///}.
         /// </summary>
         internal static string WebStyles {

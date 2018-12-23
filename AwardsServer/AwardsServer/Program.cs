@@ -470,7 +470,7 @@ namespace AwardsServer
         /// </summary>
         public const string Ignore_Length = "ignore-length";
         /// <summary>
-        /// Permits an account to dispay their votes by going to the server's ip in web browser
+        /// Allows votes by an account to be displayed, even if they cannot be verfified via IP.
         /// </summary>
         public const string View_Online = "view-online";
         /// <summary>

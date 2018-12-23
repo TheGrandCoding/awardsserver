@@ -169,15 +169,14 @@ namespace AwardsServer.ServerUI
                 authorization = $"{accountName} {lastName}-{tutor}";
             }
             User currentStudent = null;
-            if(!(pathUntilTokens == "/WebStyles.css" || pathUntilTokens == "/WebScripts.js"))
-            { // only runs on a page that might need authentification
+            if(pathUntilTokens == "/")
+            { // only runs on a page that might need authentification - Which for now is just the landing page
                 if (string.IsNullOrWhiteSpace(authorization))
                 { // they have not given any authorisation at all - so we respond with a nice form to do so
                     RespondHTTP(client, Properties.Resources.WebAuthentificationPage, 401);
                     client.Close();
                     return;
-                }
-                if (!string.IsNullOrWhiteSpace(authorization))
+                } else
                 { // they did give auth
                     string[] split = authorization.Split(' ');
                     accountName = split[0];
@@ -201,7 +200,13 @@ namespace AwardsServer.ServerUI
                 // - They have voted just now (ie, since the server started)
                 // - They are requesting from the same IP as they voted
                 // If the two abvoe are not met, then the request is refused, as below
-                if (currentStudent == null || !SocketHandler.CachedKnownIPs.ContainsKey(currentStudent.AccountName) || SocketHandler.CachedKnownIPs[currentStudent.AccountName].ToString() != curIP || !currentStudent.Flags.Contains(Flags.View_Online) || currentStudent.Flags.Contains(Flags.Disallow_View_Online))
+                // HOWEVER: We override the above is the student has a flag indicating they are to always be permitted to see the vote.
+                if (
+                    (currentStudent == null || 
+                    !SocketHandler.CachedKnownIPs.ContainsKey(currentStudent.AccountName) || 
+                    SocketHandler.CachedKnownIPs[currentStudent.AccountName].ToString() != curIP || 
+                    currentStudent.Flags.Contains(Flags.Disallow_View_Online)) 
+                    && !currentStudent.Flags.Contains(Flags.View_Online))
                 {
                     RespondHTTP(client, "<label class=\"error\">Authentification failed<br>Any of the following may apply:<br> - You entered incorrect name/information<br> - You have not logged in / voted today <br> - You voted from another computer <br> - You may not be permitted to see your vote", 403, pageTitle: "Forbidden");
                     client.Close();
@@ -223,9 +228,12 @@ namespace AwardsServer.ServerUI
 
                     string text = "<label>Your votes for each category:</label>";
                     text += $"<table><tr><th>Category</th><th>First</th><th>Second</th></tr>";
+                    int catCount = 0;
                     foreach(var category in Program.Database.AllCategories.Values)
                     { // builds information into a table, for display.
-                        string catText = "<tr><td>{0}</td><td>{1}</td><td>{2}</td></tr>";
+                        catCount++;
+                        string clrClass = (catCount % 2 == 0) ? " class=\"tblEven\"" : "";
+                        string catText = "<tr" + clrClass + "><td>{0}</td><td>{1}</td><td>{2}</td></tr>";
                         var users = category.GetVotesBy(currentStudent);
                         catText = string.Format(catText, category.Prompt, users.Item1?.FullName ?? "N/A", users.Item2?.FullName ?? "N/A");
                         text += catText;
@@ -244,7 +252,58 @@ namespace AwardsServer.ServerUI
                     RESPONSE_CODE = 200;
                     forceIgnoreWebpage = true;
                     headers.Add("Content-Type", "text/javascript");
-                } else
+                } else if(pathUntilTokens == "/all")
+                {
+                    string cssClass = (ipEnd.Address.ToString() == Program.GetLocalIPAddress() || ipEnd.Address.ToString() == "127.0.0.1") ? "" : "class=\"hidden\"";
+                    // anyone can access the info
+                    // but, we hide some data via css
+                    // which isnt particularly secure.. might change in future.
+                    RESPONSE_CODE = 200; RESPONSE_TITLE = "Y11: All Data";
+                    string htmlPage = Properties.Resources.WebAllDataPage; // this is the base template, which data will be added into
+                    int notVoted = Program.Database.AllStudents.Count; // start with all students added
+                    int currentlyVoting = 0;
+                    int alreadyVoted = 0;
+                    foreach(var student in Program.Database.AllStudents.Values)
+                    { // removes them as needed to increment the two above
+                        if(Program.Database.AlreadyVotedNames.Contains(student.AccountName))
+                        {
+                            notVoted--;
+                            alreadyVoted++;
+                        } else if (SocketHandler.CurrentClients.FirstOrDefault(x => x.User.AccountName == student.AccountName) != null)
+                        {
+                            notVoted--;
+                            currentlyVoting++;
+                        }
+                    }
+                    // Displays how many total votes have been made, and how many unique people have been voted, for each category.
+                    string categoryTable = "<table><tr><th>Category</th><th>Total Votes (by people)</th><th>Unique Voted (num people voted)</th></tr>";
+                    foreach(var category in Program.Database.AllCategories.Values)
+                    {
+                        int votes = 0;
+                        foreach(var list in category.Votes)
+                        {
+                            votes += list.Value.Count;
+                        }
+                        string tempClass = (category.ID % 2 == 0) ? "class=\"tblEven\"" : "";
+                        string format = $"<tr {tempClass}><td>{category.Prompt}</td><td {cssClass}>{votes}</td><td {cssClass}>{category.Votes.Count}</td></tr>";
+                        categoryTable += format;
+                    }
+                    // replaces data from the templace, see the WebAllDataPage.txt
+                    Dictionary<string, string> ReplaceValues = new Dictionary<string, string>()
+                    {
+                        { "[[NUM_NOT_VOTED]]", notVoted.ToString() },
+                        { "[[NUM_VOTED]]", alreadyVoted.ToString() },
+                        { "[[NUM_VOTING]]", currentlyVoting.ToString() },
+                        { "[[HIDENOT]]", cssClass },
+                        { "[[CATEGORY_TABLE]]", categoryTable }
+
+                    };
+                    foreach(var keypair in ReplaceValues) { htmlPage = htmlPage.Replace(keypair.Key, keypair.Value); }
+
+                    // TODO: display winners (or [REDACTED])
+                    RESPONSE_BODY = htmlPage;
+                }
+                else
                 { // unknown/not set up request
                     RESPONSE_BODY = "<label class=\"error\">404 - Unkown request.</label>"; RESPONSE_CODE = 404;
                 }

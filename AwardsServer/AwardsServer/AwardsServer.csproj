@@ -94,5 +94,8 @@
   <ItemGroup>
     <None Include="Resources\WebAuthentificationPage.txt" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="Resources\WebAllDataPage.txt" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

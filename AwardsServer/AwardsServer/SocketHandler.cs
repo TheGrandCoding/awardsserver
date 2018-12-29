@@ -203,7 +203,7 @@ namespace AwardsServer
                             {
                                 break;
                             }
-                            response += student.ToString("AN-FN-LN-TT") + "#"; //add the student's name + properties to a list of names to send to the client
+                            response += student.ToString("AN:FN:LN:TT") + "#"; //add the student's name + properties to a list of names to send to the client
                         }
                     }
                     this.Send("Q_RES:" + response);

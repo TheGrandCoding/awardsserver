@@ -1,0 +1,32 @@
+<!-- This is in the HTML body already -->
+<script>
+    var today = new Date();
+    var expiry = new Date(today.getTime() + 30 * 24 * 3600 * 1000); // plus 30 days
+
+    function setCookie(name, value)
+    {
+        document.cookie=name + "=" + escape(value) + "; path=/; expires=" + expiry.toGMTString();
+    }
+
+    function submitForm(form) {
+        // handles the user submitting the form (ie 'logging in' [not actually a login])
+        console.log(form);
+        form = form[0]
+        console.log(form);
+        setCookie("Auth", form[0].value.toString() + " " + form[1].value.toString() + "-" + form[2].value.toString());
+        var currentURL=location.protocol + '//' + location.host + location.pathname;
+        document.location = currentURL; // redirect.
+    }
+</script>
+<form action="/" style="width: 100%;">
+  Account Name:<br>
+  <input type="text" name="accn" value="Enter your login account name">
+  <br>
+  Last name:<br>
+  <input type="text" name="lName" value="Enter your last name (case matters)">
+  <br>
+  Tutor:<br>
+  <input type="text" name="tutor" value="Enter the tutor you are in">
+  <br><br>
+  <input type="button" value="Submit" onClick="submitForm(document.getElementsByTagName('form'));">
+</form> 

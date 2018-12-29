@@ -18,6 +18,7 @@ namespace AwardsServer
         public static ServerUI.UIForm ServerUIForm;
         public static SocketHandler Server; // Handles the connection and essentially interfaces with the TCP-side of things
         public static DatabaseStuffs Database; // database related things
+        public static ServerUI.WebsiteHandler WebServer;
 
         [AttributeUsage(AttributeTargets.Field, AllowMultiple = false)] //?? - Determines where the below attribute can be used; in our case, we just need it on Fields (ie, variables)
         public class OptionAttribute : Attribute //what is this for?? does it 'Constructs the information for an Option.'? // the class holds info on the options, and the Attribute allows it to be put in the [ ]
@@ -66,6 +67,9 @@ namespace AwardsServer
 
             [Option("Any severity below this is not shown in the UI", "Lowest severity displayed", Logging.LogSeverity.Debug)]
             public static Logging.LogSeverity Only_Show_Above_Severity;
+
+            [Option("Allow someone other than server to see the winners", "Allow see redacted", false)]
+            public static bool Allow_NonLocalHost_WebConnections;
 
             [Option("Relative/Absolute path for the file used to contain the Server's IP", "Path of ServerIP file", @"..\..\..\ServerIP", true)]
             public static string ServerIP_File_Path;
@@ -171,6 +175,8 @@ namespace AwardsServer
             SetConsoleCtrlHandler(handler, true); // this line & above handle the console window closing
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException; //?? - allows us to log any errors that completely crash the server
             // without the above, any error that is not within a "try..except" would simply cause the console window to close without any log or message.
+            Logging.Log(Logging.LogSeverity.Severe, "[README] Available at: https://y11awards.page.link/readme");
+            Logging.Log(Logging.LogSeverity.Severe, "[ISSUES] Reportable at: https://y11awards.page.link/issues");
             Logging.Log(Logging.LogSeverity.Info,  "Loading existing categories...");
             Database = new DatabaseStuffs();
             Database.Connect();
@@ -195,6 +201,9 @@ namespace AwardsServer
             Logging.Log("Starting socket listener...");
             Server = new SocketHandler();
             Logging.Log("Started. Ready to accept new connections.");
+            Logging.Log("Starting web server...");
+            WebServer = new ServerUI.WebsiteHandler();
+            Logging.Log("Started web server!");
             
 
             // Open UI form..
@@ -246,7 +255,7 @@ namespace AwardsServer
                     var highestWinners = highestVote.Item1;
                     var secondHighestVote = category.HighestVoter(true);
                     var secondHighestWinners = secondHighestVote.Item1;
-                    string temp = $"{category.Prompt}: {string.Join(", ", highestWinners)} -- {string.Join(", ", secondHighestWinners)}\r\n";
+                    string temp = $"{category.Prompt}: {string.Join(", ", highestWinners.Select(x => x.ToString("FN LN (TT)")))} -- {string.Join(", ", secondHighestWinners.Select(x => x.ToString("FN LN (TT)")))}\r\n";
                     text += temp;
 
                 }
@@ -294,6 +303,11 @@ namespace AwardsServer
         public readonly char Sex;
         public bool HasVoted => Program.Database.AlreadyVotedNames.Contains(AccountName);
         public string FullName => FirstName + " " + LastName;
+
+        /// <summary>
+        /// A list of values that indicate special options.
+        /// </summary>
+        public List<string> Flags;
 
         public User(string accountName, string firstName, string lastName, string tutor) 
         {//creating a new user
@@ -403,6 +417,26 @@ namespace AwardsServer
             return returns;
         }
 
+
+        /// <summary>
+        /// Returns the two votes made by the inputted user
+        /// </summary>
+        /// <param name="votingUser">User who you want the votes for</param>
+        /// <returns>Two user, or null</returns>
+        public Tuple<User, User> GetVotesBy(User votingUser)
+        {
+            List<User> voted = new List<User>();
+            foreach(var vote in Votes)
+            {
+                if(vote.Value.Contains(votingUser))
+                {
+                    voted.Add(Program.GetUser(vote.Key));
+                }
+            }
+            // "OrDefault" means it will return null instead of erroring.
+            return new Tuple<User, User>(voted.ElementAtOrDefault(0), voted.ElementAtOrDefault(1));
+        }
+
         /// <summary>
         /// Adds the vote specified, creating a new Dictionary entry if needed
         /// </summary>
@@ -428,4 +462,28 @@ namespace AwardsServer
             return $"{ID}: {Votes.Count} {Prompt}";
         }
     }
+
+    /// <summary>
+    /// Database manually entered flags
+    /// </summary>
+    public static class Flags
+    {
+        /// <summary>
+        /// Supresses the warning about account name length being different from 'cheale14'
+        /// </summary>
+        public const string Ignore_Length = "ignore-length";
+        /// <summary>
+        /// Allows votes by an account to be displayed, even if they cannot be verfified via IP.
+        /// </summary>
+        public const string View_Online = "view-online";
+        /// <summary>
+        /// Overrides the above, and prevents the above from happening
+        /// </summary>
+        public const string Disallow_View_Online = "disallow-view-online";
+        /// <summary>
+        /// Indicates the person is a non-Students
+        /// </summary>
+        public const string Coundon_Staff = "cc-staff";
+    }
+
 }

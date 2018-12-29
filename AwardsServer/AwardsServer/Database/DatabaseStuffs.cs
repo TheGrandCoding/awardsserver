@@ -135,9 +135,24 @@ namespace AwardsServer
             while (reader.Read())
             {
                 User user = new User(reader["UserName"].ToString(), reader["FirstName"].ToString(), reader["LastName"].ToString(), reader["Tutor"].ToString());
-                if(user.AccountName.Length != "cheale14".Length)
+                string rawflags = reader["Flags"].ToString();
+                var flags = rawflags.Split(';').Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x.ToLower());
+                user.Flags = flags.ToList();
+                if(user.AccountName.Length != "cheale14".Length && !user.Flags.Contains(Flags.Ignore_Length))
                 {
                     Logging.Log(Logging.LogSeverity.Warning, "User " + user.ToString("FN LN TT AN") + " has invalid account name");
+                }
+                if(user.AccountName.ToLower() != user.AccountName)
+                {
+                    ExecuteCommand($"UPDATE UserData SET UserName = '{user.AccountName.ToLower()}' WHERE UserName = '{user.AccountName}'");
+                }
+                if(user.ToString().Contains("-"))
+                {
+                    Logging.Log(Logging.LogSeverity.Severe, "Remove the  '-' from " + user.ToString() + " 's name(s).");
+                    Console.ReadLine();
+                    Logging.Log(Logging.LogSeverity.Severe, "Unable to continue because the '-' is a special charactor");
+                    Environment.Exit(1);
+                    //ExecuteCommand($"UPDATE UserData SET FirstName = '{user.FirstName.Replace("-", " ")}', LastName = '{user.LastName.Replace("-", " ")}' WHERE AccountName = '{user.AccountName}'");
                 }
                 AllStudents.Add(user.AccountName.ToLower(), user); 
             }

@@ -85,6 +85,12 @@ A list of some errors that may occur, what causes them, and how to fix them.
 **Solution:** Download the needed packages. I won't directly link to any, since I dont want to be responsile for any viruses  
 
 
+### Remove the "-" from <name> 's name
+**Full text:** `Remove the '-' from <accountName>: <FirstName> <LastName> (<Tutor>) 's name`  
+**Cause:** Names cannot contain dashes (the - charactor, given that )  
+**Solution:** Remove (you can find+replace) any dash charactors from the first or last name of any student.
+**Further:** should probably change code to use non-dash charactors instead, since that might be better in the future.
+
 - - -
 
 ## Common Warnings

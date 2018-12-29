@@ -17,6 +17,11 @@ namespace AwardsServer
         public static List<SocketConnection> CurrentClients = new List<SocketConnection>(); // current students actually voting
         public static List<SocketConnection> ClientQueue = new List<SocketConnection>(); // students waiting to vote
 
+        /// <summary>
+        /// We cache the IP everyone connects to, for purposes..
+        /// </summary>
+        public static Dictionary<string, IPAddress> CachedKnownIPs = new Dictionary<string, IPAddress>();
+
         public class SocketConnection
         {
             public TcpClient Client;
@@ -38,6 +43,14 @@ namespace AwardsServer
                 UserName = name;
                 if(Program.TryGetUser(name, out User)) {
                     // nothing (already sets variable so..)
+                    IPEndPoint ipEnd = client.Client.RemoteEndPoint as IPEndPoint;
+                    if(CachedKnownIPs.ContainsKey(User.AccountName)) {
+                        Logging.Log(Logging.LogSeverity.Warning, $"User {User.ToString("AN FN")} was connected via {CachedKnownIPs[User.AccountName]} but now has connected via {ipEnd.Address}");
+                        CachedKnownIPs[User.AccountName] = ipEnd.Address;
+                    } else
+                    {
+                        CachedKnownIPs.Add(User.AccountName, ipEnd.Address);
+                    }
                 } else
                 { // this is handled in the newclient thread thingy
                     throw new ArgumentException("User not found: '" + name + "'");
@@ -170,13 +183,17 @@ namespace AwardsServer
                     {
                         bool shouldGo = false; // shouldGo: does the name match the query? if so, SHOULD we GO and send it
                         // yes i know its not best naming but /shrug
-                        if(student.ToString().StartsWith(message)) 
+                        message = message.ToLower();
+                        if(student.ToString().ToLower().StartsWith(message)) 
                         {
                             shouldGo = true;
                         }
-                        else if (student.ToString().IndexOf(message, StringComparison.OrdinalIgnoreCase) >= 0) //?? - essentially looking to see if the name contains the query, ignoring any case
+                        else if (student.LastName.ToLower().StartsWith(message)) //?? - essentially looking to see if the name contains the query, ignoring any case
                         { // it is actually just returning an index of where the query string is within the student's name (same as like list.Indexof)
                             // the >=0 is because if it does not contain ^, then it returns -1 instead
+                            shouldGo = true;
+                        } else if(student.FirstName.ToLower().StartsWith(message))
+                        {
                             shouldGo = true;
                         }
                         if (shouldGo)

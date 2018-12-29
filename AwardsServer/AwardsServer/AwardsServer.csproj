@@ -61,9 +61,16 @@
     <Compile Include="ServerUI\UIForm.Designer.cs">
       <DependentUpon>UIForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="ServerUI\WebsiteHandler.cs" />
     <Compile Include="SocketHandler.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\..\CODEOWNERS">
+      <Link>CODEOWNERS</Link>
+    </None>
+    <None Include="..\..\README.md">
+      <Link>README.md</Link>
+    </None>
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
@@ -77,6 +84,18 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\EmptyDatabase.accdb" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\WebScripts.js" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\WebStyles.css" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\WebAuthentificationPage.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Resources\WebAllDataPage.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

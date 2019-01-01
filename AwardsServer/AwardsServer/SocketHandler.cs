@@ -437,6 +437,12 @@ public static string GetLocalIPAddress()
                         user.Close("Prior Vote");
                         continue;
                     }
+                    if (user.User.Flags.Contains(Flags.Disallow_Vote_Staff))
+                    {
+                        user.Send("REJECT:Blocked-Online");
+                        user.Close("Blocked from voting, online-only account");
+                        continue;
+                    }
                     lock(LockClient)
                     {
                         ClientQueue.Add(user);

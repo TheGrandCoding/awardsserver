@@ -40,6 +40,8 @@ namespace AwardsServer.ServerUI
             return ((HttpStatusCode)code).ToString();
         }
 
+        public static string ServerUrl => $"http://{Program.GetLocalIPAddress()}/";
+
         /// <summary>
         /// Compiles all the passed information into a proper up-to-regulation HTTP response
         /// </summary>
@@ -66,6 +68,7 @@ namespace AwardsServer.ServerUI
                 "<body>",
                 body,
                 "</body>",
+                $"<br><br><hr><footer>{Link(ServerUrl, "Your Votes")} - {Link(ServerUrl + "all", "All Votes")} - {Link(ServerUrl + "student", "Someone else's votes")}</footer>",
                 "</html>"
             };
             string response_body_raw = string.Join("", response_text);
@@ -108,6 +111,13 @@ namespace AwardsServer.ServerUI
         {
             Logging.LogMessage mg = new Logging.LogMessage(severity, message, "Web");
             Logging.Log(mg);
+        }
+
+        public static string Link(string url, string tooltip = "")
+        {
+            if (string.IsNullOrWhiteSpace(tooltip))
+                tooltip = url;
+            return $"<a href=\"{url}\">{tooltip}</a>";
         }
 
         /// <summary>
@@ -272,6 +282,23 @@ namespace AwardsServer.ServerUI
             {
                 if(pathUntilTokens == "/")
                 {
+                    if (currentStudent.Flags.Contains(Flags.Disallow_Vote_Staff))
+                    {
+                        RESPONSE_CODE = 302; // 302 Found, is temporary (whereas 301 is permenant)
+                        RESPONSE_BODY = "<label>Redirecting you to {0}</label>";
+                        var url = $"http://{Program.GetLocalIPAddress()}/";
+                        if(currentStudent.Flags.Contains(Flags.Coundon_Staff))
+                        {
+                            // Staff and blocked gets you redirected to see a Student's info
+                            url += "student";
+                        } else
+                        { // everyone else that's blocked gets redirected to all display thingy
+                            url += "all";
+                        }
+                        headers.Add("Location", url);
+                        RESPONSE_BODY = string.Format(RESPONSE_BODY, Link(url));
+                        return; // dont go any further
+                    }
                     // no specific page (ie: https://127.0.0.1/)
                     RESPONSE_TITLE = "Y11 Awards";
 
@@ -389,6 +416,11 @@ namespace AwardsServer.ServerUI
                     // forceIgnoreWebpage = true;
                 } else if (pathUntilTokens == "/student")
                 {
+                    if(!currentStudent.Flags.Contains(Flags.Coundon_Staff))
+                    {
+                        RespondHTTP(client, "<label class=\"error\">You do not have access to view other people's votes.</label>", 403);
+                        return;
+                    }
                     if(string.IsNullOrWhiteSpace(wantsToSee))
                     {
                         RespondHTTP(client, "<label class=\"error\">You will need to enter the information of the desired student:</label><br>" + Properties.Resources.WebAuthentificationPage.Replace("[[AUTH_OR_VIEW]]", "view"), 400);

@@ -146,13 +146,21 @@ namespace AwardsServer
                 {
                     ExecuteCommand($"UPDATE UserData SET UserName = '{user.AccountName.ToLower()}' WHERE UserName = '{user.AccountName}'");
                 }
-                if(user.ToString().Contains("-"))
+                if(user.Flags.Contains(Flags.Coundon_Staff) && user.Flags.Contains(Flags.View_Online))
                 {
-                    Logging.Log(Logging.LogSeverity.Severe, "Remove the  '-' from " + user.ToString() + " 's name(s).");
+                    Logging.Log(Logging.LogSeverity.Warning, "User " + user.ToString("AN FN LN") + " (Staff) has Staff and Online flags - this is not permitted. Removing view-online flag");
+                    user.Flags.Remove(Flags.View_Online);
+                }
+                if(user.Flags.Contains(Flags.Coundon_Staff) && !user.Flags.Contains(Flags.Disallow_Vote_Staff))
+                {
+                    Logging.Log(Logging.LogSeverity.Warning, "Staff " + user.ToString("AN FN LN") + " is able to vote - add the Disallow_Vote_Staff flag to prevent this");
+                }
+                if(user.ToString("AN FN LN TT").Contains(":"))
+                {
+                    Logging.Log(Logging.LogSeverity.Severe, "Remove the  ':' from " + user.ToString() + " 's name(s).");
                     Console.ReadLine();
-                    Logging.Log(Logging.LogSeverity.Severe, "Unable to continue because the '-' is a special charactor");
+                    Logging.Log(Logging.LogSeverity.Severe, "Unable to continue because the ':' is a special charactor");
                     Environment.Exit(1);
-                    //ExecuteCommand($"UPDATE UserData SET FirstName = '{user.FirstName.Replace("-", " ")}', LastName = '{user.LastName.Replace("-", " ")}' WHERE AccountName = '{user.AccountName}'");
                 }
                 AllStudents.Add(user.AccountName.ToLower(), user); 
             }

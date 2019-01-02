@@ -40,6 +40,8 @@ namespace AwardsServer.ServerUI
             return ((HttpStatusCode)code).ToString();
         }
 
+        public static string ServerUrl => $"http://{Program.GetLocalIPAddress()}/";
+
         /// <summary>
         /// Compiles all the passed information into a proper up-to-regulation HTTP response
         /// </summary>
@@ -49,6 +51,7 @@ namespace AwardsServer.ServerUI
         /// <param name="headers">Any headers to add or overwrite</param>
         /// <param name="pageTitle">Titled of the page, displayed in the tab thingy</param>
         /// <param name="forceDisableTextBuild">"Lets just ignore HTML, send it raw!" - Disregards any HTML formatting, and only sends as per HTTP</param>
+        /// <param name="additionalHead">Any additional text that is added just before the head tag is closed</param>
         private void RespondHTTP(TcpClient client, string body, int httpCode = 200, Dictionary<string,string> headers = null, string pageTitle = "Y11 Awards", bool forceDisableTextBuild = false, string additionalHead = "")
         {
             List<string> response_text = new List<string>()
@@ -65,6 +68,7 @@ namespace AwardsServer.ServerUI
                 "<body>",
                 body,
                 "</body>",
+                $"<br><br><hr><footer>{Link(ServerUrl, "Your Votes")} - {Link(ServerUrl + "all", "All Votes")} - {Link(ServerUrl + "student", "Someone else's votes")}</footer>",
                 "</html>"
             };
             string response_body_raw = string.Join("", response_text);
@@ -109,6 +113,13 @@ namespace AwardsServer.ServerUI
             Logging.Log(mg);
         }
 
+        public static string Link(string url, string tooltip = "")
+        {
+            if (string.IsNullOrWhiteSpace(tooltip))
+                tooltip = url;
+            return $"<a href=\"{url}\">{tooltip}</a>";
+        }
+
         /// <summary>
         /// Handles a connection's HTTP GET requests.
         /// </summary>
@@ -150,6 +161,7 @@ namespace AwardsServer.ServerUI
                 }
             }
             string authorization = "";
+            string wantsToSee = "";
             foreach (string line in perLine)
             {
                 if (pathUntilTokens.EndsWith(".css") || pathUntilTokens.EndsWith(".js")) break;
@@ -162,26 +174,44 @@ namespace AwardsServer.ServerUI
                     byte[] data = Convert.FromBase64String(authSplit[2]);
                     string decodedString = Encoding.UTF8.GetString(data);
                     authorization = decodedString;
-                    break;
-                }
-                else if (line.StartsWith("Cookie: Auth="))
+                } else if (line.StartsWith("Cookie: "))
                 {
-                    var name = Uri.UnescapeDataString(line).Substring("Cookie: Auth=".Length);
-                    string[] split = name.Split(' ');
-                    string an = split[0];
-                    string ln = split[1].Split('-')[0];
-                    string tt = split[1].Split('-')[1];
-                    var student = (Program.Database.AllStudents.Values.FirstOrDefault(x => x.AccountName == an && x.LastName == ln && tt.ToLower() == x.Tutor.ToLower()));
-                    if (student == null)
+                    var nowLine = Uri.UnescapeDataString(line).Substring("Cookie: ".Length);
+                    foreach (var cookie in nowLine.Split(';'))
                     {
-                        RespondHTTP(client, "<label class=\"error\">Authentification was rejected.<br>You may need to clear your cookies</label><br>" + Properties.Resources.WebAuthentificationPage, 401);
-                        return;
+                        if (cookie.Trim().StartsWith("Auth="))
+                        {
+                            var name = cookie.Trim().Substring("Auth=".Length);
+                            string[] split = name.Split(' ');
+                            string an = split[0];
+                            string ln = split[1].Split('-')[0];
+                            string tt = split[1].Split('-')[1];
+                            var student = (Program.Database.AllStudents.Values.FirstOrDefault(x => x.AccountName == an && x.LastName == ln && tt.ToLower() == x.Tutor.ToLower()));
+                            if (student == null)
+                            {
+                                RespondHTTP(client, "<label class=\"error\">Authentification was rejected.<br>You may need to clear your cookies</label><br>" + Properties.Resources.WebAuthentificationPage.Replace("[[AUTH_OR_VIEW]]", "auth"), 401);
+                                return;
+                            }
+                            authorization = $"{student.AccountName} {student.LastName}-{student.Tutor}";
+                        }
+                        else if (cookie.Trim().StartsWith("View="))
+                        {
+                            var name = cookie.Trim().Substring("View=".Length);
+                            var student = Program.GetUser(name);
+                            if (student == null)
+                            {
+                                RespondHTTP(client, "<label class=\"error\">The student you are trying to view was not found<br>You may need to clear your cookies</label><br>");
+                                return;
+                            }
+                            else
+                            {
+                                wantsToSee = student.AccountName;
+                            }
+                        }
                     }
-                    authorization = $"{student.AccountName} {student.LastName}-{student.Tutor}";
-                    break;
                 }
             }
-            Log(ipEnd.ToString() + " requested " + pathWanted + $"{(authorization == "" ? "" : "  -Auth: " + authorization)}");
+            Log(ipEnd.ToString() + " requested " + pathWanted + $"{(authorization == "" ? "" : "  -Auth: " + authorization)}" + $"{(wantsToSee == "" ? "" : "   -View: " + wantsToSee)}");
             if(string.IsNullOrWhiteSpace(authorization) && tokens.TryGetValue("accn", out string accountName) && tokens.TryGetValue("lName", out string lastName) && tokens.TryGetValue("tutor", out string tutor))
             { // information is parsed, and placed into auth string
                 authorization = $"{accountName} {lastName}-{tutor}";
@@ -191,7 +221,7 @@ namespace AwardsServer.ServerUI
             { // only runs on a page that might need authentification - Which for now is just the landing page
                 if (string.IsNullOrWhiteSpace(authorization))
                 { // they have not given any authorisation at all - so we respond with a nice form to do so
-                    RespondHTTP(client, Properties.Resources.WebAuthentificationPage, 401);
+                    RespondHTTP(client, Properties.Resources.WebAuthentificationPage.Replace("[[AUTH_OR_VIEW]]", "auth"), 401);
                     client.Close();
                     return;
                 } else
@@ -230,6 +260,10 @@ namespace AwardsServer.ServerUI
                     client.Close();
                     return;
                 }
+                if ((wantsToSee != "" && Program.GetUser(wantsToSee).Flags.Contains(Flags.Disallow_View_Online)) || (wantsToSee == currentStudent.AccountName && currentStudent.Flags.Contains(Flags.Coundon_Staff) && currentStudent.Flags.Contains(Flags.Disallow_Vote_Staff))) {
+                    wantsToSee = "";
+                }
+
             }
             List<string> urlPath = pathUntilTokens.Split('/').Where(x => String.IsNullOrWhiteSpace(x) == false).ToList();
             string RESPONSE_BODY = "<label>An internal error occured while attempting to process your request</label>";
@@ -248,6 +282,23 @@ namespace AwardsServer.ServerUI
             {
                 if(pathUntilTokens == "/")
                 {
+                    if (currentStudent.Flags.Contains(Flags.Disallow_Vote_Staff))
+                    {
+                        RESPONSE_CODE = 302; // 302 Found, is temporary (whereas 301 is permenant)
+                        RESPONSE_BODY = "<label>Redirecting you to {0}</label>";
+                        var url = $"http://{Program.GetLocalIPAddress()}/";
+                        if(currentStudent.Flags.Contains(Flags.Coundon_Staff))
+                        {
+                            // Staff and blocked gets you redirected to see a Student's info
+                            url += "student";
+                        } else
+                        { // everyone else that's blocked gets redirected to all display thingy
+                            url += "all";
+                        }
+                        headers.Add("Location", url);
+                        RESPONSE_BODY = string.Format(RESPONSE_BODY, Link(url));
+                        return; // dont go any further
+                    }
                     // no specific page (ie: https://127.0.0.1/)
                     RESPONSE_TITLE = "Y11 Awards";
 
@@ -287,8 +338,6 @@ namespace AwardsServer.ServerUI
                         RESPONSE_CODE = 401;
                         return;
                     }
-
-
                     string cssClass = ((ipEnd.Address.ToString() == Program.GetLocalIPAddress() || ipEnd.Address.ToString() == "127.0.0.1" || Program.Options.Allow_NonLocalHost_WebConnections || currentStudent.Flags.Contains(Flags.Coundon_Staff))) ? "" : "class=\"hidden\"";
                     // anyone can access the info
                     // but, we hide some data via css
@@ -365,6 +414,40 @@ namespace AwardsServer.ServerUI
                     // another <DOCTYPE html> and <head> and <body> elements are being put into the preexisting <body> location
                     // but google chrome seems to work it out.. and it works. So there's that.
                     // forceIgnoreWebpage = true;
+                } else if (pathUntilTokens == "/student")
+                {
+                    if(!currentStudent.Flags.Contains(Flags.Coundon_Staff))
+                    {
+                        RespondHTTP(client, "<label class=\"error\">You do not have access to view other people's votes.</label>", 403);
+                        return;
+                    }
+                    if(string.IsNullOrWhiteSpace(wantsToSee))
+                    {
+                        RespondHTTP(client, "<label class=\"error\">You will need to enter the information of the desired student:</label><br>" + Properties.Resources.WebAuthentificationPage.Replace("[[AUTH_OR_VIEW]]", "view"), 400);
+                        return;
+                    } else
+                    {
+                        if(Program.TryGetUser(wantsToSee, out User user))
+                        {
+                            string text = $"<label>{user.ToString("FN LN")}'s votes for each category:</label>";
+                            text += $"<table><tr><th>Category</th><th>First</th><th>Second</th></tr>";
+                            int catCount = 0;
+                            foreach (var category in Program.Database.AllCategories.Values)
+                            { // builds information into a table, for display.
+                                catCount++;
+                                string clrClass = (catCount % 2 == 0) ? " class=\"tblEven\"" : "";
+                                string catText = "<tr" + clrClass + "><td>{0}</td><td>{1}</td><td>{2}</td></tr>";
+                                var users = category.GetVotesBy(user);
+                                catText = string.Format(catText, category.Prompt, users.Item1?.FullName ?? "N/A", users.Item2?.FullName ?? "N/A");
+                                text += catText;
+                            }
+                            text += "</table>";
+                            RESPONSE_BODY = text; RESPONSE_CODE = 200;
+                        } else
+                        {
+                            RespondHTTP(client, "<label class=\"error\">Given student was unknown/incorrectly given - please provide proper info:</label><br>" + Properties.Resources.WebAuthentificationPage.Replace("[[AUTH_OR_VIEW]]", "view"), 400);
+                        }
+                    }
                 }
                 else
                 { // unknown/not set up request

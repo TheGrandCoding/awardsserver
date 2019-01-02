@@ -203,7 +203,7 @@ namespace AwardsServer
                             {
                                 break;
                             }
-                            response += student.ToString("AN-FN-LN-TT") + "#"; //add the student's name + properties to a list of names to send to the client
+                            response += student.ToString("AN:FN:LN:TT") + "#"; //add the student's name + properties to a list of names to send to the client
                         }
                     }
                     this.Send("Q_RES:" + response);
@@ -435,6 +435,12 @@ public static string GetLocalIPAddress()
                         Logging.Log(Logging.LogSeverity.Warning, "Refusing connection: " + user.User.ToString() + ", already voted.");
                         user.Send("REJECT:Voted");
                         user.Close("Prior Vote");
+                        continue;
+                    }
+                    if (user.User.Flags.Contains(Flags.Disallow_Vote_Staff))
+                    {
+                        user.Send("REJECT:Blocked-Online");
+                        user.Close("Blocked from voting, online-only account");
                         continue;
                     }
                     lock(LockClient)

@@ -484,6 +484,10 @@ namespace AwardsServer
         /// Indicates the person is a non-Students
         /// </summary>
         public const string Coundon_Staff = "cc-staff";
+        /// <summary>
+        /// Indicates that the person should not be permitted to actually vote
+        /// </summary>
+        public const string Disallow_Vote_Staff = "block-vote";
     }
 
 }

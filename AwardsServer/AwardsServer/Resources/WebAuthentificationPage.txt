@@ -15,7 +15,7 @@
         form = form[0]
         console.log(form);
         if(authOrView == "auth") {
-			setCookie("Auth", form[0].value.toString() + " " + form[1].value.toString() + "-" + form[2].value.toString());
+			setCookie("Auth", form[0].value.toString() + ";" + form[1].value.toString() + ";" + form[2].value.toString());
 		}
 		if(authOrView == "auth" || authOrView == "view") {
 			setCookie("View", form[0].value.toString())

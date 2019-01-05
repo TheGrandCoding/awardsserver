@@ -213,14 +213,16 @@ namespace AwardsServer.ServerUI
                     x.AccountName.ToLower() == name.ToLower() &&
                     x.LastName.ToLower() == lastName.ToLower() &&
                     x.Tutor.ToLower() == tutor.ToLower());
-                    if (
-                        (AuthenticatedAs == null ||
-                        !SocketHandler.CachedKnownIPs.ContainsKey(AuthenticatedAs.AccountName) ||
-                        SocketHandler.CachedKnownIPs[AuthenticatedAs.AccountName].ToString() != ClientIP ||
-                        AuthenticatedAs.Flags.Contains(Flags.Disallow_View_Online))
-                        && !AuthenticatedAs.Flags.Contains(Flags.View_Online))
+                    if (AuthenticatedAs == null || (
+                        (
+                            !SocketHandler.CachedKnownIPs.ContainsKey(AuthenticatedAs.AccountName) ||
+                            SocketHandler.CachedKnownIPs[AuthenticatedAs.AccountName].ToString() != ClientIP ||
+                            AuthenticatedAs.Flags.Contains(Flags.Disallow_View_Online)
+                        )
+                        && !AuthenticatedAs.Flags.Contains(Flags.View_Online)))
                     {
                         Body = "<label class=\"error\">Authentification failed<br>Any of the following may apply:<br> - You entered incorrect name/information<br> - You have not logged in / voted today <br> - You voted from another computer <br> - You may not be permitted to see your vote</label>";
+                        Body += "<br><br><br><hr>" + Properties.Resources.WebAuthentificationPage.Replace("[[AUTH_OR_VIEW]]", "auth");
                         Code = HttpStatusCode.Forbidden;
                         Title = "Forbidden";
                         AuthenticatedAs = null; // since they're not authenticated
@@ -245,22 +247,24 @@ namespace AwardsServer.ServerUI
             { // Allow them to see the js/css files
                 if (AuthenticatedAs == null)
                 { // No auth was provided (or was accepted)
-                    if(Cookies.ContainsKey("Auth"))
+                    if (Cookies.ContainsKey("Auth"))
                     {
                         Body = "<label class=\"error\">Authentification failed, you may need to connect a client to the server, then try again.</label><br><hr><br>";
                         Body += Properties.Resources.WebAuthentificationPage.Replace("[[AUTH_OR_VIEW]]", "auth");
                         Title = "Auth Rejected";
                         Code = HttpStatusCode.Unauthorized;
-                    } else
+                    }
+                    else
                     {
                         Body = Properties.Resources.WebAuthentificationPage.Replace("[[AUTH_OR_VIEW]]", "auth");
                         Title = "Auth Failed";
                         Code = HttpStatusCode.Forbidden;
                     }
                     return false;
-                } else
+                }
+                else
                 {
-                    if (
+                    /*if (
                     (AuthenticatedAs == null ||
                     !SocketHandler.CachedKnownIPs.ContainsKey(AuthenticatedAs.AccountName) ||
                     SocketHandler.CachedKnownIPs[AuthenticatedAs.AccountName].ToString() != ClientIP ||
@@ -271,7 +275,8 @@ namespace AwardsServer.ServerUI
                         Code = HttpStatusCode.Forbidden;
                         Title = "Forbidden";
                         return false;
-                    }
+                    }*/
+                    // duplicate , shsould already be checked in the CheckAuthsAndSetCookies() func               
                 }
             } else if (URLUntilTokens == "/student")
             {
@@ -431,7 +436,7 @@ namespace AwardsServer.ServerUI
                                 votes += list.Value.Count;
                             }
                             string tempClass = (category.ID % 2 == 0) ? "class=\"tblEven\"" : "";
-                            string format = $"<tr {tempClass}><td>{category.Prompt}</td><td {cssClass}>{votes}</td><td {cssClass}>{category.Votes.Count}</td></tr>";
+                            string format = $"<tr {tempClass}><td>{category.Prompt}</td><td>{votes}</td><td>{category.Votes.Count}</td></tr>";
                             categoryTable += format;
                         }
                         categoryTable += "</table>";

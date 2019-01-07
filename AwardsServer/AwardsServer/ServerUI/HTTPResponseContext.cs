@@ -76,7 +76,7 @@ namespace AwardsServer.ServerUI
                     var nowLine = line.Replace("Cookie: ", "");
                     foreach(var splited in nowLine.Split(';'))
                     {
-                        var cookie = splited.Trim();
+                        var cookie = Uri.UnescapeDataString(splited.Trim());
                         var namevalue = cookie.Split('=');
                         Cookies.Add(Uri.UnescapeDataString(namevalue[0]), Uri.UnescapeDataString(namevalue[1]));
                     }

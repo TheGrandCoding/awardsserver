@@ -43,7 +43,7 @@ The flags should be a comma seperated string, such as: `flag-one;flag-two;flag-t
 | cc-staff             | Coundon_Staff        | Indicates the person is a non-Students                                                                                           |
 | block-vote           | Disallow_Vote_Staff  | Indicates that the person should not be permitted to actually vote                                                               |
 
-Note that the above is copy-pasted from the `AwardsServer.Flags` static class (located in the [AwardsServer/Program.cs](../blob/master/AwardsServer/AwardsServer/Program.cs) file), so the most up to date flags should be found there
+Note that the above is copy-pasted from the `AwardsServer.Flags` static class (located in the [AwardsServer/Program.cs](../master/AwardsServer/AwardsServer/Program.cs) file), so the most up to date flags should be found there
 
 - - -
 

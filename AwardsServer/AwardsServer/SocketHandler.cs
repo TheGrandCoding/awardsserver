@@ -359,7 +359,7 @@ public static string GetLocalIPAddress()
                 ServerListener = new TcpListener(IPAddress.Any, 56567);
                 ServerListener.Start();
                 Listening = true;
-                Logging.Log(Logging.LogSeverity.Warning, $"Listening to new connections at {((IPEndPoint)ServerListener.LocalEndpoint).Address.ToString()}:{((IPEndPoint)ServerListener.LocalEndpoint).Port}");
+                Logging.Log(Logging.LogSeverity.Info, $"Listening to new connections at {((IPEndPoint)ServerListener.LocalEndpoint).Address.ToString()}:{((IPEndPoint)ServerListener.LocalEndpoint).Port}");
                 Thread newThread = new Thread(NewConnections);
                 newThread.Start();
                                         

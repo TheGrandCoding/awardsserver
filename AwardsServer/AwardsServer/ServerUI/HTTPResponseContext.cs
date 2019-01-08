@@ -202,9 +202,14 @@ namespace AwardsServer.ServerUI
             stream.Flush();
         }
 
+        internal static bool IsIgnoredFile(string url)
+        {
+            return url.EndsWith(".js") || url.EndsWith(".css") || url.EndsWith(".ico");
+        }
+
         internal virtual bool CheckCookiesAndSetVariables()
         {
-            if(!(URLUntilTokens.EndsWith(".js") || URLUntilTokens.EndsWith(".css")))
+            if(!IsIgnoredFile(URLUntilTokens))
             {
                 if (Cookies.TryGetValue("Auth", out string authorisation))
                 {
@@ -371,8 +376,10 @@ namespace AwardsServer.ServerUI
 
         internal override void GetResponse()
         {
-            Logging.Log(NameOrIdentity + " requested " + URLUntilTokens + $"{(AuthenticatedAs == null ? "" : "  -Auth: " + AuthenticatedAs.ToString("AN"))}" + $"{(Viewing == null ? "" : "   -View: " + Viewing.ToString("AN"))}");
-            if(CheckCookiesAndSetVariables() && CheckAuth())
+            bool getCookies = CheckCookiesAndSetVariables(); // needs to be called before below log msg, as the AuthenticatedAs is assigned in this func
+            if(!IsIgnoredFile(URLUntilTokens))
+                Logging.Log(Logging.LogSeverity.Info, NameOrIdentity + " requested " + URLUntilTokens + $"{(AuthenticatedAs == null ? "" : "  -Auth: " + AuthenticatedAs.ToString("AN"))}" + $"{(Viewing == null ? "" : "   -View: " + Viewing.ToString("AN"))}", (AuthenticatedAs == null ? "" :  AuthenticatedAs.AccountName + "/") + "Web" );
+            if(getCookies && CheckAuth())
             { // Ensure they are permitted to view that page
                 if (CheckRedirect())
                 { // Check if we should redirect fire

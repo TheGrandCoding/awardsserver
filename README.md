@@ -29,6 +29,24 @@ Then, each [Client](https://github.com/TheGrandCoding/awardsprogram) should be r
 
 - - -
 
+### Account Flag System
+
+For further configuration, the Database file may be manually edited to add 'Flags' within the 'Flag' column of the 'UserData' table.  
+These flags control certain aspects of how the Awards server treats said accounts.  
+The flags should be a comma seperated string, such as: `flag-one;flag-two;flag-three;...`, the case should match that of the below:
+
+| Flag String          | Name                 | Description                                                                                                                      |
+|----------------------|----------------------|----------------------------------------------------------------------------------------------------------------------------------|
+| ignore-length        | Ignore_Length        | Supresses the warning about account name length being different from 'cheale14'                                                  |
+| view-online          | View_Online          | Allows votes by an account to be displayed, even if they cannot be authenticated (meaning *anyone* can view this account's info) |
+| disallow-view-online | Disallow_View_Online | Overrides the above: This account may *never* be viewable online - not even from the /student page accessible by only Staff      |
+| cc-staff             | Coundon_Staff        | Indicates the person is a non-Students                                                                                           |
+| block-vote           | Disallow_Vote_Staff  | Indicates that the person should not be permitted to actually vote                                                               |
+
+Note that the above is copy-pasted from the `AwardsServer.Flags` static class (located in the [AwardsServer/Program.cs](../blob/master/AwardsServer/AwardsServer/Program.cs) file), so the most up to date flags should be found there
+
+- - -
+
 ### Further things
 #### Updating a Student's information
 Head on over to the "[Students][Students]" tab of the Server's UI.  
@@ -99,7 +117,26 @@ A list of some errors that may occur, what causes them, and how to fix them.
 **Full text:** `User '<first_name> <last_name> <tutor> <sex> <account_name> has invalid account name'`  
 **Cause:** Account names are expected to have the same number of charactors as 'cheale14'  
 **Solution:** Check that the account name given is correct. If it is, the warning can be ignored.  
-**Is Critical?** Not particularly.  
+**Is Critical?** Not particularly.
+
+### Staff <name> is able to vote
+**Full text:** `Staff <account> <first> <last> is able to vote - add the Disallow_Vote_Staff flag to prevent this`  
+**Cause:**  It is assumed that Staff members should be unable to both vote and be voted for, this warning reminds this.  
+**Solution:** Remove staff flag if it was added incorrectly, or also add the Disallow vote [flag][Flags]  
+**Is Critical?** Could cause issues when it comes to staff being voted for - so maybe.  
+
+### User <name> is expected to have an account ending in 'st'  
+**Full text:** `User <account> <first> <last> is expected to have an account name ending in 'st', due to them being marked as Staff`  
+**Cause:** Most staff accounts seem to end in 'st', so this warns of any account that does not  
+**Solution:** check to ensure the [flag][Flags] was not set incorrectly  
+**Is Critical?** Unless a non-staff has the flag, not really.  
+
+### User <name> is potentially a Staff account
+**Full text:** `User <account> <first> <last> is potentially a Staff account, but does not have a flag to indicate this.`  
+**Cause:** Staff accounts usually end in 'st', so this warns of staff accounts that have not been [flagged][Flags] as such
+**Solution:** add flag if the account is a staff members
+**Is Critical?** No
+ 
 
 Other errors may be added
 
@@ -125,3 +162,4 @@ Other errors may be added
 [Winners]: https://github.com/TheGrandCoding/awardsserver/blob/master/UI_TABS.md#winners
 [Options]: https://github.com/TheGrandCoding/awardsserver/blob/master/UI_TABS.md#server-options
 [CurrentQueue]: https://github.com/TheGrandCoding/awardsserver/blob/master/UI_TABS.md#current-queue
+[Flags]: #account-flag-system

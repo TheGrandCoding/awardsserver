@@ -93,6 +93,9 @@ namespace AwardsServer.ServerUI
             } catch (Exception ex)
             {
                 Logging.Log(Logging.LogSeverity.Error, ex.ToString(), "Web:" + NameOrIdentity);
+                Body = "<label class=\"error\">An error occured while processing your request.<br>The error has been logged.</label>";
+                Code = HttpStatusCode.InternalServerError;
+                Title = "Awards - Error";
             } finally
             {
                 RespondHTTP(Client, Body, Code, Headers, Title, IgnoreHTMLFormatting, AdditionalHeadText);
@@ -205,7 +208,22 @@ namespace AwardsServer.ServerUI
             {
                 if (Cookies.TryGetValue("Auth", out string authorisation))
                 {
-                    var splited = authorisation.Split(';');
+                    string[] splited = new string[] { "", "", "" };
+                    if(authorisation.Contains(" "))
+                    {
+                        authorisation = authorisation.Replace(";", "-");
+                        var spl1 = authorisation.Split(' ');
+                        var spl2 = spl1[1].Split('-');
+                        splited = new string[]
+                        {
+                            spl1[0],
+                            spl2[0],
+                            spl2[1]
+                        };
+                    } else
+                    {
+                        splited = authorisation.Split(';');
+                    }
                     var name = splited[0];
                     var lastName = splited[1];
                     var tutor = splited[2];

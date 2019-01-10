@@ -162,6 +162,14 @@ namespace AwardsServer
                     Logging.Log(Logging.LogSeverity.Severe, "Unable to continue because the ':' is a special charactor");
                     Environment.Exit(1);
                 }
+                if(user.Flags.Contains(Flags.Coundon_Staff) && !user.AccountName.EndsWith("st"))
+                {
+                    Logging.Log(Logging.LogSeverity.Warning, "User " + user.ToString("AN FN LN") + " is expected to have an account name ending in 'st', due to them being marked as Staff");
+                }
+                if(user.AccountName.EndsWith("st") && !user.Flags.Contains(Flags.Coundon_Staff))
+                {
+                    Logging.Log(Logging.LogSeverity.Warning, "User " + user.ToString("AN FN LN") + " is potentially a Staff account, but does not have a flag to indicate this.");
+                }
                 AllStudents.Add(user.AccountName.ToLower(), user); 
             }
             OleDbCommand command2 = new OleDbCommand();

@@ -15,7 +15,7 @@
         form = form[0]
         console.log(form);
         if(authOrView == "auth") {
-			setCookie("Auth", form[0].value.toString() + " " + form[1].value.toString() + "-" + form[2].value.toString());
+			setCookie("Auth", form[0].value.toString() + ";" + form[1].value.toString() + ";" + form[2].value.toString());
 		}
 		if(authOrView == "auth" || authOrView == "view") {
 			setCookie("View", form[0].value.toString())
@@ -26,13 +26,13 @@
 </script>
 <form action="/" style="width: 100%;">
   Account Name:<br>
-  <input type="text" name="accn" value="Enter your login account name">
+  <input type="text" name="accn" placeholder="Enter your login account name">
   <br>
   Last name:<br>
-  <input type="text" id="lname" name="lName" value="Enter your last name (case matters)">
+  <input type="text" id="lname" name="lName" placeholder="Enter your last name (case matters)">
   <br>
   Tutor:<br>
-  <input type="text" id="tutor" name="tutor" value="Enter the tutor you are in">
+  <input type="text" id="tutor" name="tutor" placeholder="Enter the tutor you are in">
   <br><br>
   <input type="button" value="Submit" onClick="submitForm(document.getElementsByTagName('form'));">
 </form> 

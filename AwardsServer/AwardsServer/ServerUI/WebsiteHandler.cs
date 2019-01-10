@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Net.Sockets;
 using System.Net;
 using System.Threading;
+using AwardsServer.ServerUI;
 
 namespace AwardsServer.ServerUI
 {
@@ -31,442 +32,22 @@ namespace AwardsServer.ServerUI
             stream.Write(broadcastBytes, 0, broadcastBytes.Length);
             stream.Flush();
         }
-        /// <summary>
-        /// Converts an integer code to its string counterpart (ie, 404 -> 'Page not found')
-        /// </summary>
-        /// <param name="code">Code to convert</param>
-        public static string HttpCodeToString(int code)
-        {
-            return ((HttpStatusCode)code).ToString();
-        }
-
-        public static string ServerUrl => $"http://{Program.GetLocalIPAddress()}/";
-
-        /// <summary>
-        /// Compiles all the passed information into a proper up-to-regulation HTTP response
-        /// </summary>
-        /// <param name="client">Connetion to response to</param>
-        /// <param name="body">HTML body text to send</param>
-        /// <param name="httpCode">HTTP response status code</param>
-        /// <param name="headers">Any headers to add or overwrite</param>
-        /// <param name="pageTitle">Titled of the page, displayed in the tab thingy</param>
-        /// <param name="forceDisableTextBuild">"Lets just ignore HTML, send it raw!" - Disregards any HTML formatting, and only sends as per HTTP</param>
-        /// <param name="additionalHead">Any additional text that is added just before the head tag is closed</param>
-        private void RespondHTTP(TcpClient client, string body, int httpCode = 200, Dictionary<string,string> headers = null, string pageTitle = "Y11 Awards", bool forceDisableTextBuild = false, string additionalHead = "")
-        {
-            List<string> response_text = new List<string>()
-            {
-                "<!DOCTYPE html>", // tells browser its a HTML page
-                "<html>",
-                "<head>",
-                "<link rel=\"stylesheet\" href=\"/WebStyles.css\">", // in resources
-                "<script src=\"/WebScripts.js\"></script>", // also in resources
-                "<meta charset=\"UTF-8\">",
-                $"<title>{pageTitle}</title>",
-                additionalHead,
-                "</head>",
-                "<body>",
-                body,
-                "</body>",
-                $"<br><br><hr><footer>{Link(ServerUrl, "Your Votes")} - {Link(ServerUrl + "all", "All Votes")} - {Link(ServerUrl + "student", "Someone else's votes")}</footer>",
-                "</html>"
-            };
-            string response_body_raw = string.Join("", response_text);
-            if (forceDisableTextBuild) // forces us to not set the above, maybe we want to send a raw text file
-                response_body_raw = body;
-            Dictionary<string, string> response_headers = new Dictionary<string, string>()
-            {
-                { "Content-Type", "text/html; encoding=utf8" },
-                { "Content-Length", response_body_raw.Length.ToString() },
-                { "Connection", "Keep-Alive" }
-            };
-            if (headers != null)
-            { // overrides, or adds new, headers
-                foreach (KeyValuePair<string, string> keypair in headers)
-                {
-                    if(response_headers.ContainsKey(keypair.Key))
-                    {
-                        response_headers[keypair.Key] = keypair.Value;
-                    } else
-                    {
-                        response_headers.Add(keypair.Key, keypair.Value);
-                    }
-                }
-            }
-            // The below compiles all the above into proper format, then sends it.
-            string response_headers_raw = "";
-            foreach (KeyValuePair<string, string> keypair in response_headers)
-            {
-                response_headers_raw += keypair.Key + ": " + keypair.Value + "\n";
-            }
-            string response_proto = "HTTP/1.1";
-            string response_status = httpCode.ToString();
-            string response_status_text = HttpCodeToString(httpCode);
-            string initialSend = $"{response_proto} {response_status} {response_status_text}";
-            string toSend = initialSend + "\n" + response_headers_raw + "\n" + response_body_raw;
-            WriteClient(client, toSend);
-        }
-
-        public static void Log(string message, Logging.LogSeverity severity = Logging.LogSeverity.Debug)
-        {
-            Logging.LogMessage mg = new Logging.LogMessage(severity, message, "Web");
-            Logging.Log(mg);
-        }
-
-        public static string Link(string url, string tooltip = "")
-        {
-            if (string.IsNullOrWhiteSpace(tooltip))
-                tooltip = url;
-            return $"<a href=\"{url}\">{tooltip}</a>";
-        }
 
         /// <summary>
         /// Handles a connection's HTTP GET requests.
         /// </summary>
         private void HandleClientRequest(TcpClient client, IPEndPoint ipEnd, string request)
         {
-            //RespondHTTP(client, "<label>No response content</label>", 500, pageTitle: "Error");
-
-            string[] perLine = request.Replace("\r", "").Split('\n');
-            // example: 'GET / HTTP/1.1'
-            string pathWanted = perLine[0];
-            string[] pathSplit = pathWanted.Split(' '); // since URL's shouldnt contain spaces..
-            pathWanted = pathSplit[1];
-            pathWanted = Uri.UnescapeDataString(pathWanted); // now we decode the url, so it may contain spaces
-            string pathUntilTokens = pathWanted;
-            Dictionary<string, string> tokens = new Dictionary<string, string>();
-            if (pathWanted.Contains("?"))
-            { // finds dictionary of any 'tokens' ie:
-                // http://127.0.0.1/?name=Dave&job=unemployed
-                // will return a dictionary of:
-                // "name":"Dave"; "job":"unemployed"
-                pathUntilTokens = pathWanted.Substring(0, pathWanted.IndexOf("?"));
-                string pathWithTokens = pathWanted.Replace(pathUntilTokens, "");
-                pathWithTokens = pathWithTokens.Replace("?", "&");
-                string[] tokenInfo = pathWithTokens.Split('&');
-                foreach (string tokenString in tokenInfo)
-                {
-                    if (tokenString == "")
-                    {
-                        continue;
-                    }
-                    if (tokenString.Contains("=") == false)
-                    {
-                        tokens.Add(tokenString, "");
-                        continue;
-                    }
-                    string name = tokenString.Substring(0, tokenString.IndexOf("="));
-                    string value = tokenString.Replace(name + "=", "");
-                    tokens.Add(name, value);
-                }
-            }
-            string authorization = "";
-            string wantsToSee = "";
-            foreach (string line in perLine)
-            {
-                if (pathUntilTokens.EndsWith(".css") || pathUntilTokens.EndsWith(".js")) break;
-                if (line.StartsWith("Authorization"))
-                {
-                    // Gets the authorisation.
-                    // Ie, username/password.
-                    // This doesnt seem to work for me, but i've included it anyway
-                    string[] authSplit = line.Split(' ');
-                    byte[] data = Convert.FromBase64String(authSplit[2]);
-                    string decodedString = Encoding.UTF8.GetString(data);
-                    authorization = decodedString;
-                } else if (line.StartsWith("Cookie: "))
-                {
-                    var nowLine = Uri.UnescapeDataString(line).Substring("Cookie: ".Length);
-                    foreach (var cookie in nowLine.Split(';'))
-                    {
-                        if (cookie.Trim().StartsWith("Auth="))
-                        {
-                            var name = cookie.Trim().Substring("Auth=".Length);
-                            string[] split = name.Split(' ');
-                            string an = split[0];
-                            string ln = split[1].Split('-')[0];
-                            string tt = split[1].Split('-')[1];
-                            var student = (Program.Database.AllStudents.Values.FirstOrDefault(x => x.AccountName == an && x.LastName == ln && tt.ToLower() == x.Tutor.ToLower()));
-                            if (student == null)
-                            {
-                                RespondHTTP(client, "<label class=\"error\">Authentification was rejected.<br>You may need to clear your cookies</label><br>" + Properties.Resources.WebAuthentificationPage.Replace("[[AUTH_OR_VIEW]]", "auth"), 401);
-                                return;
-                            }
-                            authorization = $"{student.AccountName} {student.LastName}-{student.Tutor}";
-                        }
-                        else if (cookie.Trim().StartsWith("View="))
-                        {
-                            var name = cookie.Trim().Substring("View=".Length);
-                            var student = Program.GetUser(name);
-                            if (student == null)
-                            {
-                                RespondHTTP(client, "<label class=\"error\">The student you are trying to view was not found<br>You may need to clear your cookies</label><br>");
-                                return;
-                            }
-                            else
-                            {
-                                wantsToSee = student.AccountName;
-                            }
-                        }
-                    }
-                }
-            }
-            Log(ipEnd.ToString() + " requested " + pathWanted + $"{(authorization == "" ? "" : "  -Auth: " + authorization)}" + $"{(wantsToSee == "" ? "" : "   -View: " + wantsToSee)}");
-            if(string.IsNullOrWhiteSpace(authorization) && tokens.TryGetValue("accn", out string accountName) && tokens.TryGetValue("lName", out string lastName) && tokens.TryGetValue("tutor", out string tutor))
-            { // information is parsed, and placed into auth string
-                authorization = $"{accountName} {lastName}-{tutor}";
-            }
-            User currentStudent = null;
-            if(!(pathUntilTokens.EndsWith(".css") || pathUntilTokens.EndsWith(".js")))
-            { // only runs on a page that might need authentification - Which for now is just the landing page
-                if (string.IsNullOrWhiteSpace(authorization))
-                { // they have not given any authorisation at all - so we respond with a nice form to do so
-                    RespondHTTP(client, Properties.Resources.WebAuthentificationPage.Replace("[[AUTH_OR_VIEW]]", "auth"), 401);
-                    client.Close();
-                    return;
-                } else
-                { // they did give auth
-                    string[] split = authorization.Split(' ');
-                    accountName = split[0];
-                    lastName = split[1].Split('-')[0];
-                    tutor = split[1].Split('-')[1];
-                    var student = (Program.Database.AllStudents.Values.FirstOrDefault(x => x.AccountName == accountName && x.LastName == lastName && tutor.ToLower() == x.Tutor.ToLower()));
-                    if (student == null)
-                    { // but the auth is incorrect - wrong / no student
-                        RespondHTTP(client, "<label class=\"error\"Your authentification failed<br>Unknown user with given account name, last name and tutor.<br>Try again.<br>Case matters.", 401);
-                        client.Close();
-                        return;
-                    }
-                    currentStudent = student;
-                }
-                var curIP = ipEnd.Address.ToString();
-                if(curIP == Program.GetLocalIPAddress())
-                {
-                    curIP = "127.0.0.1";
-                }
-                // in order to prevent abuse, we only allow them to see the votes IF:
-                // - They have voted just now (ie, since the server started)
-                // - They are requesting from the same IP as they voted
-                // If the two abvoe are not met, then the request is refused, as below
-                // HOWEVER: We override the above is the student has a flag indicating they are to always be permitted to see the vote.
-                if (
-                    (currentStudent == null || 
-                    !SocketHandler.CachedKnownIPs.ContainsKey(currentStudent.AccountName) || 
-                    SocketHandler.CachedKnownIPs[currentStudent.AccountName].ToString() != curIP || 
-                    currentStudent.Flags.Contains(Flags.Disallow_View_Online)) 
-                    && !currentStudent.Flags.Contains(Flags.View_Online))
-                {
-                    RespondHTTP(client, "<label class=\"error\">Authentification failed<br>Any of the following may apply:<br> - You entered incorrect name/information<br> - You have not logged in / voted today <br> - You voted from another computer <br> - You may not be permitted to see your vote", 403, pageTitle: "Forbidden");
-                    client.Close();
-                    return;
-                }
-                if ((wantsToSee != "" && Program.GetUser(wantsToSee).Flags.Contains(Flags.Disallow_View_Online)) || (wantsToSee == currentStudent.AccountName && currentStudent.Flags.Contains(Flags.Coundon_Staff) && currentStudent.Flags.Contains(Flags.Disallow_Vote_Staff))) {
-                    wantsToSee = "";
-                }
-
-            }
-            List<string> urlPath = pathUntilTokens.Split('/').Where(x => String.IsNullOrWhiteSpace(x) == false).ToList();
-            string RESPONSE_BODY = "<label>An internal error occured while attempting to process your request</label>";
-            string RESPONSE_TITLE = "Y11 Awards"; // default valuess
-            string OPTIONAL_HEAD_TEXT = "";
-            int RESPONSE_CODE = 500;
-            var headers = new Dictionary<string, string>();
-            if(currentStudent != null) 
-                headers.Add("Set-Cookie", $"Auth={currentStudent.AccountName} {currentStudent.LastName}-{currentStudent.Tutor};MaxAge=3600");
-            if(pathUntilTokens == "/" && pathWanted.Contains("?accn=") && currentStudent != null)
-            {
-                headers.Add("Location", $"http://{Program.GetLocalIPAddress()}/");
-            }
-            bool forceIgnoreWebpage = false;
             try
             {
-                if(pathUntilTokens == "/")
-                {
-                    if (currentStudent.Flags.Contains(Flags.Disallow_Vote_Staff))
-                    {
-                        RESPONSE_CODE = 302; // 302 Found, is temporary (whereas 301 is permenant)
-                        RESPONSE_BODY = "<label>Redirecting you to {0}</label>";
-                        var url = $"http://{Program.GetLocalIPAddress()}/";
-                        if(currentStudent.Flags.Contains(Flags.Coundon_Staff))
-                        {
-                            // Staff and blocked gets you redirected to see a Student's info
-                            url += "student";
-                        } else
-                        { // everyone else that's blocked gets redirected to all display thingy
-                            url += "all";
-                        }
-                        headers.Add("Location", url);
-                        RESPONSE_BODY = string.Format(RESPONSE_BODY, Link(url));
-                        return; // dont go any further
-                    }
-                    // no specific page (ie: https://127.0.0.1/)
-                    RESPONSE_TITLE = "Y11 Awards";
-
-                    string text = "<label>Your votes for each category:</label>";
-                    text += $"<table><tr><th>Category</th><th>First</th><th>Second</th></tr>";
-                    int catCount = 0;
-                    foreach(var category in Program.Database.AllCategories.Values)
-                    { // builds information into a table, for display.
-                        catCount++;
-                        string clrClass = (catCount % 2 == 0) ? " class=\"tblEven\"" : "";
-                        string catText = "<tr" + clrClass + "><td>{0}</td><td>{1}</td><td>{2}</td></tr>";
-                        var users = category.GetVotesBy(currentStudent);
-                        catText = string.Format(catText, category.Prompt, users.Item1?.FullName ?? "N/A", users.Item2?.FullName ?? "N/A");
-                        text += catText;
-                    }
-                    text += "</table>";
-                    RESPONSE_BODY = text; RESPONSE_CODE = 200;
-                } else if (pathUntilTokens == "/WebStyles.css")
-                { // returns web styling
-                    RESPONSE_BODY = Properties.Resources.WebStyles;
-                    RESPONSE_CODE = 200;
-                    forceIgnoreWebpage = true; // without any HTML formatting
-                    headers.Add("Content-Type", "text/css");
-                } else if (pathUntilTokens == "/WebScripts.js")
-                { // as with the CSS above
-                    RESPONSE_BODY = Properties.Resources.WebScripts;
-                    RESPONSE_CODE = 200;
-                    forceIgnoreWebpage = true;
-                    headers.Add("Content-Type", "text/javascript");
-                } else if(pathUntilTokens == "/all")
-                {
-                    if(currentStudent == null)
-                    {
-                        // we should redirect them to get authenticated.
-                        OPTIONAL_HEAD_TEXT = $"<meta http-equiv=\"refresh\" content=\"5; URL = http://{Program.GetLocalIPAddress()}/\" />";
-                        RESPONSE_BODY = $"<label class=\"error\">You need to be authenticated.<br>You will be redirected shortly.<br><br>If not, head to http://{Program.GetLocalIPAddress()}/</label>";
-                        RESPONSE_CODE = 401;
-                        return;
-                    }
-                    string cssClass = ((ipEnd.Address.ToString() == Program.GetLocalIPAddress() || ipEnd.Address.ToString() == "127.0.0.1" || Program.Options.Allow_NonLocalHost_WebConnections || currentStudent.Flags.Contains(Flags.Coundon_Staff))) ? "" : "class=\"hidden\"";
-                    // anyone can access the info
-                    // but, we hide some data via css
-                    // which isnt particularly secure.. might change in future.
-                    // however: I have set the javascript to remove any information within a [REDACTED] element
-                    // which means that it is in no way secure - its still being sent
-                    // BUT it is impossible to get the data using just Inspect element, which will prevent access from most/all
-                    RESPONSE_CODE = 200; RESPONSE_TITLE = "Y11: All Data";
-                    string htmlPage = Properties.Resources.WebAllDataPage; // this is the base template, which data will be added into
-                    int notVoted = Program.Database.AllStudents.Count; // start with all students added
-                    int currentlyVoting = 0;
-                    int alreadyVoted = 0;
-                    foreach(var student in Program.Database.AllStudents.Values)
-                    { // removes them as needed to increment the two above
-                        if(Program.Database.AlreadyVotedNames.Contains(student.AccountName))
-                        {
-                            notVoted--;
-                            alreadyVoted++;
-                        } else if (SocketHandler.CurrentClients.FirstOrDefault(x => x.User.AccountName == student.AccountName) != null)
-                        {
-                            notVoted--;
-                            currentlyVoting++;
-                        }
-                    }
-                    // Displays how many total votes have been made, and how many unique people have been voted, for each category.
-                    string categoryTable = "<table><tr><th>Category</th><th>Total Votes (by people)</th><th>Unique Voted (num people voted)</th></tr>";
-                    foreach(var category in Program.Database.AllCategories.Values)
-                    {
-                        int votes = 0;
-                        foreach(var list in category.Votes)
-                        {
-                            votes += list.Value.Count;
-                        }
-                        string tempClass = (category.ID % 2 == 0) ? "class=\"tblEven\"" : "";
-                        string format = $"<tr {tempClass}><td>{category.Prompt}</td><td {cssClass}>{votes}</td><td {cssClass}>{category.Votes.Count}</td></tr>";
-                        categoryTable += format;
-                    }
-                    categoryTable += "</table>";
-
-                    string winnersTable = "<table><tr><th>Category</th><th>First Winner</th><th>Second Winner</th></tr>";
-                    foreach (var category in Program.Database.AllCategories.Values)
-                    {
-                        var highestVote = category.HighestVoter(false);
-                        var highestWinners = highestVote.Item1;
-                        var secondHighestVote = category.HighestVoter(true);
-                        var secondHighestWinners = secondHighestVote.Item1;
-                        string first = $"{string.Join(", ", highestWinners.Select(x => x.ToString("FN LN (TT)")))}";
-                        if (string.IsNullOrWhiteSpace(first)) first = "N/A";
-                        string second = $"{string.Join(", ", secondHighestWinners.Select(x => x.ToString("FN LN (TT)")))}";
-                        if (string.IsNullOrWhiteSpace(second)) second = "N/A";
-                        string format = "<tr><td>{1}</td><td {0}>{4}: {2}</td><td {0}>{5}: {3}</td></tr>";
-                        format = string.Format(format, cssClass, category.Prompt, first, second, $"<strong>{highestVote.Item2}</strong>", $"<strong>{secondHighestVote.Item2}</strong>");
-                        winnersTable += format;
-                    }
-                    winnersTable += "</table>";
-
-
-                    // replaces data from the templace, see the WebAllDataPage.txt
-                    Dictionary<string, string> ReplaceValues = new Dictionary<string, string>()
-                    {
-                        { "[[NUM_NOT_VOTED]]", notVoted.ToString() },
-                        { "[[NUM_VOTED]]", alreadyVoted.ToString() },
-                        { "[[NUM_VOTING]]", currentlyVoting.ToString() },
-                        { "[[HIDENOT]]", cssClass },
-                        { "[[CATEGORY_TABLE]]", categoryTable },
-                        { "[[WINNER_TABLE]]", winnersTable }
-
-                    };
-                    foreach(var keypair in ReplaceValues) { htmlPage = htmlPage.Replace(keypair.Key, keypair.Value); }
-
-                    RESPONSE_BODY = htmlPage;
-                    // This is commented out because it works.
-                    // I've added this in because i'm aware that technically speaking
-                    // another <DOCTYPE html> and <head> and <body> elements are being put into the preexisting <body> location
-                    // but google chrome seems to work it out.. and it works. So there's that.
-                    // forceIgnoreWebpage = true;
-                } else if (pathUntilTokens == "/student")
-                {
-                    if(!currentStudent.Flags.Contains(Flags.Coundon_Staff))
-                    {
-                        RespondHTTP(client, "<label class=\"error\">You do not have access to view other people's votes.</label>", 403);
-                        return;
-                    }
-                    if(string.IsNullOrWhiteSpace(wantsToSee))
-                    {
-                        RespondHTTP(client, "<label class=\"error\">You will need to enter the information of the desired student:</label><br>" + Properties.Resources.WebAuthentificationPage.Replace("[[AUTH_OR_VIEW]]", "view"), 400);
-                        return;
-                    } else
-                    {
-                        if(Program.TryGetUser(wantsToSee, out User user))
-                        {
-                            string text = $"<label>{user.ToString("FN LN")}'s votes for each category:</label>";
-                            text += $"<table><tr><th>Category</th><th>First</th><th>Second</th></tr>";
-                            int catCount = 0;
-                            foreach (var category in Program.Database.AllCategories.Values)
-                            { // builds information into a table, for display.
-                                catCount++;
-                                string clrClass = (catCount % 2 == 0) ? " class=\"tblEven\"" : "";
-                                string catText = "<tr" + clrClass + "><td>{0}</td><td>{1}</td><td>{2}</td></tr>";
-                                var users = category.GetVotesBy(user);
-                                catText = string.Format(catText, category.Prompt, users.Item1?.FullName ?? "N/A", users.Item2?.FullName ?? "N/A");
-                                text += catText;
-                            }
-                            text += "</table>";
-                            RESPONSE_BODY = text; RESPONSE_CODE = 200;
-                        } else
-                        {
-                            RespondHTTP(client, "<label class=\"error\">Given student was unknown/incorrectly given - please provide proper info:</label><br>" + Properties.Resources.WebAuthentificationPage.Replace("[[AUTH_OR_VIEW]]", "view"), 400);
-                        }
-                    }
-                }
-                else
-                { // unknown/not set up request
-                    RESPONSE_BODY = "<label class=\"error\">404 - Unkown request.</label>"; RESPONSE_CODE = 404;
-                }
-            } catch (Exception ex)
-            {
-                Log(ex.ToString(), Logging.LogSeverity.Error);
-                RESPONSE_BODY = "<label>An error occured while processing your request.<br>It has been logged.<br>For your fun, the error was:</lable><br><label class=\"error\">" + ex.Message + "</label>";
-                RESPONSE_CODE = 500;
-            } finally
-            { // always always always respond in atleast some way
-                RespondHTTP(client, RESPONSE_BODY, RESPONSE_CODE, (headers.Count == 0 ? null : headers), RESPONSE_TITLE, forceIgnoreWebpage, OPTIONAL_HEAD_TEXT);
+                var newContext = new HTTPGetResponse(client, request);
+                newContext.Execute();
+                newContext.Client.Close(); // done.
             }
-
-
-
-
-
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
         private void ListenNewClients()
@@ -486,13 +67,14 @@ namespace AwardsServer.ServerUI
                     }
                     catch (Exception ex)
                     {
-                        Log(ex.ToString(), Logging.LogSeverity.Error);
+                        Logging.Log("Web-R", ex);
+                        continue;
                     }
                     dataFromClient = Encoding.UTF8.GetString(bytesFrom).Trim().Replace("\0", "");
                     IPEndPoint ipEnd = clientSocket.Client.RemoteEndPoint as IPEndPoint;
                     if (string.IsNullOrWhiteSpace(dataFromClient))
                     {
-                        WriteClient(clientSocket, "400 " + HttpCodeToString(400));
+                        WriteClient(clientSocket, "400 Bad Request");
                         clientSocket.Close();
                         continue;
                     }
@@ -501,11 +83,11 @@ namespace AwardsServer.ServerUI
                         HandleClientRequest(clientSocket, ipEnd, dataFromClient);
                     } else
                     { // so, we error on any others
-                        WriteClient(clientSocket, "400 " + HttpCodeToString(400));
+                        WriteClient(clientSocket, "501 - Not Implemented");
                     }
                 } catch (Exception ex)
                 {
-                    Log(ex.ToString(), Logging.LogSeverity.Error);
+                    Logging.Log("Web", ex);
                 }
             }
         }

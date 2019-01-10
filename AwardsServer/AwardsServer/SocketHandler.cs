@@ -20,7 +20,7 @@ namespace AwardsServer
         /// <summary>
         /// We cache the IP everyone connects to, for purposes..
         /// </summary>
-        public static Dictionary<string, IPAddress> CachedKnownIPs = new Dictionary<string, IPAddress>();
+        public static Dictionary<string, string> CachedKnownIPs = new Dictionary<string, string>();
 
         public class SocketConnection
         {
@@ -44,12 +44,13 @@ namespace AwardsServer
                 if(Program.TryGetUser(name, out User)) {
                     // nothing (already sets variable so..)
                     IPEndPoint ipEnd = client.Client.RemoteEndPoint as IPEndPoint;
+                    var ip = ipEnd.Address.ToString() == "127.0.0.1" ? Program.GetLocalIPAddress() : ipEnd.Address.ToString();
                     if(CachedKnownIPs.ContainsKey(User.AccountName)) {
-                        Logging.Log(Logging.LogSeverity.Warning, $"User {User.ToString("AN FN")} was connected via {CachedKnownIPs[User.AccountName]} but now has connected via {ipEnd.Address}");
-                        CachedKnownIPs[User.AccountName] = ipEnd.Address;
+                        Logging.Log(Logging.LogSeverity.Warning, $"User {User.ToString("AN FN")} was connected via {CachedKnownIPs[User.AccountName]} but now has connected via {ip}");
+                        CachedKnownIPs[User.AccountName] = ip;
                     } else
                     {
-                        CachedKnownIPs.Add(User.AccountName, ipEnd.Address);
+                        CachedKnownIPs.Add(User.AccountName, ip);
                     }
                 } else
                 { // this is handled in the newclient thread thingy
@@ -184,6 +185,8 @@ namespace AwardsServer
                         bool shouldGo = false; // shouldGo: does the name match the query? if so, SHOULD we GO and send it
                         // yes i know its not best naming but /shrug
                         message = message.ToLower();
+                        if (student.Flags.Contains(Flags.Disallow_Vote_Staff) || student.Flags.Contains(Flags.Coundon_Staff))
+                            continue; // disallow for staff to be voted for, even if they are in the database.
                         if(student.ToString().ToLower().StartsWith(message)) 
                         {
                             shouldGo = true;
@@ -357,7 +360,7 @@ public static string GetLocalIPAddress()
                 ServerListener = new TcpListener(IPAddress.Any, 56567);
                 ServerListener.Start();
                 Listening = true;
-                Logging.Log(Logging.LogSeverity.Warning, $"Listening to new connections at {((IPEndPoint)ServerListener.LocalEndpoint).Address.ToString()}:{((IPEndPoint)ServerListener.LocalEndpoint).Port}");
+                Logging.Log(Logging.LogSeverity.Info, $"Listening to new connections at {((IPEndPoint)ServerListener.LocalEndpoint).Address.ToString()}:{((IPEndPoint)ServerListener.LocalEndpoint).Port}");
                 Thread newThread = new Thread(NewConnections);
                 newThread.Start();
                                         

@@ -100,6 +100,9 @@ namespace AwardsServer.ServerUI
             } catch (Exception ex)
             {
                 Logging.Log(Logging.LogSeverity.Error, ex.ToString(), "Web:" + NameOrIdentity);
+                Body = "<label class=\"error\">An error occured while processing your request.<br>The error has been logged.</label>";
+                Code = HttpStatusCode.InternalServerError;
+                Title = "Awards - Error";
             } finally
             {
                 RespondHTTP(Client, Body, Code, Headers, Title, IgnoreHTMLFormatting, AdditionalHeadText);
@@ -206,13 +209,33 @@ namespace AwardsServer.ServerUI
             stream.Flush();
         }
 
+        internal static bool IsIgnoredFile(string url)
+        {
+            return url.EndsWith(".js") || url.EndsWith(".css") || url.EndsWith(".ico");
+        }
+
         internal virtual bool CheckCookiesAndSetVariables()
         {
-            if(!(URLUntilTokens.EndsWith(".js") || URLUntilTokens.EndsWith(".css")))
+            if(!IsIgnoredFile(URLUntilTokens))
             {
                 if (Cookies.TryGetValue("Auth", out string authorisation))
                 {
-                    var splited = authorisation.Split(';');
+                    string[] splited = new string[] { "", "", "" };
+                    if(authorisation.Contains(" "))
+                    {
+                        authorisation = authorisation.Replace(";", "-");
+                        var spl1 = authorisation.Split(' ');
+                        var spl2 = spl1[1].Split('-');
+                        splited = new string[]
+                        {
+                            spl1[0],
+                            spl2[0],
+                            spl2[1]
+                        };
+                    } else
+                    {
+                        splited = authorisation.Split(';');
+                    }
                     var name = splited[0];
                     var lastName = splited[1];
                     var tutor = splited[2];
@@ -360,8 +383,10 @@ namespace AwardsServer.ServerUI
 
         internal override void GetResponse()
         {
-            Logging.Log(NameOrIdentity + " requested " + URLUntilTokens + $"{(AuthenticatedAs == null ? "" : "  -Auth: " + AuthenticatedAs.ToString("AN"))}" + $"{(Viewing == null ? "" : "   -View: " + Viewing.ToString("AN"))}");
-            if(CheckCookiesAndSetVariables() && CheckAuth())
+            bool getCookies = CheckCookiesAndSetVariables(); // needs to be called before below log msg, as the AuthenticatedAs is assigned in this func
+            if(!IsIgnoredFile(URLUntilTokens))
+                Logging.Log(Logging.LogSeverity.Info, NameOrIdentity + " requested " + URLUntilTokens + $"{(AuthenticatedAs == null ? "" : "  -Auth: " + AuthenticatedAs.ToString("AN"))}" + $"{(Viewing == null ? "" : "   -View: " + Viewing.ToString("AN"))}", (AuthenticatedAs == null ? "" :  AuthenticatedAs.AccountName + "/") + "Web" );
+            if(getCookies && CheckAuth())
             { // Ensure they are permitted to view that page
                 if (CheckRedirect())
                 { // Check if we should redirect fire

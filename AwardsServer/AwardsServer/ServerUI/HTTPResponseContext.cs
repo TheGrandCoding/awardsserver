@@ -11,14 +11,19 @@ namespace AwardsServer.ServerUI
 {
     public class HTTPResponseContext
     {
+        private static string HTML_AuthOrViewPage;
+        public static string HTML_AuthPage => HTML_AuthOrViewPage.Replace("[[AUTH_OR_VIEW]]", "auth");
+        public static string HTML_ViewPage => HTML_AuthOrViewPage.Replace("[[AUTH_OR_VIEW]]", "view");
+
+
         public static string ServerUrl => $"http://{Program.GetLocalIPAddress()}/";
         public TcpClient Client;
         public string ClientIP
         { get
             {
                 var ip = ((IPEndPoint)Client.Client.RemoteEndPoint).Address.ToString();
-                if (ip == Program.GetLocalIPAddress())
-                    return "127.0.0.1";
+                //if (ip == Program.GetLocalIPAddress())
+                //    return "127.0.0.1";
                 return ip;
             } }
         public string NameOrIdentity => ((AuthenticatedAs?.FullName) ?? ClientIP);
@@ -37,6 +42,8 @@ namespace AwardsServer.ServerUI
 
         public HTTPResponseContext(TcpClient client, string request)
         {
+            if (HTML_AuthOrViewPage == null)
+                HTML_AuthOrViewPage = Properties.Resources.WebAuthentificationPage;
             Client = client;
             FullHTTPRequest = request;
             string[] perLine = FullHTTPRequest.Replace("\r", "").Split('\n');
@@ -76,7 +83,7 @@ namespace AwardsServer.ServerUI
                     var nowLine = line.Replace("Cookie: ", "");
                     foreach(var splited in nowLine.Split(';'))
                     {
-                        var cookie = Uri.UnescapeDataString(splited.Trim());
+                        var cookie = splited.Trim();
                         var namevalue = cookie.Split('=');
                         Cookies.Add(Uri.UnescapeDataString(namevalue[0]), Uri.UnescapeDataString(namevalue[1]));
                     }
@@ -222,7 +229,7 @@ namespace AwardsServer.ServerUI
                         && !AuthenticatedAs.Flags.Contains(Flags.View_Online)))
                     {
                         Body = "<label class=\"error\">Authentification failed<br>Any of the following may apply:<br> - You entered incorrect name/information<br> - You have not logged in / voted today <br> - You voted from another computer <br> - You may not be permitted to see your vote</label>";
-                        Body += "<br><br><br><hr>" + Properties.Resources.WebAuthentificationPage.Replace("[[AUTH_OR_VIEW]]", "auth");
+                        Body += "<br><br><br><hr>" + HTML_AuthPage;
                         Code = HttpStatusCode.Forbidden;
                         Title = "Forbidden";
                         AuthenticatedAs = null; // since they're not authenticated
@@ -250,13 +257,13 @@ namespace AwardsServer.ServerUI
                     if (Cookies.ContainsKey("Auth"))
                     {
                         Body = "<label class=\"error\">Authentification failed, you may need to connect a client to the server, then try again.</label><br><hr><br>";
-                        Body += Properties.Resources.WebAuthentificationPage.Replace("[[AUTH_OR_VIEW]]", "auth");
+                        Body += HTML_AuthPage;
                         Title = "Auth Rejected";
                         Code = HttpStatusCode.Unauthorized;
                     }
                     else
                     {
-                        Body = Properties.Resources.WebAuthentificationPage.Replace("[[AUTH_OR_VIEW]]", "auth");
+                        Body = HTML_AuthPage;
                         Title = "Auth Failed";
                         Code = HttpStatusCode.Forbidden;
                     }
@@ -291,7 +298,7 @@ namespace AwardsServer.ServerUI
                     else
                     {
                         Body = $"<label class=\"error\">You need to provide the student's information first:</label><br>"; 
-                        Body += Properties.Resources.WebAuthentificationPage.Replace("[[AUTH_OR_VIEW]]", "view");
+                        Body += HTML_ViewPage;
                         Title = "Provide Info";
                         Code = HttpStatusCode.BadRequest;
                     }
@@ -490,7 +497,7 @@ namespace AwardsServer.ServerUI
                         }
                         if (Viewing == null)
                         {
-                            Body = "<label class=\"error\">You will need to enter the information of the desired student:</label><br>" + Properties.Resources.WebAuthentificationPage.Replace("[[AUTH_OR_VIEW]]", "view");
+                            Body = "<label class=\"error\">You will need to enter the information of the desired student:</label><br>" + HTML_ViewPage;
                             Code = HttpStatusCode.BadRequest;
                             Title = "Invalid Info";
                             return;

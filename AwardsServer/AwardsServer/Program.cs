@@ -307,7 +307,7 @@ namespace AwardsServer
         /// <summary>
         /// A list of values that indicate special options.
         /// </summary>
-        public List<string> Flags;
+        public List<string> Flags = new List<string>();
 
         public User(string accountName, string firstName, string lastName, string tutor) 
         {//creating a new user

@@ -43,14 +43,17 @@ namespace AwardsServer
                 UserName = name;
                 if(Program.TryGetUser(name, out User)) {
                     // nothing (already sets variable so..)
-                    IPEndPoint ipEnd = client.Client.RemoteEndPoint as IPEndPoint;
-                    var ip = ipEnd.Address.ToString() == "127.0.0.1" ? Program.GetLocalIPAddress() : ipEnd.Address.ToString();
-                    if(CachedKnownIPs.ContainsKey(User.AccountName)) {
-                        Logging.Log(Logging.LogSeverity.Warning, $"User {User.ToString("AN FN")} was connected via {CachedKnownIPs[User.AccountName]} but now has connected via {ip}");
-                        CachedKnownIPs[User.AccountName] = ip;
-                    } else
+                    if(Program.Options.WebSever_Enabled)
                     {
-                        CachedKnownIPs.Add(User.AccountName, ip);
+                        IPEndPoint ipEnd = client.Client.RemoteEndPoint as IPEndPoint;
+                        var ip = ipEnd.Address.ToString() == "127.0.0.1" ? Program.GetLocalIPAddress() : ipEnd.Address.ToString();
+                        if(CachedKnownIPs.ContainsKey(User.AccountName)) {
+                            Logging.Log(Logging.LogSeverity.Warning, $"User {User.ToString("AN FN")} was connected via {CachedKnownIPs[User.AccountName]} but now has connected via {ip}");
+                            CachedKnownIPs[User.AccountName] = ip;
+                        } else
+                        {
+                            CachedKnownIPs.Add(User.AccountName, ip);
+                        }
                     }
                 } else
                 { // this is handled in the newclient thread thingy

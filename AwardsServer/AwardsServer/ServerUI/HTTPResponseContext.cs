@@ -216,7 +216,15 @@ namespace AwardsServer.ServerUI
 
         internal virtual bool CheckCookiesAndSetVariables()
         {
-            if(!IsIgnoredFile(URLUntilTokens))
+
+            if (!Program.Options.WebSever_Enabled)
+            {
+                Body = "<p>Website of the Awards server has been disabled</p>";
+                Title = "Offline";
+                Code = (HttpStatusCode)418;
+                return false;
+            }
+            if (!IsIgnoredFile(URLUntilTokens))
             {
                 if (Cookies.TryGetValue("Auth", out string authorisation))
                 {

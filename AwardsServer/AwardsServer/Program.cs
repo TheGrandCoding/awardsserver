@@ -73,6 +73,9 @@ namespace AwardsServer
 
             [Option("Relative/Absolute path for the file used to contain the Server's IP", "Path of ServerIP file", @"..\..\..\ServerIP", true)]
             public static string ServerIP_File_Path;
+
+            [Option("Is the web server serving files/listening for connections?", "Web site status", false)]
+            public static bool WebSever_Enabled;
         }
 
         private const string MainRegistry = "HKEY_CURRENT_USER\\AwardsProgram\\Server";
@@ -201,10 +204,6 @@ namespace AwardsServer
             Logging.Log("Starting socket listener...");
             Server = new SocketHandler();
             Logging.Log("Started. Ready to accept new connections.");
-            Logging.Log("Starting web server...");
-            WebServer = new ServerUI.WebsiteHandler();
-            Logging.Log("Started web server!");
-            
 
             // Open UI form..
             System.Threading.Thread uiThread = new System.Threading.Thread(RunUI);

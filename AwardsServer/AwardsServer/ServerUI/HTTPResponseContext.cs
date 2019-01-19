@@ -216,7 +216,6 @@ namespace AwardsServer.ServerUI
 
         internal virtual bool CheckCookiesAndSetVariables()
         {
-
             if (!Program.Options.WebSever_Enabled)
             {
                 Body = "<p>Website of the Awards server has been disabled</p>";
@@ -225,6 +224,7 @@ namespace AwardsServer.ServerUI
                 return false;
             }
             if (!IsIgnoredFile(URLUntilTokens))
+
             {
                 if (Cookies.TryGetValue("Auth", out string authorisation))
                 {

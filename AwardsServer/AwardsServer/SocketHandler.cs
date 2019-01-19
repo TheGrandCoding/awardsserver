@@ -188,7 +188,7 @@ namespace AwardsServer
                         bool shouldGo = false; // shouldGo: does the name match the query? if so, SHOULD we GO and send it
                         // yes i know its not best naming but /shrug
                         message = message.ToLower();
-                        if (student.Flags.Contains(Flags.Disallow_Vote_Staff) || student.Flags.Contains(Flags.Coundon_Staff))
+                        if (student.Flags.Contains(Flags.Disallow_Vote_Staff))
                             continue; // disallow for staff to be voted for, even if they are in the database.
                         if(student.ToString().ToLower().StartsWith(message)) 
                         {

@@ -138,6 +138,8 @@ namespace AwardsServer
                 string rawflags = reader["Flags"].ToString();
                 var flags = rawflags.Split(';').Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x.ToLower());
                 user.Flags = flags.ToList();
+                if (user.Flags == null)
+                    user.Flags = new List<string>(); // empty.
                 if(user.AccountName.Length != "cheale14".Length && !user.Flags.Contains(Flags.Ignore_Length))
                 {
                     Logging.Log(Logging.LogSeverity.Warning, "User " + user.ToString("FN LN TT AN") + " has invalid account name");
@@ -155,7 +157,11 @@ namespace AwardsServer
                 {
                     Logging.Log(Logging.LogSeverity.Warning, "Staff " + user.ToString("AN FN LN") + " is able to vote - add the Disallow_Vote_Staff flag to prevent this");
                 }
-                if(user.ToString("AN FN LN TT").Contains(":"))
+                if (user.Flags.Contains(Flags.Disallow_Vote_Staff) && !user.Flags.Contains(Flags.Coundon_Staff))
+                {
+                    Logging.Log(Logging.LogSeverity.Warning, "User " + user.ToString("AN FN LN") + " unable to vote, but is not marked as Staff");
+                }
+                if (user.ToString("AN FN LN TT").Contains(":"))
                 {
                     Logging.Log(Logging.LogSeverity.Severe, "Remove the  ':' from " + user.ToString() + " 's name(s).");
                     Console.ReadLine();

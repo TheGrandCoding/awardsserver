@@ -296,6 +296,11 @@ namespace AwardsServer.ServerUI
             // These may error in execution:
             UpdateCurrentQueue();
             UpdateCurrentlyVoting();
+
+            try
+            {
+                WebServer = new ServerUI.WebsiteHandler();
+            } catch { }
         }
 
         private void queueTimer_Tick(object sender, EventArgs e)
@@ -363,6 +368,17 @@ namespace AwardsServer.ServerUI
                     hold.FieldInfo.SetValue(null, hold.Value);
                     SetOption(hold.VariableName, hold.Value.ToString());
                     Logging.Log(Logging.LogSeverity.Warning, $"Updated {hold.VariableName}, now: {hold.FieldInfo.GetValue(null)}");
+                    if(hold.VariableName == nameof(Program.Options.WebSever_Enabled))
+                    {
+                        Logging.Log(Logging.LogSeverity.Warning, "WEB SERVER CHANGED:");
+                        if(((bool)hold.FieldInfo.GetValue(null)))
+                        {
+                            Logging.Log(Logging.LogSeverity.Warning, "You have just enabled the web server, but you will need to restart the server for it to actually come online");
+                        } else
+                        {
+                            Logging.Log(Logging.LogSeverity.Warning, "You have just disabled the web server. It will reply with 418 'Offline' to any client requests");
+                        }
+                    }
                 }
             }
         }

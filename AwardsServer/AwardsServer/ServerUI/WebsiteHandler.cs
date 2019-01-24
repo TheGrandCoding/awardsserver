@@ -97,10 +97,19 @@ namespace AwardsServer.ServerUI
             if (_started)
                 throw new InvalidOperationException("Webserver has already been started");
             _started = true;
-            WebServer = new TcpListener(IPAddress.Any, 80);
-            WebServer.Start();
-            Thread listen = new Thread(ListenNewClients);
-            listen.Start();
+            Logging.Log("Starting web server...");
+            if(Program.Options.WebSever_Enabled)
+            {
+                WebServer = new TcpListener(IPAddress.Any, 80);
+                WebServer.Start();
+                Thread listen = new Thread(ListenNewClients);
+                listen.Start();
+                Logging.Log(Logging.LogSeverity.Warning, "Web server has been started and can be accessed at http://127.0.0.1/");
+            }
+            else
+            {
+                Logging.Log(Logging.LogSeverity.Warning, "Website offine and not listening for connections: User option set to disable");
+            }
         }
 
     }

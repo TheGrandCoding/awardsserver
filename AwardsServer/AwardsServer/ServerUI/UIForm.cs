@@ -270,6 +270,12 @@ namespace AwardsServer.ServerUI
             }
         }
 
+        public void UpdateManualVote()
+        {
+            if (txtNameOfManualVote.Enabled == true)
+                btnSubmitManualVote.Visible = false;
+        }
+
         public void SetLocalIP()
         {
             try
@@ -291,6 +297,7 @@ namespace AwardsServer.ServerUI
             UpdateCategory();
             UpdateWinners();
             UpdateOptions();
+            UpdateManualVote();
             SetLocalIP(); // must come after options since it relies on it
 
             // These may error in execution:
@@ -514,9 +521,112 @@ namespace AwardsServer.ServerUI
                 );
         }
 
-        private void dgvStudents_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        private void btnPerformManualVote_Click(object sender, EventArgs e)
         {
+            if(Program.TryGetUser(txtNameOfManualVote.Text ?? "", out var student))
+            {
+                txtNameOfManualVote.Text = student.AccountName;
+                txtNameOfManualVote.ReadOnly = true;
+                dgvManualVotes.Rows.Clear();
+                foreach(var category in Database.AllCategories.Values)
+                {
+                    var existingVotes = category.GetVotesBy(student);
+                    string[] row = new string[] { $"{category.ID.ToString("00")} {category.Prompt}", "", "" };
+                    dgvManualVotes.Rows.Add(row);
+                    var dgvRow = dgvManualVotes.Rows[category.ID - 1];
+                    if(existingVotes.Item1 != null)
+                    {
+                        dgvRow.Cells[1].Tag = existingVotes.Item1.AccountName;
+                        dgvRow.Cells[1].Value = existingVotes.Item1.ToString("FN LN TT");
+                        dgvRow.Cells[1].Style.BackColor = Color.Aquamarine;
+                    }
+                    if (existingVotes.Item2 != null)
+                    {
+                        dgvRow.Cells[2].Tag = existingVotes.Item2.AccountName;
+                        dgvRow.Cells[2].Value = existingVotes.Item2.ToString("FN LN TT");
+                        dgvRow.Cells[2].Style.BackColor = Color.Aquamarine;
+                    }
+                }
+                btnReadyManualVote.Visible = false;
+                btnSubmitManualVote.Visible = true;
+            } else
+            {
+                txtNameOfManualVote.BackColor = Color.Red;
+                MessageBox.Show("Unknown user");
+            }
+        }
 
+        private void txtNameOfManualVote_TextChanged(object sender, EventArgs e)
+        {
+            txtNameOfManualVote.BackColor = Color.FromKnownColor(KnownColor.Window);
+        }
+
+        static UserVoteSubmit Confirming;
+        private void btnSubmitManualVote_Click(object sender, EventArgs e)
+        {
+            var defaultBackground = dgvManualVotes.Rows[0].Cells[0].Style.BackColor;
+            var highlightBackground = Color.IndianRed;
+            int numEmpty = 0;
+            UserVoteSubmit vote = null;
+            if(Program.TryGetUser(txtNameOfManualVote.Text, out User user))
+            {
+                vote = new UserVoteSubmit(user);
+            } else
+            {
+                return;
+            }
+            foreach(DataGridViewRow row in dgvManualVotes.Rows)
+            {
+                var firstWinner = row.Cells[1];
+                var secondWinner = row.Cells[2];
+                User first = null;
+                User second = null;
+                if (string.IsNullOrWhiteSpace((string)firstWinner.Tag))
+                    numEmpty++;
+                else
+                    Program.TryGetUser((string)firstWinner.Tag, out first);
+                
+                firstWinner.Style.BackColor = (string.IsNullOrWhiteSpace((string)firstWinner.Tag)) ? highlightBackground : defaultBackground;
+                if (string.IsNullOrWhiteSpace((string)secondWinner.Tag))
+                    numEmpty++;
+                else
+                    Program.TryGetUser((string)secondWinner.Tag, out second);
+                secondWinner.Style.BackColor = (string.IsNullOrWhiteSpace((string)secondWinner.Tag)) ? highlightBackground : defaultBackground;
+
+                vote.AddVote(row.Index + 1, first, second);
+            }
+            if(numEmpty > 0 && (vote.ConfirmString != (Confirming?.ConfirmString ?? "")))
+            {
+                Confirming = vote;
+                MessageBox.Show($"Warning:\r\nYou have left {numEmpty} nominations empty\r\nPlease confirm the highlighted ones, and hit 'Submit' again", "Empty Nominations", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+            }
+            else
+            {
+                vote.Submit();
+                MessageBox.Show($"Vote has been submitted", "Submitted", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+        }
+
+        private void dgvManualVotes_CellEndEdit(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.ColumnIndex < 0 || e.RowIndex < 0)
+                return;
+            var row = dgvManualVotes.Rows[e.RowIndex];
+            var cell = row.Cells[e.ColumnIndex];
+            string content = (string)cell.Value;
+            User user = null;
+            if (!Program.TryGetUser(content, out user)) // try text, so they can override..
+                Program.TryGetUser((string)cell.Tag, out user);  // but also check tag, in case we are resetting a prior vote
+            if(user != null)
+            {
+                cell.Style.BackColor = Color.FromKnownColor(KnownColor.Window);
+                cell.Value = user.ToString("FN LN TT");
+                cell.Tag = user.AccountName;
+            } else
+            {
+                cell.Tag = "";
+                cell.Style.BackColor = Color.Red;
+            }
         }
     }
 }

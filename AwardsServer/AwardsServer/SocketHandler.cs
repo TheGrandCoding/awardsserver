@@ -111,6 +111,7 @@ namespace AwardsServer
                     // SUBMIT:male;female#male;female#male;female ....
                     // the male;female pairs are in order, so we should just be able to increment a counter as we go thorugh each
                     string rejectedReason = "";
+                    UserVoteSubmit vote = new UserVoteSubmit(this.User);
                     try
                     {
                         string[] cats = message.Split('#'); //categories
@@ -134,26 +135,17 @@ namespace AwardsServer
                             if (firstWinner != null)
                             {
                                 if (firstWinner.AccountName == this.User.AccountName) //trying to vote for themself
-                                {
                                     rejectedReason = "Rejected:Self";
-                                }
-                                else
-                                {
-                                    Program.Database.AddVoteFor(index + 1, firstWinner, this.User);
-                                }
                             }
                             if(secondWinner != null)
                             {
                                 if (secondWinner.AccountName == this.User.AccountName)
-                                {
                                     rejectedReason = "Rejected:Self";
-                                }
-                                else
-                                {
-                                    Program.Database.AddVoteFor(index + 1, secondWinner, this.User);
-                                }
                             }
-
+                            if(string.IsNullOrWhiteSpace(rejectedReason))
+                            {
+                                vote.AddVote(index + 1, firstWinner, secondWinner);
+                            }
                         }
                     } catch (Exception ex)
                     {
@@ -166,6 +158,7 @@ namespace AwardsServer
                             var now = DateTime.Now;
                             var ts = now - this.StartedTime;
                             Program.Database.AlreadyVotedNames.Add(this.User.AccountName);
+                            vote.Submit();
                             this.Send("Accepted");
                             Logging.Log(Logging.LogSeverity.Warning, $"User has voted (took: {ts})", this.User.AccountName);
                         }

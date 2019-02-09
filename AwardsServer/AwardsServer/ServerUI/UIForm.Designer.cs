@@ -32,12 +32,20 @@
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.dgvStudents = new System.Windows.Forms.DataGridView();
+            this.Column1 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Column2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Column3 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Column4 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Column13 = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.tabPage2 = new System.Windows.Forms.TabPage();
             this.dgvCategories = new System.Windows.Forms.DataGridView();
             this.Column6 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Column7 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.tabPage3 = new System.Windows.Forms.TabPage();
             this.dgvWinners = new System.Windows.Forms.DataGridView();
+            this.Column8 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Column9 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Column10 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.tabPage4 = new System.Windows.Forms.TabPage();
             this.btnSaveOptions = new System.Windows.Forms.Button();
             this.tabPage5 = new System.Windows.Forms.TabPage();
@@ -49,15 +57,16 @@
             this.dataGridViewTextBoxColumn1 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Column14 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.dataGridViewTextBoxColumn2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.tabPage7 = new System.Windows.Forms.TabPage();
+            this.dgvManualVotes = new System.Windows.Forms.DataGridView();
+            this.txtNameOfManualVote = new System.Windows.Forms.TextBox();
+            this.label1 = new System.Windows.Forms.Label();
             this.queueTimer = new System.Windows.Forms.Timer(this.components);
-            this.Column1 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Column2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Column3 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Column4 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Column13 = new System.Windows.Forms.DataGridViewCheckBoxColumn();
-            this.Column8 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Column9 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Column10 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.btnReadyManualVote = new System.Windows.Forms.Button();
+            this.btnSubmitManualVote = new System.Windows.Forms.Button();
+            this.Column5 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Column15 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Column16 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvStudents)).BeginInit();
@@ -70,6 +79,8 @@
             ((System.ComponentModel.ISupportInitialize)(this.dgvQueue)).BeginInit();
             this.tabPage6.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvCurrentVoters)).BeginInit();
+            this.tabPage7.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.dgvManualVotes)).BeginInit();
             this.SuspendLayout();
             // 
             // tabControl1
@@ -80,6 +91,7 @@
             this.tabControl1.Controls.Add(this.tabPage4);
             this.tabControl1.Controls.Add(this.tabPage5);
             this.tabControl1.Controls.Add(this.tabPage6);
+            this.tabControl1.Controls.Add(this.tabPage7);
             this.tabControl1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tabControl1.Location = new System.Drawing.Point(0, 0);
             this.tabControl1.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
@@ -122,8 +134,33 @@
             this.dgvStudents.Size = new System.Drawing.Size(786, 417);
             this.dgvStudents.TabIndex = 2;
             this.dgvStudents.CellBeginEdit += new System.Windows.Forms.DataGridViewCellCancelEventHandler(this.dgvStudents_CellBeginEdit);
-            this.dgvStudents.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvStudents_CellContentClick);
             this.dgvStudents.CellEndEdit += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvStudents_CellEndEdit);
+            // 
+            // Column1
+            // 
+            this.Column1.HeaderText = "Acc. Name";
+            this.Column1.Name = "Column1";
+            // 
+            // Column2
+            // 
+            this.Column2.HeaderText = "First Name";
+            this.Column2.Name = "Column2";
+            // 
+            // Column3
+            // 
+            this.Column3.HeaderText = "Second Name";
+            this.Column3.Name = "Column3";
+            // 
+            // Column4
+            // 
+            this.Column4.HeaderText = "Tutor";
+            this.Column4.Name = "Column4";
+            // 
+            // Column13
+            // 
+            this.Column13.HeaderText = "Voted";
+            this.Column13.Name = "Column13";
+            this.Column13.ReadOnly = true;
             // 
             // tabPage2
             // 
@@ -201,8 +238,27 @@
             this.dgvWinners.Size = new System.Drawing.Size(786, 417);
             this.dgvWinners.TabIndex = 2;
             // 
+            // Column8
+            // 
+            this.Column8.HeaderText = "Category";
+            this.Column8.Name = "Column8";
+            this.Column8.ReadOnly = true;
+            // 
+            // Column9
+            // 
+            this.Column9.HeaderText = "1st Winner(s) | Num Votes";
+            this.Column9.Name = "Column9";
+            this.Column9.ReadOnly = true;
+            // 
+            // Column10
+            // 
+            this.Column10.HeaderText = "2nd Winner(s) | Num Votes";
+            this.Column10.Name = "Column10";
+            this.Column10.ReadOnly = true;
+            // 
             // tabPage4
             // 
+            this.tabPage4.AutoScroll = true;
             this.tabPage4.Controls.Add(this.btnSaveOptions);
             this.tabPage4.Location = new System.Drawing.Point(4, 25);
             this.tabPage4.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
@@ -218,7 +274,7 @@
             this.btnSaveOptions.Location = new System.Drawing.Point(5, 6);
             this.btnSaveOptions.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.btnSaveOptions.Name = "btnSaveOptions";
-            this.btnSaveOptions.Size = new System.Drawing.Size(780, 25);
+            this.btnSaveOptions.Size = new System.Drawing.Size(744, 25);
             this.btnSaveOptions.TabIndex = 0;
             this.btnSaveOptions.Text = "Save";
             this.btnSaveOptions.UseVisualStyleBackColor = true;
@@ -228,9 +284,9 @@
             // 
             this.tabPage5.Controls.Add(this.dgvQueue);
             this.tabPage5.Location = new System.Drawing.Point(4, 25);
-            this.tabPage5.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.tabPage5.Margin = new System.Windows.Forms.Padding(4);
             this.tabPage5.Name = "tabPage5";
-            this.tabPage5.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.tabPage5.Padding = new System.Windows.Forms.Padding(4);
             this.tabPage5.Size = new System.Drawing.Size(792, 421);
             this.tabPage5.TabIndex = 4;
             this.tabPage5.Text = "Current Queue";
@@ -249,7 +305,7 @@
             this.Column12});
             this.dgvQueue.Dock = System.Windows.Forms.DockStyle.Fill;
             this.dgvQueue.Location = new System.Drawing.Point(4, 4);
-            this.dgvQueue.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.dgvQueue.Margin = new System.Windows.Forms.Padding(4);
             this.dgvQueue.Name = "dgvQueue";
             this.dgvQueue.ReadOnly = true;
             this.dgvQueue.RowHeadersVisible = false;
@@ -293,7 +349,7 @@
             this.dataGridViewTextBoxColumn2});
             this.dgvCurrentVoters.Dock = System.Windows.Forms.DockStyle.Fill;
             this.dgvCurrentVoters.Location = new System.Drawing.Point(3, 2);
-            this.dgvCurrentVoters.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.dgvCurrentVoters.Margin = new System.Windows.Forms.Padding(4);
             this.dgvCurrentVoters.Name = "dgvCurrentVoters";
             this.dgvCurrentVoters.ReadOnly = true;
             this.dgvCurrentVoters.RowHeadersVisible = false;
@@ -318,55 +374,96 @@
             this.dataGridViewTextBoxColumn2.Name = "dataGridViewTextBoxColumn2";
             this.dataGridViewTextBoxColumn2.ReadOnly = true;
             // 
+            // tabPage7
+            // 
+            this.tabPage7.Controls.Add(this.btnSubmitManualVote);
+            this.tabPage7.Controls.Add(this.btnReadyManualVote);
+            this.tabPage7.Controls.Add(this.dgvManualVotes);
+            this.tabPage7.Controls.Add(this.txtNameOfManualVote);
+            this.tabPage7.Controls.Add(this.label1);
+            this.tabPage7.Location = new System.Drawing.Point(4, 25);
+            this.tabPage7.Name = "tabPage7";
+            this.tabPage7.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage7.Size = new System.Drawing.Size(792, 421);
+            this.tabPage7.TabIndex = 6;
+            this.tabPage7.Text = "Manual Vote";
+            this.tabPage7.UseVisualStyleBackColor = true;
+            // 
+            // dgvManualVotes
+            // 
+            this.dgvManualVotes.AllowUserToAddRows = false;
+            this.dgvManualVotes.AllowUserToDeleteRows = false;
+            this.dgvManualVotes.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
+            this.dgvManualVotes.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dgvManualVotes.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.Column5,
+            this.Column15,
+            this.Column16});
+            this.dgvManualVotes.Location = new System.Drawing.Point(11, 31);
+            this.dgvManualVotes.Name = "dgvManualVotes";
+            this.dgvManualVotes.RowHeadersVisible = false;
+            this.dgvManualVotes.RowTemplate.Height = 24;
+            this.dgvManualVotes.Size = new System.Drawing.Size(773, 384);
+            this.dgvManualVotes.TabIndex = 2;
+            this.dgvManualVotes.CellEndEdit += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvManualVotes_CellEndEdit);
+            // 
+            // txtNameOfManualVote
+            // 
+            this.txtNameOfManualVote.Location = new System.Drawing.Point(244, 6);
+            this.txtNameOfManualVote.Name = "txtNameOfManualVote";
+            this.txtNameOfManualVote.Size = new System.Drawing.Size(193, 22);
+            this.txtNameOfManualVote.TabIndex = 1;
+            this.txtNameOfManualVote.TextChanged += new System.EventHandler(this.txtNameOfManualVote_TextChanged);
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(6, 5);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(232, 17);
+            this.label1.TabIndex = 0;
+            this.label1.Text = "Add a vote on behalf of (username)";
+            // 
             // queueTimer
             // 
             this.queueTimer.Enabled = true;
             this.queueTimer.Interval = 10000;
             this.queueTimer.Tick += new System.EventHandler(this.queueTimer_Tick);
             // 
-            // Column1
+            // btnReadyManualVote
             // 
-            this.Column1.HeaderText = "Acc. Name";
-            this.Column1.Name = "Column1";
+            this.btnReadyManualVote.Location = new System.Drawing.Point(443, 6);
+            this.btnReadyManualVote.Name = "btnReadyManualVote";
+            this.btnReadyManualVote.Size = new System.Drawing.Size(111, 23);
+            this.btnReadyManualVote.TabIndex = 3;
+            this.btnReadyManualVote.Text = "Ready";
+            this.btnReadyManualVote.UseVisualStyleBackColor = true;
+            this.btnReadyManualVote.Click += new System.EventHandler(this.btnPerformManualVote_Click);
             // 
-            // Column2
+            // btnSubmitManualVote
             // 
-            this.Column2.HeaderText = "First Name";
-            this.Column2.Name = "Column2";
+            this.btnSubmitManualVote.Location = new System.Drawing.Point(673, 5);
+            this.btnSubmitManualVote.Name = "btnSubmitManualVote";
+            this.btnSubmitManualVote.Size = new System.Drawing.Size(111, 23);
+            this.btnSubmitManualVote.TabIndex = 4;
+            this.btnSubmitManualVote.Text = "Submit";
+            this.btnSubmitManualVote.UseVisualStyleBackColor = true;
+            this.btnSubmitManualVote.Click += new System.EventHandler(this.btnSubmitManualVote_Click);
             // 
-            // Column3
+            // Column5
             // 
-            this.Column3.HeaderText = "Second Name";
-            this.Column3.Name = "Column3";
+            this.Column5.HeaderText = "Category";
+            this.Column5.Name = "Column5";
             // 
-            // Column4
+            // Column15
             // 
-            this.Column4.HeaderText = "Tutor";
-            this.Column4.Name = "Column4";
+            this.Column15.HeaderText = "First Winner";
+            this.Column15.Name = "Column15";
             // 
-            // Column13
+            // Column16
             // 
-            this.Column13.HeaderText = "Voted";
-            this.Column13.Name = "Column13";
-            this.Column13.ReadOnly = true;
-            // 
-            // Column8
-            // 
-            this.Column8.HeaderText = "Category";
-            this.Column8.Name = "Column8";
-            this.Column8.ReadOnly = true;
-            // 
-            // Column9
-            // 
-            this.Column9.HeaderText = "1st Winner(s) | Num Votes";
-            this.Column9.Name = "Column9";
-            this.Column9.ReadOnly = true;
-            // 
-            // Column10
-            // 
-            this.Column10.HeaderText = "2nd Winner(s) | Num Votes";
-            this.Column10.Name = "Column10";
-            this.Column10.ReadOnly = true;
+            this.Column16.HeaderText = "Second Winner";
+            this.Column16.Name = "Column16";
             // 
             // UIForm
             // 
@@ -391,6 +488,9 @@
             ((System.ComponentModel.ISupportInitialize)(this.dgvQueue)).EndInit();
             this.tabPage6.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.dgvCurrentVoters)).EndInit();
+            this.tabPage7.ResumeLayout(false);
+            this.tabPage7.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.dgvManualVotes)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -426,5 +526,14 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn Column8;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column9;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column10;
+        private System.Windows.Forms.TabPage tabPage7;
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.TextBox txtNameOfManualVote;
+        private System.Windows.Forms.DataGridView dgvManualVotes;
+        private System.Windows.Forms.Button btnReadyManualVote;
+        private System.Windows.Forms.Button btnSubmitManualVote;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Column5;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Column15;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Column16;
     }
 }

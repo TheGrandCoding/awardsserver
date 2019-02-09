@@ -44,6 +44,12 @@ namespace AwardsServer
         }
         public static class Options
         {
+            [Option("Relative/Absolute path for the file used to contain the Server's IP", "Path of ServerIP file", @"..\..\..\ServerIP", true)]
+            public static string ServerIP_File_Path;
+
+            [Option("Path for votes to be saved to in text-file format", "Backup vote text file path", @"..\..\..\RawVotes.log", true)]
+            public static string ServerTextFileVotes_Path;
+
             [Option("Maximum number of students to list in a name query response", "Max students for query", 10)]
             public static int Maximum_Query_Response;
 
@@ -71,11 +77,11 @@ namespace AwardsServer
             [Option("Allow someone other than server to see the winners", "Allow see redacted", false)]
             public static bool Allow_NonLocalHost_WebConnections;
 
-            [Option("Relative/Absolute path for the file used to contain the Server's IP", "Path of ServerIP file", @"..\..\..\ServerIP", true)]
-            public static string ServerIP_File_Path;
-
             [Option("Is the web server serving files/listening for connections?", "Web site status", false)]
             public static bool WebSever_Enabled;
+
+            [Option("Can the server manually vote on behalf of a user via its 'Manual Vote' tab", "Can server save a vote", true)]
+            public static bool Allow_Manual_Vote;
         }
 
         private const string MainRegistry = "HKEY_CURRENT_USER\\AwardsProgram\\Server";
@@ -487,6 +493,59 @@ namespace AwardsServer
         /// Indicates that the person should not be permitted to actually vote
         /// </summary>
         public const string Disallow_Vote_Staff = "block-vote";
+    }
+
+    public class UserVoteSubmit
+    {
+        static object lockObj = new object();
+        public User VotingFor;
+        public Dictionary<int, Tuple<User, User>> Votes = new Dictionary<int, Tuple<User, User>>();
+        public void AddVote(int cat, User u1 = null, User u2 = null)
+        {
+            if (Votes.ContainsKey(cat))
+                Votes[cat] = new Tuple<User, User>(u1, u2);
+            else
+                Votes.Add(cat, new Tuple<User, User>(u1, u2));
+        }
+        public void AddVote(Category cat, User u1 = null, User u2 = null) => AddVote(cat.ID, u1, u2);
+        public UserVoteSubmit(User _for)
+        {
+            VotingFor = _for;
+        }
+        public string ConfirmString
+        {
+            get
+            {
+                string t = "";
+                foreach (var cat in Votes.Values)
+                {
+                    t += $"{(cat.Item1?.AccountName ?? "")};{cat.Item2?.AccountName ?? ""}#";
+                }
+                return t;
+            }
+        }
+        public bool Submit()
+        {
+            bool errored = false;
+            lock(lockObj)
+            {
+                try
+                {
+                    System.IO.File.AppendAllText(Program.Options.ServerTextFileVotes_Path, $"{VotingFor.AccountName}/{ConfirmString}");
+                }
+                catch (Exception ex)
+                {
+                    Logging.Log("SubmitIO", ex);
+                    errored = true;
+                }
+            }
+            foreach(var vote in Votes)
+            {
+                Program.Database.AddVoteFor(vote.Key, vote.Value.Item1, this.VotingFor);
+                Program.Database.AddVoteFor(vote.Key, vote.Value.Item2, this.VotingFor);
+            }
+            return errored;
+        }
     }
 
 }

@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using AwardsServer.BugReport;
 
 namespace AwardsServer
 {
@@ -22,6 +23,8 @@ namespace AwardsServer
         /// </summary>
         public static Dictionary<string, string> CachedKnownIPs = new Dictionary<string, string>();
 
+
+        public enum Authentication { Student=0,Sysop=1,Sysadmin=2}
         public class SocketConnection
         {
             public TcpClient Client;
@@ -33,6 +36,8 @@ namespace AwardsServer
 
             public string IPAddress;
 
+            public Authentication Authentication = Authentication.Student;
+
             public DateTime StartedTime;
 
             Thread listenThread;
@@ -43,10 +48,16 @@ namespace AwardsServer
                 UserName = name;
                 if(Program.TryGetUser(name, out User)) {
                     // nothing (already sets variable so..)
-                    if(Program.Options.WebSever_Enabled)
+                    IPEndPoint ipEnd = client.Client.RemoteEndPoint as IPEndPoint;
+                    var ip = ipEnd.Address.ToString() == "127.0.0.1" ? Program.GetLocalIPAddress() : ipEnd.Address.ToString();
+                    if (User.Flags.Contains(Flags.Automatic_Sysop))
+                        this.Authentication = Authentication.Sysop;
+                    if (ip == Program.GetLocalIPAddress())
+                        this.Authentication = Authentication.Sysadmin;
+                    if (this.Authentication != Authentication.Student)
+                        this.Send("Auth:" + ((int)Authentication).ToString());
+                    if (Program.Options.WebSever_Enabled)
                     {
-                        IPEndPoint ipEnd = client.Client.RemoteEndPoint as IPEndPoint;
-                        var ip = ipEnd.Address.ToString() == "127.0.0.1" ? Program.GetLocalIPAddress() : ipEnd.Address.ToString();
                         if(CachedKnownIPs.ContainsKey(User.AccountName)) {
                             Logging.Log(Logging.LogSeverity.Warning, $"User {User.ToString("AN FN")} was connected via {CachedKnownIPs[User.AccountName]} but now has connected via {ip}");
                             CachedKnownIPs[User.AccountName] = ip;
@@ -220,6 +231,11 @@ namespace AwardsServer
                     {
                         Logging.Log("SuggestFile", ex);
                     }
+                } else if(message.StartsWith("REPORT:"))
+                {
+                    var report = BugReport.BugReport.Parse(message, this.User);
+                    Program.BugReports.Add(report);
+                    Program.Github.Save();
                 }
             }
 

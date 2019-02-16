@@ -19,6 +19,10 @@ namespace AwardsServer
         public static SocketHandler Server; // Handles the connection and essentially interfaces with the TCP-side of things
         public static DatabaseStuffs Database; // database related things
         public static ServerUI.WebsiteHandler WebServer;
+        public static BugReport.GithubService Github;
+        public static GithubDLL.GithubRepository AwardsRepository;
+
+        public static List<BugReport.BugReport> BugReports = new List<BugReport.BugReport>();
 
         [AttributeUsage(AttributeTargets.Field, AllowMultiple = false)] //?? - Determines where the below attribute can be used; in our case, we just need it on Fields (ie, variables)
         public class OptionAttribute : Attribute //what is this for?? does it 'Constructs the information for an Option.'? // the class holds info on the options, and the Attribute allows it to be put in the [ ]
@@ -82,6 +86,9 @@ namespace AwardsServer
 
             [Option("Can the server manually vote on behalf of a user via its 'Manual Vote' tab", "Can server save a vote", true)]
             public static bool Allow_Manual_Vote;
+
+            [Option("Github authentication token", "Github authentification token", "")]
+            public static string Github_AuthToken;
         }
 
         private const string MainRegistry = "HKEY_CURRENT_USER\\AwardsProgram\\Server";
@@ -186,6 +193,7 @@ namespace AwardsServer
             // without the above, any error that is not within a "try..except" would simply cause the console window to close without any log or message.
             Logging.Log(Logging.LogSeverity.Severe, "[README] Available at: https://y11awards.page.link/readme");
             Logging.Log(Logging.LogSeverity.Severe, "[ISSUES] Reportable at: https://y11awards.page.link/issues");
+
             Logging.Log(Logging.LogSeverity.Info,  "Loading existing categories...");
             Database = new DatabaseStuffs();
             Database.Connect();
@@ -205,7 +213,8 @@ namespace AwardsServer
 #endif
 
             Logging.Log($"Loaded {Database.AllStudents.Count} students and {Database.AllCategories.Count} categories.");
-            
+
+
 
             Logging.Log("Starting socket listener...");
             Server = new SocketHandler();
@@ -449,6 +458,8 @@ namespace AwardsServer
         /// <param name="votedBy">Person that was doing the voting.</param>
         public void AddVote(User voted, User votedBy) //add a vote to 'voted'
         {
+            if (voted == null)
+                return;
             if (voted.AccountName == votedBy.AccountName)
             {
                 throw new ArgumentException("Both users are the same object, or share the same name");
@@ -493,6 +504,11 @@ namespace AwardsServer
         /// Indicates that the person should not be permitted to actually vote
         /// </summary>
         public const string Disallow_Vote_Staff = "block-vote";
+
+        /// <summary>
+        /// Upon connection, makes the user a system operator.
+        /// </summary>
+        public const string Automatic_Sysop = "sysop";
     }
 
     public class UserVoteSubmit
@@ -531,7 +547,7 @@ namespace AwardsServer
             {
                 try
                 {
-                    System.IO.File.AppendAllText(Program.Options.ServerTextFileVotes_Path, $"{VotingFor.AccountName}/{ConfirmString}");
+                    System.IO.File.AppendAllText(Program.Options.ServerTextFileVotes_Path, $"{VotingFor.AccountName}/{ConfirmString}\n");
                 }
                 catch (Exception ex)
                 {
@@ -541,8 +557,10 @@ namespace AwardsServer
             }
             foreach(var vote in Votes)
             {
-                Program.Database.AddVoteFor(vote.Key, vote.Value.Item1, this.VotingFor);
-                Program.Database.AddVoteFor(vote.Key, vote.Value.Item2, this.VotingFor);
+                if(vote.Value.Item1 != null)
+                    Program.Database.AddVoteFor(vote.Key, vote.Value.Item1, this.VotingFor);
+                if(vote.Value.Item2 != null)
+                    Program.Database.AddVoteFor(vote.Key, vote.Value.Item2, this.VotingFor);
             }
             return errored;
         }

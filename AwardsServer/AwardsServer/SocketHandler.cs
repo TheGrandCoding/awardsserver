@@ -18,16 +18,37 @@ namespace AwardsServer
         public static List<SocketConnection> CurrentClients = new List<SocketConnection>(); // current students actually voting
         public static List<SocketConnection> ClientQueue = new List<SocketConnection>(); // students waiting to vote
 
+        public static List<SocketConnection> AdminClients
+        {
+            get
+            {
+                List<SocketConnection> list = new List<SocketConnection>();
+                lock(LockClient)
+                {
+                    list = CurrentClients.Where(x => x.Authentication > Authentication.Student).ToList();
+                    list.AddRange(ClientQueue.Where(x => x.Authentication > Authentication.Student));
+                }
+                return list;
+            }
+        }
+
         /// <summary>
         /// We cache the IP everyone connects to, for purposes..
         /// </summary>
         public static Dictionary<string, string> CachedKnownIPs = new Dictionary<string, string>();
 
 
-        public enum Authentication { Student=0,Sysop=1,Sysadmin=2}
+        public enum Authentication
+        {
+            None     = 0,
+            Student  = 1,
+            Sysop    = 2,
+            Sysadmin = 3
+        }
         public class SocketConnection
         {
             public TcpClient Client;
+            public IPEndPoint IPEnd;
             public string UserName; // can be different from AccountName, eg when same person joins twice
                                     // this will be randomly generated a suffix of 3 digits
             public User User;
@@ -37,6 +58,16 @@ namespace AwardsServer
             public string IPAddress;
 
             public Authentication Authentication = Authentication.Student;
+
+            public void ReSendAuthentication()
+            {
+                Authentication = Authentication.Student;
+                if (User.Flags.Contains(Flags.Automatic_Sysop))
+                    this.Authentication = Authentication.Sysop;
+                if (IPEnd.Address.ToString() == "127.0.0.1" || IPEnd.Address.ToString() == Program.GetLocalIPAddress())
+                    this.Authentication = Authentication.Sysadmin;
+                this.Send("Auth:" + ((int)Authentication).ToString());
+            }
 
             public DateTime StartedTime;
 
@@ -49,13 +80,9 @@ namespace AwardsServer
                 if(Program.TryGetUser(name, out User)) {
                     // nothing (already sets variable so..)
                     IPEndPoint ipEnd = client.Client.RemoteEndPoint as IPEndPoint;
-                    var ip = ipEnd.Address.ToString() == "127.0.0.1" ? Program.GetLocalIPAddress() : ipEnd.Address.ToString();
-                    if (User.Flags.Contains(Flags.Automatic_Sysop))
-                        this.Authentication = Authentication.Sysop;
-                    if (ip == Program.GetLocalIPAddress())
-                        this.Authentication = Authentication.Sysadmin;
-                    if (this.Authentication != Authentication.Student)
-                        this.Send("Auth:" + ((int)Authentication).ToString());
+                    IPEnd = ipEnd;
+                    var ip = ipEnd.Address.ToString();
+                    this.ReSendAuthentication();
                     if (Program.Options.WebSever_Enabled)
                     {
                         if(CachedKnownIPs.ContainsKey(User.AccountName)) {
@@ -66,6 +93,7 @@ namespace AwardsServer
                             CachedKnownIPs.Add(User.AccountName, ip);
                         }
                     }
+                    User.Connection = this;
                 } else
                 { // this is handled in the newclient thread thingy
                     throw new ArgumentException("User not found: '" + name + "'");
@@ -75,10 +103,10 @@ namespace AwardsServer
             /// <summary>
             /// Indicates that it should begin to listen because it's been moved from the queue
             /// </summary>
-            public void AcceptFromQueue()
+            public void AcceptFromQueue(bool bypassed = false)
             {
                 StartedTime = DateTime.Now;
-                Logging.Log(Logging.LogSeverity.Warning, "Bringing " + this.User.ToString() + " from queue.");
+                Logging.Log(Logging.LogSeverity.Warning, $"Bringing {this.User} from queue. {(bypassed ? " (user bypassed queue)" : "")}");
                 Send("Ready:" + this.User.FirstName);
                 Send("NumCat:" + Program.Database.AllCategories.Count);
                 listenThread = new Thread(Listen);
@@ -236,6 +264,35 @@ namespace AwardsServer
                     var report = BugReport.BugReport.Parse(message, this.User);
                     Program.BugReports.Add(report);
                     Program.SaveBugs();
+                } else if(message.StartsWith("/"))
+                {
+                    // admin message
+                    message = message.Substring(1);
+                    if(message.StartsWith("CHAT:"))
+                    {
+                        message = message.Substring(5);
+                        Program.SendAdminChat(new AdminMessage(this, message));
+                    } else if(message.StartsWith("QUEUE"))
+                    {
+                        var str = "/AQU:";
+                        int num = 0;
+                        foreach(var s in ClientQueue)
+                        {
+                            num += 1;
+                            str += $"{s.User.AccountName}:{s.User.FirstName}:{s.User.LastName}:{s.User.Tutor}:{num}:{s.IPAddress}#";
+                        }
+                        Send(str);
+                    } else if(message.StartsWith("VOTERS"))
+                    {
+                        var str = "/AVT:";
+                        int num = 0;
+                        foreach (var s in CurrentClients)
+                        {
+                            num += 1;
+                            str += $"{s.User.AccountName}:{s.User.FirstName}:{s.User.LastName}:{s.User.Tutor}:{(int)s.Authentication}:{s.IPAddress}#";
+                        }
+                        Send(str);
+                    }
                 }
             }
 
@@ -246,6 +303,10 @@ namespace AwardsServer
             public void Close(string reason = "unknown")
             {
                 Logging.Log(Logging.LogSeverity.Warning, $"Closing {UserName}({this.User?.ToString() ?? "n/a"}) due to {reason}");
+                try
+                {
+                    this.User.Connection = null;
+                } catch { }
                 try
                 {
                     Client.Close();
@@ -470,6 +531,13 @@ public static string GetLocalIPAddress()
                             CurrentClients.Add(ClientQueue[0]);
                             ClientQueue.RemoveAt(0);
                         }
+                        var adminsInQueue = ClientQueue.Where(x => x.Authentication > Authentication.Student).ToList();
+                        foreach(var adm in adminsInQueue)
+                        {
+                            ClientQueue.RemoveAll(x => x.UserName == adm.UserName);
+                            CurrentClients.Add(adm);
+                            adm.AcceptFromQueue(true);
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -479,4 +547,43 @@ public static string GetLocalIPAddress()
             }
         }
     }
+
+
+    public class AdminMessage
+    {
+        public string From;
+        public SocketHandler.Authentication FromAuth;
+        public string Content;
+
+        public AdminMessage(string from, SocketHandler.Authentication auth, string content)
+        {
+            From = from;
+            FromAuth = auth;
+            Content = content;
+        }
+
+        public AdminMessage(SocketHandler.SocketConnection connection, string content) : this(connection.User.AccountName, connection.Authentication, content)
+        {
+        }
+
+        public string ToSend()
+        {
+            return $"/CHAT:{From}^{(int)FromAuth}^{Content}";
+        }
+
+        public static AdminMessage Parse(string message)
+        {
+            if (message.StartsWith("/"))
+                message = message.Substring(1);
+            if (message.StartsWith("CHAT:"))
+                message = message.Substring(4);
+            var split = message.Split('^').ToList();
+            var from = split[0];
+            var auth = (SocketHandler.Authentication)int.Parse(split[1]);
+            split.RemoveRange(0, 2);
+            var content = string.Join("", split);
+            return new AdminMessage(from, auth, content);
+        }
+    }
+
 }

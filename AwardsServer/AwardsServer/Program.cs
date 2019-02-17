@@ -274,7 +274,7 @@ namespace AwardsServer
                         Database.ExecuteCommand($"DELETE FROM Category{cat.Key} WHERE True = True"); // removes all records
                     }
                     Database.Load_All_Votes();
-                    Logging.Log("Removed all users votes.");
+                    Logging.Log(Logging.LogSeverity.Console, "Removed all users votes.");
                     try
                     {
                         ServerUIForm.Close();
@@ -295,9 +295,45 @@ namespace AwardsServer
                     text += temp;
 
                 }
-                Logging.Log(Logging.LogSeverity.Severe,text);
+                Logging.Log(Logging.LogSeverity.Console, text);
                 System.IO.File.WriteAllText("test.html", text.Replace("\r\n", "<br>"));
+            } else if(e.StartsWith("op"))
+            {
+                e = e.Substring(3).Trim(); // remove "op "
+                if(Program.TryGetUser(e, out User user))
+                {
+                    if (user.Flags.Contains(Flags.Automatic_Sysop))
+                    {
+                        user.Flags.Remove(Flags.Automatic_Sysop);
+                        Logging.Log(Logging.LogSeverity.Console, "Removed sysop from " + user.AccountName);
+                    }
+                    else
+                    {
+                        user.Flags.Add(Flags.Automatic_Sysop);
+                        Logging.Log(Logging.LogSeverity.Console, "Given sysop to " + user.AccountName);
+                    }
+                    Database.ExecuteCommand($"UPDATE UserData SET Flags = '{string.Join(";", user.Flags)}' WHERE UserName = '{user.AccountName}'");
+                    if (user.Connection != null)
+                        user.Connection.ReSendAuthentication();
+                }
+                else
+                {
+                    Logging.Log(Logging.LogSeverity.Console, "Unknown user accounr: " + e);
+                }
+            } else if (e.StartsWith("chat"))
+            {
+                e = e.Substring("chat".Length + 1);
+                SendAdminChat(new AdminMessage("Server", SocketHandler.Authentication.Sysadmin, e));
             }
+        }
+
+        public static void SendAdminChat(AdminMessage message)
+        {
+            foreach (var admin in SocketHandler.AdminClients)
+            {
+                admin.Send(message.ToSend());
+            }
+            Logging.Log(Logging.LogSeverity.Console, message.Content, "Adm/" + message.From);
         }
 
         private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
@@ -339,6 +375,8 @@ namespace AwardsServer
         public readonly char Sex;
         public bool HasVoted => Program.Database.AlreadyVotedNames.Contains(AccountName);
         public string FullName => FirstName + " " + LastName;
+
+        public SocketHandler.SocketConnection Connection; // could be null
 
         /// <summary>
         /// A list of values that indicate special options.

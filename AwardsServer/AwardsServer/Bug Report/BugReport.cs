@@ -10,48 +10,6 @@ using System.Text.RegularExpressions;
 
 namespace AwardsServer.BugReport
 {
-    public class GithubService
-    {
-        public static GithubDLL.GithubClient Client;
-        public const string RepoRegex = @"(?<=repos)\/.*\/.*";
-        public const string IssueFindRegex = @"\S*\/\S*#\d+";
-        public static List<GithubIssue> GetIssues(string input)
-        {
-            List<GithubIssue> issues = new List<GithubIssue>();
-            var regex = new Regex(IssueFindRegex);
-            var match = regex.Matches(input);
-            foreach (Match mat in match)
-            {
-                var text = mat.Value;
-                string[] split = text.Split('/');
-                var owner = split[0];
-                string[] secondSplit = split[1].Split('#');
-                var repo = secondSplit[0];
-                var id = secondSplit[1];
-                var issue = Client.GetAndParse<GithubIssue>($"repos/{owner}/{repo}/issues/{id}");
-                issues.Add(issue);
-            }
-            return issues;
-        }
-        public GithubService(string auth, string agent)
-        {
-            Client = new GithubClient(auth, agent);
-            string contents = "";
-            try
-            {
-                contents = System.IO.File.ReadAllText("bugreports.json");
-            }
-            catch (System.IO.FileNotFoundException)
-            {
-                System.IO.File.WriteAllText("bugreports.json", "");
-            }
-            Program.BugReports = JsonConvert.DeserializeObject<List<BugReport>>(contents);
-        }
-        public void Save()
-        {
-            System.IO.File.WriteAllText("bugreports.json", JsonConvert.SerializeObject(Program.BugReports));
-        }
-    }
     public class BugReport
     {
         public string Primary;
@@ -62,7 +20,7 @@ namespace AwardsServer.BugReport
         [JsonProperty]
         private string reporterName => Reporter?.AccountName ?? "";
         [JsonIgnore]
-        public GithubDLL.GithubIssue Issue;
+        public GithubDLL.Entities.Issue Issue;
         private int issueId => Issue?.number ?? 0;
         public bool Solved;
         public bool Submitted => issueId != 0;
@@ -101,8 +59,8 @@ namespace AwardsServer.BugReport
         [JsonConstructor]
         private BugReport(int id, string reportername)
         {
-            if(id >= 70) 
-                Issue = GithubService.GetIssues("thegrandcoding/awardsserver#" + id.ToString()).FirstOrDefault();
+            if (id >= 70)
+                Issue = Program.AwardsRepository.GetIssue(id);
             else
             {
                 _internalCounter = id;

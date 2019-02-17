@@ -361,7 +361,7 @@ namespace AwardsServer.ServerUI
             }
             catch { }
 
-            if (BugReport.GithubService.Client == null)
+            if (Program.Github == null)
             {
                 if (!warnedGithubBefore)
                 {
@@ -373,8 +373,9 @@ namespace AwardsServer.ServerUI
                     }
                     else
                     {
-                        Github = new BugReport.GithubService(Options.Github_AuthToken, "tgc-awards");
-                        Program.AwardsRepository = GithubDLL.GithubRepository.GetRepo(GithubService.Client, "thegrandcoding", "awardsserver");
+                        Github = new GithubDLL.GithubClient(Options.Github_AuthToken, "tgc-awards");
+                        Program.AwardsRepository = Github.GetRepository("thegrandcoding", "awardsserver");
+                        LoadBugs();
                         UpdateBugReports();
                     }
                 }
@@ -746,8 +747,8 @@ namespace AwardsServer.ServerUI
                         var reason = Microsoft.VisualBasic.Interaction.InputBox("Enter a reason for closing the issue", "Closure Reason");
                         if (!string.IsNullOrWhiteSpace(reason))
                         {
-                            report.Issue.Comment(GithubService.Client, "Closed by server, reason provided: " + reason);
-                            report.Issue.ModifyAsync(GithubService.Client, x =>
+                            report.Issue.Comment("Closed by server, reason provided: " + reason);
+                            report.Issue.ModifyAsync(x =>
                             {
                                 x.state = "closed";
                             });
@@ -757,7 +758,7 @@ namespace AwardsServer.ServerUI
                 else
                 {
                     // not submitted, so we need to create an issue.
-                    var issue = Program.AwardsRepository.CreateIssue(GithubService.Client, x =>
+                    var issue = Program.AwardsRepository.CreateIssue(x =>
                     {
                         x.title = "Bug report by " + report.Reporter.AccountName;
                         x.body = $"**Type:** {report.Type}\r\n" +
@@ -767,8 +768,7 @@ namespace AwardsServer.ServerUI
                     });
                     report.Issue = issue;
                 }
-                report.Issue = GithubService.Client.GetAndParse<GithubDLL.GithubIssue>(report.Issue.url);
-                Github.Save();
+                Program.SaveBugs();
             }
         }
     }

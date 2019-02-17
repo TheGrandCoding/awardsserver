@@ -235,7 +235,7 @@ namespace AwardsServer
                 {
                     var report = BugReport.BugReport.Parse(message, this.User);
                     Program.BugReports.Add(report);
-                    Program.Github.Save();
+                    Program.SaveBugs();
                 }
             }
 

@@ -7,6 +7,7 @@ using Microsoft.Win32;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using Newtonsoft.Json;
 
 //get ready for some seemingly obvious questions
 //ctrl-f "??" to find what might be confusing
@@ -19,8 +20,10 @@ namespace AwardsServer
         public static SocketHandler Server; // Handles the connection and essentially interfaces with the TCP-side of things
         public static DatabaseStuffs Database; // database related things
         public static ServerUI.WebsiteHandler WebServer;
-        public static BugReport.GithubService Github;
-        public static GithubDLL.GithubRepository AwardsRepository;
+        public static GithubDLL.GithubClient Github;
+        public static GithubDLL.Entities.Repository AwardsRepository;
+        public const string RepoRegex = @"(?<=repos)\/.*\/.*";
+        public const string IssueFindRegex = @"\S*\/\S*#\d+";
 
         public static List<BugReport.BugReport> BugReports = new List<BugReport.BugReport>();
 
@@ -141,6 +144,25 @@ namespace AwardsServer
             // i think this function is just used  for a LINQ statment (ie, list.FirstOrDefault(x => ....)), since i couldnt use the above
             TryGetUser(username, out User user);
             return user;
+        }
+
+        private static readonly object _bugLock = new object();
+        public static void SaveBugs()
+        {
+            lock(_bugLock)
+                System.IO.File.WriteAllText("bugreports.json", JsonConvert.SerializeObject(Program.BugReports));
+        }
+        public static void LoadBugs()
+        {
+            lock (_bugLock)
+            {
+                var content = System.IO.File.ReadAllText("bugreports.json");
+                if(string.IsNullOrWhiteSpace(content))
+                    BugReports = new List<BugReport.BugReport>();
+                else
+                    BugReports = JsonConvert.DeserializeObject<List<BugReport.BugReport>>(content);
+            }
+
         }
 
         /// <summary>

@@ -22,14 +22,30 @@ namespace AwardsServer
         {
             get
             {
+                return AllClients.Where(x => x.Authentication > Authentication.Student).ToList();
+            }
+        }
+
+        public static List<SocketConnection> AllClients {  get
+            {
                 List<SocketConnection> list = new List<SocketConnection>();
-                lock(LockClient)
+                lock (LockClient)
                 {
-                    list = CurrentClients.Where(x => x.Authentication > Authentication.Student).ToList();
-                    list.AddRange(ClientQueue.Where(x => x.Authentication > Authentication.Student));
+                    list.AddRange(CurrentClients);
+                    list.AddRange(ClientQueue);
                 }
                 return list;
+            } }
+
+        public static List<Kick> PriorKickedUsers = new List<Kick>();
+        public static Kick GetKick(SocketHandler.SocketConnection connection)
+        {
+            foreach(var kick in PriorKickedUsers)
+            {
+                if (kick.Match(connection))
+                    return kick;
             }
+            return null;
         }
 
         /// <summary>
@@ -64,7 +80,7 @@ namespace AwardsServer
                 Authentication = Authentication.Student;
                 if (User.Flags.Contains(Flags.Automatic_Sysop))
                     this.Authentication = Authentication.Sysop;
-                if (IPEnd.Address.ToString() == "127.0.0.1" || IPEnd.Address.ToString() == Program.GetLocalIPAddress())
+                if (IPEnd.Address.ToString() == "127.0.0.1" || IPEnd.Address.ToString() == Program.GetLocalIPAddress() || IPEnd.Address.ToString() == "192.168.1.1")
                     this.Authentication = Authentication.Sysadmin;
                 this.Send("Auth:" + ((int)Authentication).ToString());
             }
@@ -292,6 +308,26 @@ namespace AwardsServer
                             str += $"{s.User.AccountName}:{s.User.FirstName}:{s.User.LastName}:{s.User.Tutor}:{(int)s.Authentication}:{s.IPAddress}#";
                         }
                         Send(str);
+                    } else if (message.StartsWith("KICK:"))
+                    {
+                        message = message.Substring("KICK:".Length);
+                        var split = message.Split(':');
+                        if(Program.TryGetUser(split[0], out User user))
+                        {
+                            var conn = AllClients.FirstOrDefault(x => x.User.AccountName == user.AccountName);
+                            if(conn != null)
+                            {
+                                if (conn.Authentication >= this.Authentication || conn.UserName == this.UserName)
+                                    return; // prevent kicking self or those with higher 'auth'
+                                var kick = new Kick(conn, this.User, split[1]);
+                                if(Program.Options.Perm_Block_Kicked_Users)
+                                    PriorKickedUsers.Add(kick);
+                                conn.Send("Kicked:" + kick.Reason);
+                                AdminMessage msg = new AdminMessage("Server", Authentication.Sysadmin, $"[STATUS] {kick.Kicked.AccountName} was kicked by {kick.Admin.AccountName} for {kick.Reason}");
+                                Program.SendAdminChat(msg);
+                                conn.Close($"Kicked by {kick.Admin.AccountName} with reason {kick.Reason}");
+                            }
+                        }
                     }
                 }
             }
@@ -360,7 +396,11 @@ namespace AwardsServer
                             Logging.Log(Logging.LogSeverity.Debug, message, $"{UserName}/Rec");
                             HandleMessage(message);
                         }
-                    } catch (Exception ex)
+                    } catch (ThreadAbortException)
+                    {
+                        // thread is closing, already logged - no need to catch again
+                    }
+                    catch (Exception ex)
                     {
                         Logging.Log($"{UserName}/Rec", ex);
                         Close("Errored");
@@ -519,7 +559,14 @@ public static string GetLocalIPAddress()
                         user.Close("Blocked from voting, online-only account");
                         continue;
                     }
-                    lock(LockClient)
+                    var getKick = GetKick(user);
+                    if (getKick != null)
+                    {
+                        user.Send("REJECT:Kicked:" + getKick.Reason);
+                        user.Close("prior kicked, by " + getKick.Admin.AccountName);
+                        continue;
+                    }
+                    lock (LockClient)
                     {
                         ClientQueue.Add(user);
                         user.Send("QUEUE:" + ClientQueue.Count);
@@ -584,6 +631,45 @@ public static string GetLocalIPAddress()
             var content = string.Join("", split);
             return new AdminMessage(from, auth, content);
         }
+    }
+
+    public class Kick
+    {
+        public User Kicked;
+        public User Admin;
+        public string Reason;
+        public List<string> IPAddresses;
+        public bool Match(SocketHandler.SocketConnection user)
+        {
+            if(!Program.Options.Perm_Block_Kicked_Users)
+                return false;
+
+            if (user.User.AccountName == Kicked.AccountName)
+            {
+                if (!IPAddresses.Contains(user.IPAddress))
+                    IPAddresses.Add(user.IPAddress);
+                return true;
+            }
+            foreach (var ip in IPAddresses)
+                if (ip == user.IPAddress || ip == user.IPEnd.Address.ToString())
+                    return true;
+            return false;
+        }
+        public Kick(User kicked, User admin, string reason, string ip)
+        {
+            Kicked = kicked;
+            Admin = admin;
+            Reason = reason;
+            IPAddresses = new List<string>() { ip };
+        }
+        public Kick(SocketHandler.SocketConnection connection, User admin, string reason)
+        {
+            Kicked = connection.User;
+            Admin = admin;
+            Reason = reason;
+            IPAddresses = new List<string>() { connection.IPAddress };
+        }
+
     }
 
 }

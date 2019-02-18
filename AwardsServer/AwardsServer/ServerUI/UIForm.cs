@@ -374,6 +374,12 @@ namespace AwardsServer.ServerUI
                     else
                     {
                         Github = new GithubDLL.GithubClient(Options.Github_AuthToken, "tgc-awards");
+                        Github.RequestMade += (object sendert, GithubDLL.RESTRequestEventArgs args) =>
+                        {
+                            bool success = (int)args.ResponseCode >= 200 && (int)args.ResponseCode <= 299;
+                            Logging.LogSeverity sev = success ? Logging.LogSeverity.Debug : Logging.LogSeverity.Warning;
+                            Logging.Log(sev, args.ToString(), "GithubREST");
+                        };
                         Program.AwardsRepository = Github.GetRepository("thegrandcoding", "awardsserver");
                         LoadBugs();
                         UpdateBugReports();
@@ -725,7 +731,7 @@ namespace AwardsServer.ServerUI
             { // ID clicked
                 if (report.Submitted)
                 {
-                    string url = report.Issue.Link;
+                    string url = report.Issue.HTMLURL;
                     try
                     {
                         Clipboard.SetText(url);

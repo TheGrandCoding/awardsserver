@@ -21,7 +21,7 @@ namespace AwardsServer.BugReport
         private string reporterName => Reporter?.AccountName ?? "";
         [JsonIgnore]
         public GithubDLL.Entities.Issue Issue;
-        private int issueId => Issue?.number ?? 0;
+        private int issueId => Issue?.Number ?? 0;
         public bool Solved;
         public bool Submitted => issueId != 0;
 

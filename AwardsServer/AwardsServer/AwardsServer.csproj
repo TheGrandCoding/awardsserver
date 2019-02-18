@@ -35,7 +35,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="GithubDLL, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\CheAle14.CasinoBot.Interface.2.0.8\lib\net45\GithubDLL.dll</HintPath>
+      <HintPath>..\packages\CheAle14.CasinoBot.Interface.2.2.0\lib\net45\GithubDLL.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.VisualBasic" />
     <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">

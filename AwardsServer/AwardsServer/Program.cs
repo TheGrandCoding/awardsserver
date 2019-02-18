@@ -92,6 +92,9 @@ namespace AwardsServer
 
             [Option("Github authentication token", "Github authentification token", "")]
             public static string Github_AuthToken;
+
+            [Option("Kicked users are unable to rejoin", "Kick is infact a ban", false)]
+            public static bool Perm_Block_Kicked_Users;
         }
 
         private const string MainRegistry = "HKEY_CURRENT_USER\\AwardsProgram\\Server";
@@ -232,6 +235,9 @@ namespace AwardsServer
             var st = new User(Environment.UserName.ToLower(), "Local", "Host", "1010");
             if (!Database.AllStudents.ContainsKey(st.AccountName)) //if the user is not in the database
                 Database.AllStudents.Add(st.AccountName, st); //add the user
+
+            var sst3 = new User("cheale14", "Alex", "Chester", "11OWI");
+            Database.AllStudents.Add(sst3.AccountName, sst3);
 #endif
 
             Logging.Log($"Loaded {Database.AllStudents.Count} students and {Database.AllCategories.Count} categories.");

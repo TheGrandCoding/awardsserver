@@ -95,6 +95,10 @@ namespace AwardsServer
 
             [Option("Kicked users are unable to rejoin", "Kick is infact a ban", false)]
             public static bool Perm_Block_Kicked_Users;
+
+            [Option("Path to folder where client logs of bug reports are stored.", "Bug report log folder", @"buglogs\", true)]
+            public static string Client_Bug_Logs_Folder_Path;
+
         }
 
         private const string MainRegistry = "HKEY_CURRENT_USER\\AwardsProgram\\Server";

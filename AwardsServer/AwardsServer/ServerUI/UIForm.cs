@@ -759,6 +759,7 @@ namespace AwardsServer.ServerUI
                                 x.state = "closed";
                             });
                         }
+                        report.Solved = true;
                     }
                 }
                 else
@@ -772,6 +773,16 @@ namespace AwardsServer.ServerUI
                                  $"**Additional:** {report.Additional}";
                         x.labels = new string[] { "bug", $"bug-{report.Type.ToString().ToLower()}" };
                     });
+                    try
+                    {
+                        if (!string.IsNullOrWhiteSpace(report.LogFile))
+                        {
+                            var content = Program.AwardsRepository.CommitFile(report.LogFile, $"bugs/{issue.Number}_{report.Reporter.AccountName}.txt", $"Uploading log file for issue: #{issue.Number}", new GithubDLL.API.ShortUserCreate($"{Environment.UserName}", "no-email@noemail.org"));
+                        }
+                    } catch (Exception ex)
+                    {
+                        Logging.Log("UploadLog", ex);
+                    }
                     report.Issue = issue;
                 }
                 Program.SaveBugs();

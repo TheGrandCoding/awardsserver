@@ -15,6 +15,9 @@ namespace AwardsServer.BugReport
         public string Primary;
         public BugReportType Type;
         public string Additional;
+
+        public string LogFile;
+
         [JsonIgnore]
         public User Reporter;
         [JsonProperty]
@@ -51,31 +54,37 @@ namespace AwardsServer.BugReport
                 (BugReportType)Enum.Parse(typeof(BugReportType), split[0]),
                 split[1],
                 split[2], 
+                split[3],
                 reporter);
             rp.internalId = System.Threading.Interlocked.Increment(ref _internalCounter);
             return rp;
         }
 
         [JsonConstructor]
-        private BugReport(int id, string reportername)
+        private BugReport(int id, string reportername, bool solved)
         {
             if (id >= 70)
-                Issue = Program.AwardsRepository.GetIssue(id);
+                    Issue = Program.AwardsRepository.GetIssue(id);
             else
             {
                 _internalCounter = id;
                 this.internalId = id;
             }
- 
             Reporter = Program.GetUser(reportername);
         }
 
-        public BugReport(BugReportType type, string primary, string additional, User reporter)
+        public BugReport(BugReportType type, string primary, string additional, string logBase64Encoded, User reporter)
         {
             Type = type;
             Primary = primary;
             Additional = additional;
             Reporter = reporter;
+            string decodedLog = Encoding.UTF8.GetString(Convert.FromBase64String(logBase64Encoded));
+            decodedLog = $"------------------\r\nNew bug report:\r\nType: {type}\r\nPrimary: {primary}\r\nAdditional: {additional}\r\n------------------\r\n" + decodedLog;
+            string fileName = $"{DateTime.Now.ToString("yyyyMMdd")}_{reporter.AccountName}.txt";
+            string path = Program.Options.Client_Bug_Logs_Folder_Path + fileName;
+            System.IO.File.AppendAllText(path, decodedLog);
+            LogFile = path;
         }
 
         /*public GithubIssue Submit()    -- This is done in the UIForm.

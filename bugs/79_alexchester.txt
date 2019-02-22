@@ -1,0 +1,17 @@
+------------------
+New bug report:
+Type: Other
+Primary: 
+Additional: yeet
+------------------
+09:16:51.500: MainForm/ Loaded for AlexChester
+09:16:51.508: MainForm/ Started conn thread
+09:16:51.534: MainForm/ Starting connection to 127.0.0.1:56567
+09:16:51.561: MainForm/ Connected to server
+09:16:51.675: MainForm/ Started conn thread
+09:16:51.699: Server/ Auth:3
+09:16:51.764: Server/ QUEUE:1
+09:16:51.777: Server/ Ready:Alexander
+09:16:51.787: Server/ NumCat:17
+09:16:51.809: Server/ /AQU:
+09:16:51.851: Server/ /AVT:alexchester:Alexander:Chester:11OWI:3:127.0.0.1#

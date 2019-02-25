@@ -96,7 +96,7 @@ namespace AwardsServer
             [Option("Kicked users are unable to rejoin", "Kick is infact a ban", false)]
             public static bool Perm_Block_Kicked_Users;
 
-            [Option("Path to folder where client logs of bug reports are stored.", "Bug report log folder", @"buglogs\", true)]
+            [Option("Path to folder where client logs of bug reports are stored.", "Bug report log folder", @"buglogs\")]
             public static string Client_Bug_Logs_Folder_Path;
 
         }
@@ -163,8 +163,15 @@ namespace AwardsServer
         {
             lock (_bugLock)
             {
-                var content = System.IO.File.ReadAllText("bugreports.json");
-                if(string.IsNullOrWhiteSpace(content))
+                string content = "";
+                try
+                {
+                    content = System.IO.File.ReadAllText("bugreports.json");
+                }
+                catch (System.IO.FileNotFoundException) {
+                    System.IO.File.CreateText("bugreports.json");
+                }
+                if (string.IsNullOrWhiteSpace(content))
                     BugReports = new List<BugReport.BugReport>();
                 else
                     BugReports = JsonConvert.DeserializeObject<List<BugReport.BugReport>>(content);

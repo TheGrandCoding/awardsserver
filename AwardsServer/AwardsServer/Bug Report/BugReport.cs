@@ -83,7 +83,18 @@ namespace AwardsServer.BugReport
             decodedLog = $"------------------\r\nNew bug report:\r\nType: {type}\r\nPrimary: {primary}\r\nAdditional: {additional}\r\n------------------\r\n" + decodedLog;
             string fileName = $"{DateTime.Now.ToString("yyyyMMdd")}_{reporter.AccountName}.txt";
             string path = Program.Options.Client_Bug_Logs_Folder_Path + fileName;
-            System.IO.File.AppendAllText(path, decodedLog);
+            if(!System.IO.Directory.Exists(Program.Options.Client_Bug_Logs_Folder_Path))
+            {
+                System.IO.Directory.CreateDirectory(Program.Options.Client_Bug_Logs_Folder_Path);
+            }
+            try
+            {
+                System.IO.File.AppendAllText(path, decodedLog);
+            }
+            catch (Exception ex)
+            {
+                Logging.Log("BugRpCtor", ex);
+            }
             LogFile = path;
         }
 

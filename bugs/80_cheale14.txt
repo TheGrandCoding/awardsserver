@@ -1,0 +1,32 @@
+------------------
+New bug report:
+Type: Other
+Primary: 1
+Additional: yeet
+------------------
+06:20:10.846: MainForm/ Loaded for cheale14
+06:20:10.857: MainForm/ Started conn thread
+06:20:11.163: MainForm/ Starting connection to 10.249.67.167:56567
+06:20:32.180: MainForm/ System.Net.Sockets.SocketException (0x80004005): A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond 10.249.67.167:56567
+   at System.Net.Sockets.Socket.EndConnect(IAsyncResult asyncResult)
+   at System.Net.Sockets.TcpClient.EndConnect(IAsyncResult asyncResult)
+   at AwardsClient.MainForm.AttemptConnection(Int32 delay)
+06:20:32.207: MainForm/ Started conn thread
+06:20:37.208: MainForm/ Starting connection to 127.0.0.1:56567
+06:20:37.216: MainForm/ Connected to server
+06:20:37.235: MainForm/ Started conn thread
+06:20:37.247: Server/ Auth:3
+06:20:37.278: Server/ QUEUE:1
+06:20:37.290: Server/ Ready:Alexander
+06:20:37.298: Server/ NumCat:18
+06:20:37.305: Server/ /AQU:
+06:20:37.313: Server/ /AVT:cheale14:Alexander:Chester:11OWI:3:127.0.0.1#
+06:20:40.462: Server/ hi
+06:20:45.454: Server/ hi
+06:20:50.461: Server/ hi
+06:20:55.453: Server/ hi
+06:21:00.452: Server/ hi
+06:21:02.701: Server/ Cat:1:Happiest Person
+06:21:02.717: Server/ Cat:2:Most outrageous laugh
+06:21:05.451: Server/ hi
+06:21:10.453: Server/ hi

@@ -64,7 +64,7 @@ namespace AwardsServer.BugReport
         private BugReport(int id, string reportername, bool solved)
         {
             if (id >= 70)
-                    Issue = Program.AwardsRepository.GetIssue(id);
+                Issue = Program.AwardsRepository.GetIssue(id);
             else
             {
                 _internalCounter = id;

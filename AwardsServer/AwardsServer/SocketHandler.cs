@@ -328,6 +328,23 @@ namespace AwardsServer
                                 conn.Close($"Kicked by {kick.Admin.AccountName} with reason {kick.Reason}");
                             }
                         }
+                    } else if(message.StartsWith("MANR:"))
+                    {
+                        message = message.Replace("MANR:", "");
+                        if(Program.TryGetUser(message, out User user))
+                        {
+                            string response = "/MANRD:";
+                            foreach(var category in Program.Database.AllCategories.Values)
+                            {
+                                var votes = category.GetVotesBy(user);
+                                response += $"{votes.Item1?.ToString("AN:FN:LN:TT") ?? ""};{votes.Item2?.ToString("AN:FN:LN:TT") ?? ""}#";
+                            }
+                            Send(response);
+                        }
+                    } else if(message.StartsWith("MANVOTE:"))
+                    {
+                        message = message.Replace("MANVOTE:", "");
+
                     }
                 }
             }

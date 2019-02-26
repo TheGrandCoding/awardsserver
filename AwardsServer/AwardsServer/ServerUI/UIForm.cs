@@ -738,6 +738,10 @@ namespace AwardsServer.ServerUI
                     }
                     catch { }
                     System.Diagnostics.Process.Start("chrome.exe", url);
+                } else
+                {
+                    // clicked id of non-submitted, so we want to open the log
+                    System.Diagnostics.Process.Start("wordpad.exe", report.LogFile);
                 }
             }
             else if (e.ColumnIndex == 6)

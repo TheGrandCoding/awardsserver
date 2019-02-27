@@ -178,10 +178,8 @@ namespace AwardsServer
                             string[] winners = thing.Split(';'); // these are "male;female", so yes
                             string maleWin = winners[0];
                             string femaleWin = winners[1];
-                            User firstWinner;
-                            User secondWinner;
-                            Program.TryGetUser(maleWin, out firstWinner);
-                            Program.TryGetUser(femaleWin, out secondWinner);
+                            Program.TryGetUser(maleWin, out User firstWinner);
+                            Program.TryGetUser(femaleWin, out User secondWinner);
                             if ((firstWinner?.AccountName ?? ",") == (secondWinner?.AccountName ?? ""))
                             {
                                 rejectedReason = "Rejected:Duplicate";
@@ -278,6 +276,9 @@ namespace AwardsServer
                 } else if(message.StartsWith("REPORT:"))
                 {
                     var report = BugReport.BugReport.Parse(message, this.User);
+                    Logging.Log(Logging.LogSeverity.Warning,
+                        $"NEW: {report.Primary ?? report.Additional}{(string.IsNullOrWhiteSpace(report.Primary) ? "" : " " + report.Additional)} @ {report.LogFile}"
+                        , $"Bugs/{report.Reporter.AccountName}");
                     Program.BugReports.Add(report);
                     Program.SaveBugs();
                 } else if(message.StartsWith("/"))

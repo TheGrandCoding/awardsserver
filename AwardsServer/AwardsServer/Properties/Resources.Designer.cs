@@ -71,26 +71,7 @@ namespace AwardsServer.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to &lt;!DOCTYPE html&gt;
-        ///&lt;html&gt;
-        ///&lt;head&gt;
-        ///&lt;script type=&quot;text/javascript&quot; src=&quot;https://www.gstatic.com/charts/loader.js&quot;&gt;&lt;/script&gt;
-        ///&lt;/head&gt;
-        ///&lt;body&gt;
-        ///
-        ///&lt;h1&gt;Y11 Awards - Compiled Data&lt;/h1&gt;
-        ///
-        ///&lt;div id=&quot;piechart&quot;&gt;&lt;/div&gt;
-        ///
-        ///&lt;script type=&quot;text/javascript&quot;&gt;
-        ///// Load google charts
-        ///google.charts.load(&apos;current&apos;, {&apos;packages&apos;:[&apos;corechart&apos;]});
-        ///google.charts.setOnLoadCallback(drawChart);
-        ///
-        ///// Draw the chart and set the chart values
-        ///function drawChart() {
-        ///  var data = google.visualization.arrayToDataTable([
-        ///  [&apos;Votes&apos;, &apos;Type&apos; [rest of string was truncated]&quot;;.
+        ///   Looks up a localized string reflecting the WebAllDataPage.txt
         /// </summary>
         internal static string WebAllDataPage {
             get {

@@ -99,6 +99,12 @@ namespace AwardsServer
             [Option("Path to folder where client logs of bug reports are stored.", "Bug report log folder", @"buglogs\")]
             public static string Client_Bug_Logs_Folder_Path;
 
+            [Option("Default text editor to open with", "Text editor", "wordpad.exe")]
+            public static string DEFAULT_TEXT_EDITOR;
+
+            [Option("Default web browser to open with", "Web browser", "chrome.exe")]
+            public static string DEFAULT_WEB_BROWSER;
+
         }
 
         private const string MainRegistry = "HKEY_CURRENT_USER\\AwardsProgram\\Server";

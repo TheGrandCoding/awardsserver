@@ -704,8 +704,7 @@ namespace AwardsServer.ServerUI
             var row = dgvManualVotes.Rows[e.RowIndex];
             var cell = row.Cells[e.ColumnIndex];
             string content = (string)cell.Value;
-            User user = null;
-            if (!Program.TryGetUser(content, out user)) // try text, so they can override..
+            if (!Program.TryGetUser(content, out User user)) // try text, so they can override..
                 Program.TryGetUser((string)cell.Tag, out user);  // but also check tag, in case we are resetting a prior vote
             if (user != null)
             {
@@ -737,11 +736,11 @@ namespace AwardsServer.ServerUI
                         Clipboard.SetText(url);
                     }
                     catch { }
-                    System.Diagnostics.Process.Start("chrome.exe", url);
+                    System.Diagnostics.Process.Start(Options.DEFAULT_WEB_BROWSER, url);
                 } else
                 {
                     // clicked id of non-submitted, so we want to open the log
-                    System.Diagnostics.Process.Start("wordpad.exe", report.LogFile);
+                    System.Diagnostics.Process.Start(Options.DEFAULT_TEXT_EDITOR, report.LogFile);
                 }
             }
             else if (e.ColumnIndex == 6)

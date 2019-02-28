@@ -1,0 +1,47 @@
+------------------
+New bug report:
+Type: Other
+Primary: 
+Additional: I WANT TO VOTE MYSELF
+------------------
+02:42:58.840: MainForm/ Loaded for manami14
+02:42:58.843: MainForm/ Started conn thread
+02:43:00.034: MainForm/ Starting connection to 10.249.67.183:56567
+02:43:00.039: MainForm/ Connected to server
+02:43:00.053: MainForm/ Started conn thread
+02:43:00.061: Server/ Auth:1
+02:43:00.257: Server/ QUEUE:1
+02:43:00.260: Server/ Ready:Amir
+02:43:00.262: Server/ NumCat:17
+02:43:02.260: Server/ Cat:1:Happiest Person
+02:43:02.275: Server/ Cat:2:Most outrageous laugh
+02:43:08.679: Server/ hi
+02:43:10.370: Server/ Q_RES:
+02:43:11.601: Server/ Q_RES:seyjar14:Jared:Seymour:11EYL#
+02:43:18.691: Server/ hi
+02:43:20.354: Server/ Q_RES:blejoe14:Joel:Blencowe:11GOF#wiljos14:Joey:Wilkinson:11GOF#
+02:43:23.175: Server/ Cat:3:Most artistic
+02:43:27.579: Server/ Q_RES:gibjos14:Joshua:Gibson:11FOS#prajos14:Joshua:Pratt:11FOS#edgjos14:Joshua:Edge:11KAU#willjos14:Josh:Williams:11KAU#keojos14:Joshua:Keogh:11LAN#blyjos14:Joseph:Blyth:11PAY#stojos14:Josh:Stokes:11PAY#
+02:43:28.704: Server/ hi
+02:43:36.242: Server/ Q_RES:blojon14:Jon:Blount:11FOS#lamjon14:Jona:Lama:11GOF#
+02:43:38.711: Server/ hi
+02:43:39.263: Server/ Cat:4:Sports personality
+02:43:43.498: Server/ Q_RES:fleiia14:Iian:Fletcher:11KAU#
+02:43:48.026: Server/ Q_RES:braaar14:Aaron:Brar:11GOF#
+02:43:48.723: Server/ hi
+02:43:49.664: Server/ Cat:5:Best Hair
+02:43:54.041: Server/ Cat:6:Best Singer
+02:43:56.408: Server/ Cat:7:Best Dancer
+02:43:58.727: Server/ hi
+02:44:01.569: Server/ Cat:8:Best Sportsperson
+02:44:08.735: Server/ hi
+02:44:11.148: Server/ Q_RES:gibjos14:Joshua:Gibson:11FOS#prajos14:Joshua:Pratt:11FOS#edgjos14:Joshua:Edge:11KAU#willjos14:Josh:Williams:11KAU#keojos14:Joshua:Keogh:11LAN#blyjos14:Joseph:Blyth:11PAY#stojos14:Josh:Stokes:11PAY#
+02:44:13.241: Server/ Cat:9:Most likely to become a millionaire
+02:44:18.737: Server/ hi
+02:44:21.947: Server/ Q_RES:broree14:Reece:Brown:11DHA#
+02:44:26.217: Server/ Cat:10:Most likely to win the Man Booker Prize for Writing
+02:44:28.746: Server/ hi
+02:44:32.709: Server/ Q_RES:
+02:44:43.837: Server/ hi
+02:44:45.468: Server/ Q_RES:manami14:Amir:Manafikhi:11PAY#
+02:44:53.832: Server/ hi

@@ -129,6 +129,43 @@ namespace AwardsServer
                 listenThread.Start();
             }
 
+            public List<User> QueryStudent(string message)
+            {
+                List<User> responses = new List<User>();
+                int count = 0;
+                foreach (var student in Program.Database.AllStudents.Values)
+                {
+                    bool shouldGo = false; // shouldGo: does the name match the query? if so, SHOULD we GO and send it
+                                           // yes i know its not best naming but /shrug
+                    message = message.ToLower();
+                    if (student.Flags.Contains(Flags.Disallow_Vote_Staff))
+                        continue; // disallow for staff to be voted for, even if they are in the database.
+                    if (student.ToString().ToLower().StartsWith(message))
+                    {
+                        shouldGo = true;
+                    }
+                    else if (student.LastName.ToLower().StartsWith(message)) //?? - essentially looking to see if the name contains the query, ignoring any case
+                    { // it is actually just returning an index of where the query string is within the student's name (same as like list.Indexof)
+                      // the >=0 is because if it does not contain ^, then it returns -1 instead
+                        shouldGo = true;
+                    }
+                    else if (student.FirstName.ToLower().StartsWith(message))
+                    {
+                        shouldGo = true;
+                    }
+                    if (shouldGo)
+                    {
+                        count++;
+                        if (count >= Program.Options.Maximum_Query_Response)
+                        {
+                            break;
+                        }
+                        responses.Add(student); //add the student's name + properties to a list of names to send to the client
+                    }
+                }
+                return responses;
+            }
+
             private void HandleMessage(string message) //when a the server receives a message from the client
             {
                 if(message .StartsWith("GET_CATE:"))
@@ -228,36 +265,8 @@ namespace AwardsServer
                     // format:
                     // ENTERED_TEXT
                     // its substring(2) '2' because we need to ignore first M/F and the :
-                    int count = 0; //what would this count ?? - allows us to limit number of names to respond with (so we dont crash the network)
-                    foreach (var student in Program.Database.AllStudents.Values)
-                    {
-                        bool shouldGo = false; // shouldGo: does the name match the query? if so, SHOULD we GO and send it
-                        // yes i know its not best naming but /shrug
-                        message = message.ToLower();
-                        if (student.Flags.Contains(Flags.Disallow_Vote_Staff))
-                            continue; // disallow for staff to be voted for, even if they are in the database.
-                        if(student.ToString().ToLower().StartsWith(message)) 
-                        {
-                            shouldGo = true;
-                        }
-                        else if (student.LastName.ToLower().StartsWith(message)) //?? - essentially looking to see if the name contains the query, ignoring any case
-                        { // it is actually just returning an index of where the query string is within the student's name (same as like list.Indexof)
-                            // the >=0 is because if it does not contain ^, then it returns -1 instead
-                            shouldGo = true;
-                        } else if(student.FirstName.ToLower().StartsWith(message))
-                        {
-                            shouldGo = true;
-                        }
-                        if (shouldGo)
-                        {
-                            count++;
-                            if (count >= Program.Options.Maximum_Query_Response)
-                            {
-                                break;
-                            }
-                            response += student.ToString("AN:FN:LN:TT") + "#"; //add the student's name + properties to a list of names to send to the client
-                        }
-                    }
+                    var students = QueryStudent(message);
+                    foreach(var student in students) { response += student.ToString("AN:FN:LN:TT") + "#"; }
                     this.Send("Q_RES:" + response);
                 } else if(message.StartsWith("QUES:"))
                 {
@@ -345,7 +354,37 @@ namespace AwardsServer
                     } else if(message.StartsWith("MANVOTE:"))
                     {
                         message = message.Replace("MANVOTE:", "");
+                        var split = message.Split(':');
+                        if(Program.Database.AllStudents.TryGetValue(split.ElementAt(0), out User user))
+                        {
+                            int categoryId = 1;
+                            var votes = split.ElementAt(1).Split('#').Where(x => !string.IsNullOrWhiteSpace(x));
+                            foreach(string vote in votes)
+                            {
+                                var each = vote.Split(';');
+                                Program.TryGetUser(each.ElementAt(0), out User first);
+                                Program.TryGetUser(each.ElementAt(1), out User second);
+                                if(first != null)
+                                    Program.Database.AddVoteFor(categoryId, first, user);
+                                if(second != null)
+                                    Program.Database.AddVoteFor(categoryId, second, user);
+                                categoryId++;
+                            }
+                        }
 
+                    } else if (message.StartsWith("QUERY:"))
+                    {
+                        message = message.Replace("QUERY:", "");
+                        var split = message.Split(':').Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
+
+                        var rowIndex = int.Parse(split[0]);
+                        var colIndex = int.Parse(split[1]);
+                        var queryT = split[2];
+                        var students = QueryStudent(queryT);
+                        if(students.Count == 1)
+                        {
+                            Send($"/QUERY:{rowIndex}:{colIndex}:{students[0].ToString("AN;FN;LN;TT")}");
+                        }
                     }
                 }
             }

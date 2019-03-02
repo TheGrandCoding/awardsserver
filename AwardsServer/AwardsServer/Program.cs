@@ -287,7 +287,8 @@ namespace AwardsServer
             e = e.ToLower();
             if (e == "remove_all_votes")
             {
-                if (MessageBox.Show("Are you sure you want to REMOVE EVERY SINGLE VOTE?", "Remove All Votes", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                Logging.Log(Logging.LogSeverity.Console, "Command has been removed.");
+                /*if (MessageBox.Show("Are you sure you want to REMOVE EVERY SINGLE VOTE?", "Remove All Votes", MessageBoxButtons.YesNo) == DialogResult.Yes)
                 {
                     foreach (var cat in Database.AllCategories)
                     {
@@ -300,7 +301,7 @@ namespace AwardsServer
                         ServerUIForm.Close();
                         ServerUIForm.Dispose(); // close the UI so it reloads
                     } catch { } // dont need to error catch this
-                }
+                }*/
             } else if(e == "copy_winners")
             {
                 string text = "Y11 Awards as of " + DateTime.Now.ToShortDateString();

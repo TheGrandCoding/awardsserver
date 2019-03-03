@@ -7,6 +7,7 @@ using Microsoft.Win32;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using Newtonsoft.Json;
 
 //get ready for some seemingly obvious questions
 //ctrl-f "??" to find what might be confusing
@@ -19,6 +20,12 @@ namespace AwardsServer
         public static SocketHandler Server; // Handles the connection and essentially interfaces with the TCP-side of things
         public static DatabaseStuffs Database; // database related things
         public static ServerUI.WebsiteHandler WebServer;
+        public static GithubDLL.GithubClient Github;
+        public static GithubDLL.Entities.Repository AwardsRepository;
+        public const string RepoRegex = @"(?<=repos)\/.*\/.*";
+        public const string IssueFindRegex = @"\S*\/\S*#\d+";
+
+        public static List<BugReport.BugReport> BugReports = new List<BugReport.BugReport>();
 
         [AttributeUsage(AttributeTargets.Field, AllowMultiple = false)] //?? - Determines where the below attribute can be used; in our case, we just need it on Fields (ie, variables)
         public class OptionAttribute : Attribute //what is this for?? does it 'Constructs the information for an Option.'? // the class holds info on the options, and the Attribute allows it to be put in the [ ]
@@ -44,6 +51,12 @@ namespace AwardsServer
         }
         public static class Options
         {
+            [Option("Relative/Absolute path for the file used to contain the Server's IP", "Path of ServerIP file", @"..\..\..\ServerIP", true)]
+            public static string ServerIP_File_Path;
+
+            [Option("Path for votes to be saved to in text-file format", "Backup vote text file path", @"..\..\..\RawVotes.log", true)]
+            public static string ServerTextFileVotes_Path;
+
             [Option("Maximum number of students to list in a name query response", "Max students for query", 10)]
             public static int Maximum_Query_Response;
 
@@ -71,11 +84,27 @@ namespace AwardsServer
             [Option("Allow someone other than server to see the winners", "Allow see redacted", false)]
             public static bool Allow_NonLocalHost_WebConnections;
 
-            [Option("Relative/Absolute path for the file used to contain the Server's IP", "Path of ServerIP file", @"..\..\..\ServerIP", true)]
-            public static string ServerIP_File_Path;
-
             [Option("Is the web server serving files/listening for connections?", "Web site status", false)]
             public static bool WebSever_Enabled;
+
+            [Option("Can the server manually vote on behalf of a user via its 'Manual Vote' tab", "Can server save a vote", true)]
+            public static bool Allow_Manual_Vote;
+
+            [Option("Github authentication token", "Github authentification token", "")]
+            public static string Github_AuthToken;
+
+            [Option("Kicked users are unable to rejoin", "Kick is infact a ban", false)]
+            public static bool Perm_Block_Kicked_Users;
+
+            [Option("Path to folder where client logs of bug reports are stored.", "Bug report log folder", @"buglogs\")]
+            public static string Client_Bug_Logs_Folder_Path;
+
+            [Option("Default text editor to open with", "Text editor", "wordpad.exe")]
+            public static string DEFAULT_TEXT_EDITOR;
+
+            [Option("Default web browser to open with", "Web browser", "chrome.exe")]
+            public static string DEFAULT_WEB_BROWSER;
+
         }
 
         private const string MainRegistry = "HKEY_CURRENT_USER\\AwardsProgram\\Server";
@@ -130,6 +159,32 @@ namespace AwardsServer
             return user;
         }
 
+        private static readonly object _bugLock = new object();
+        public static void SaveBugs()
+        {
+            lock(_bugLock)
+                System.IO.File.WriteAllText("bugreports.json", JsonConvert.SerializeObject(Program.BugReports));
+        }
+        public static void LoadBugs()
+        {
+            lock (_bugLock)
+            {
+                string content = "";
+                try
+                {
+                    content = System.IO.File.ReadAllText("bugreports.json");
+                }
+                catch (System.IO.FileNotFoundException) {
+                    System.IO.File.CreateText("bugreports.json");
+                }
+                if (string.IsNullOrWhiteSpace(content))
+                    BugReports = new List<BugReport.BugReport>();
+                else
+                    BugReports = JsonConvert.DeserializeObject<List<BugReport.BugReport>>(content);
+            }
+
+        }
+
         /// <summary>
         /// Returns the current computer's local ip address within its current network
         /// </summary>
@@ -180,6 +235,7 @@ namespace AwardsServer
             // without the above, any error that is not within a "try..except" would simply cause the console window to close without any log or message.
             Logging.Log(Logging.LogSeverity.Severe, "[README] Available at: https://y11awards.page.link/readme");
             Logging.Log(Logging.LogSeverity.Severe, "[ISSUES] Reportable at: https://y11awards.page.link/issues");
+
             Logging.Log(Logging.LogSeverity.Info,  "Loading existing categories...");
             Database = new DatabaseStuffs();
             Database.Connect();
@@ -199,7 +255,8 @@ namespace AwardsServer
 #endif
 
             Logging.Log($"Loaded {Database.AllStudents.Count} students and {Database.AllCategories.Count} categories.");
-            
+
+
 
             Logging.Log("Starting socket listener...");
             Server = new SocketHandler();
@@ -230,20 +287,21 @@ namespace AwardsServer
             e = e.ToLower();
             if (e == "remove_all_votes")
             {
-                if (MessageBox.Show("Are you sure you want to REMOVE EVERY SINGLE VOTE?", "Remove All Votes", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                Logging.Log(Logging.LogSeverity.Console, "Command has been removed.");
+                /*if (MessageBox.Show("Are you sure you want to REMOVE EVERY SINGLE VOTE?", "Remove All Votes", MessageBoxButtons.YesNo) == DialogResult.Yes)
                 {
                     foreach (var cat in Database.AllCategories)
                     {
                         Database.ExecuteCommand($"DELETE FROM Category{cat.Key} WHERE True = True"); // removes all records
                     }
                     Database.Load_All_Votes();
-                    Logging.Log("Removed all users votes.");
+                    Logging.Log(Logging.LogSeverity.Console, "Removed all users votes.");
                     try
                     {
                         ServerUIForm.Close();
                         ServerUIForm.Dispose(); // close the UI so it reloads
                     } catch { } // dont need to error catch this
-                }
+                }*/
             } else if(e == "copy_winners")
             {
                 string text = "Y11 Awards as of " + DateTime.Now.ToShortDateString();
@@ -258,9 +316,45 @@ namespace AwardsServer
                     text += temp;
 
                 }
-                Logging.Log(Logging.LogSeverity.Severe,text);
+                Logging.Log(Logging.LogSeverity.Console, text);
                 System.IO.File.WriteAllText("test.html", text.Replace("\r\n", "<br>"));
+            } else if(e.StartsWith("op"))
+            {
+                e = e.Substring(3).Trim(); // remove "op "
+                if(Program.TryGetUser(e, out User user))
+                {
+                    if (user.Flags.Contains(Flags.Automatic_Sysop))
+                    {
+                        user.Flags.Remove(Flags.Automatic_Sysop);
+                        Logging.Log(Logging.LogSeverity.Console, "Removed sysop from " + user.AccountName);
+                    }
+                    else
+                    {
+                        user.Flags.Add(Flags.Automatic_Sysop);
+                        Logging.Log(Logging.LogSeverity.Console, "Given sysop to " + user.AccountName);
+                    }
+                    Database.ExecuteCommand($"UPDATE UserData SET Flags = '{string.Join(";", user.Flags)}' WHERE UserName = '{user.AccountName}'");
+                    if (user.Connection != null)
+                        user.Connection.ReSendAuthentication();
+                }
+                else
+                {
+                    Logging.Log(Logging.LogSeverity.Console, "Unknown user accounr: " + e);
+                }
+            } else if (e.StartsWith("chat"))
+            {
+                e = e.Substring("chat".Length + 1);
+                SendAdminChat(new AdminMessage("Server", SocketHandler.Authentication.Sysadmin, e));
             }
+        }
+
+        public static void SendAdminChat(AdminMessage message)
+        {
+            foreach (var admin in SocketHandler.AdminClients)
+            {
+                admin.Send(message.ToSend());
+            }
+            Logging.Log(Logging.LogSeverity.Console, message.Content, "Adm/" + message.From);
         }
 
         private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
@@ -302,6 +396,8 @@ namespace AwardsServer
         public readonly char Sex;
         public bool HasVoted => Program.Database.AlreadyVotedNames.Contains(AccountName);
         public string FullName => FirstName + " " + LastName;
+
+        public SocketHandler.SocketConnection Connection; // could be null
 
         /// <summary>
         /// A list of values that indicate special options.
@@ -443,6 +539,8 @@ namespace AwardsServer
         /// <param name="votedBy">Person that was doing the voting.</param>
         public void AddVote(User voted, User votedBy) //add a vote to 'voted'
         {
+            if (voted == null)
+                return;
             if (voted.AccountName == votedBy.AccountName)
             {
                 throw new ArgumentException("Both users are the same object, or share the same name");
@@ -487,6 +585,66 @@ namespace AwardsServer
         /// Indicates that the person should not be permitted to actually vote
         /// </summary>
         public const string Disallow_Vote_Staff = "block-vote";
+
+        /// <summary>
+        /// Upon connection, makes the user a system operator.
+        /// </summary>
+        public const string Automatic_Sysop = "sysop";
+    }
+
+    public class UserVoteSubmit
+    {
+        static object lockObj = new object();
+        public User VotingFor;
+        public Dictionary<int, Tuple<User, User>> Votes = new Dictionary<int, Tuple<User, User>>();
+        public void AddVote(int cat, User u1 = null, User u2 = null)
+        {
+            if (Votes.ContainsKey(cat))
+                Votes[cat] = new Tuple<User, User>(u1, u2);
+            else
+                Votes.Add(cat, new Tuple<User, User>(u1, u2));
+        }
+        public void AddVote(Category cat, User u1 = null, User u2 = null) => AddVote(cat.ID, u1, u2);
+        public UserVoteSubmit(User _for)
+        {
+            VotingFor = _for;
+        }
+        public string ConfirmString
+        {
+            get
+            {
+                string t = "";
+                foreach (var cat in Votes.Values)
+                {
+                    t += $"{(cat.Item1?.AccountName ?? "")};{cat.Item2?.AccountName ?? ""}#";
+                }
+                return t;
+            }
+        }
+        public bool Submit()
+        {
+            bool errored = false;
+            lock(lockObj)
+            {
+                try
+                {
+                    System.IO.File.AppendAllText(Program.Options.ServerTextFileVotes_Path, $"{VotingFor.AccountName}/{ConfirmString}\n");
+                }
+                catch (Exception ex)
+                {
+                    Logging.Log("SubmitIO", ex);
+                    errored = true;
+                }
+            }
+            foreach(var vote in Votes)
+            {
+                if(vote.Value.Item1 != null)
+                    Program.Database.AddVoteFor(vote.Key, vote.Value.Item1, this.VotingFor);
+                if(vote.Value.Item2 != null)
+                    Program.Database.AddVoteFor(vote.Key, vote.Value.Item2, this.VotingFor);
+            }
+            return errored;
+        }
     }
 
 }

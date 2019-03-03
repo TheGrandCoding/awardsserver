@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using AwardsServer.BugReport;
 
 namespace AwardsServer
 {
@@ -17,14 +18,53 @@ namespace AwardsServer
         public static List<SocketConnection> CurrentClients = new List<SocketConnection>(); // current students actually voting
         public static List<SocketConnection> ClientQueue = new List<SocketConnection>(); // students waiting to vote
 
+        public static List<SocketConnection> AdminClients
+        {
+            get
+            {
+                return AllClients.Where(x => x.Authentication > Authentication.Student).ToList();
+            }
+        }
+
+        public static List<SocketConnection> AllClients {  get
+            {
+                List<SocketConnection> list = new List<SocketConnection>();
+                lock (LockClient)
+                {
+                    list.AddRange(CurrentClients);
+                    list.AddRange(ClientQueue);
+                }
+                return list;
+            } }
+
+        public static List<Kick> PriorKickedUsers = new List<Kick>();
+        public static Kick GetKick(SocketHandler.SocketConnection connection)
+        {
+            foreach(var kick in PriorKickedUsers)
+            {
+                if (kick.Match(connection))
+                    return kick;
+            }
+            return null;
+        }
+
         /// <summary>
         /// We cache the IP everyone connects to, for purposes..
         /// </summary>
         public static Dictionary<string, string> CachedKnownIPs = new Dictionary<string, string>();
 
+
+        public enum Authentication
+        {
+            None     = 0,
+            Student  = 1,
+            Sysop    = 2,
+            Sysadmin = 3
+        }
         public class SocketConnection
         {
             public TcpClient Client;
+            public IPEndPoint IPEnd;
             public string UserName; // can be different from AccountName, eg when same person joins twice
                                     // this will be randomly generated a suffix of 3 digits
             public User User;
@@ -32,6 +72,18 @@ namespace AwardsServer
             public bool Listening = true; // for the while loop below
 
             public string IPAddress;
+
+            public Authentication Authentication = Authentication.Student;
+
+            public void ReSendAuthentication()
+            {
+                Authentication = Authentication.Student;
+                if (User.Flags.Contains(Flags.Automatic_Sysop))
+                    this.Authentication = Authentication.Sysop;
+                if (IPEnd.Address.ToString() == "127.0.0.1" || IPEnd.Address.ToString() == Program.GetLocalIPAddress() || IPEnd.Address.ToString() == "192.168.1.1")
+                    this.Authentication = Authentication.Sysadmin;
+                this.Send("Auth:" + ((int)Authentication).ToString());
+            }
 
             public DateTime StartedTime;
 
@@ -43,10 +95,12 @@ namespace AwardsServer
                 UserName = name;
                 if(Program.TryGetUser(name, out User)) {
                     // nothing (already sets variable so..)
-                    if(Program.Options.WebSever_Enabled)
+                    IPEndPoint ipEnd = client.Client.RemoteEndPoint as IPEndPoint;
+                    IPEnd = ipEnd;
+                    var ip = ipEnd.Address.ToString();
+                    this.ReSendAuthentication();
+                    if (Program.Options.WebSever_Enabled)
                     {
-                        IPEndPoint ipEnd = client.Client.RemoteEndPoint as IPEndPoint;
-                        var ip = ipEnd.Address.ToString() == "127.0.0.1" ? Program.GetLocalIPAddress() : ipEnd.Address.ToString();
                         if(CachedKnownIPs.ContainsKey(User.AccountName)) {
                             Logging.Log(Logging.LogSeverity.Warning, $"User {User.ToString("AN FN")} was connected via {CachedKnownIPs[User.AccountName]} but now has connected via {ip}");
                             CachedKnownIPs[User.AccountName] = ip;
@@ -55,6 +109,7 @@ namespace AwardsServer
                             CachedKnownIPs.Add(User.AccountName, ip);
                         }
                     }
+                    User.Connection = this;
                 } else
                 { // this is handled in the newclient thread thingy
                     throw new ArgumentException("User not found: '" + name + "'");
@@ -64,14 +119,51 @@ namespace AwardsServer
             /// <summary>
             /// Indicates that it should begin to listen because it's been moved from the queue
             /// </summary>
-            public void AcceptFromQueue()
+            public void AcceptFromQueue(bool bypassed = false)
             {
                 StartedTime = DateTime.Now;
-                Logging.Log(Logging.LogSeverity.Warning, "Bringing " + this.User.ToString() + " from queue.");
+                Logging.Log(Logging.LogSeverity.Warning, $"Bringing {this.User} from queue. {(bypassed ? " (user bypassed queue)" : "")}");
                 Send("Ready:" + this.User.FirstName);
                 Send("NumCat:" + Program.Database.AllCategories.Count);
                 listenThread = new Thread(Listen);
                 listenThread.Start();
+            }
+
+            public List<User> QueryStudent(string message)
+            {
+                List<User> responses = new List<User>();
+                int count = 0;
+                foreach (var student in Program.Database.AllStudents.Values)
+                {
+                    bool shouldGo = false; // shouldGo: does the name match the query? if so, SHOULD we GO and send it
+                                           // yes i know its not best naming but /shrug
+                    message = message.ToLower();
+                    if (student.Flags.Contains(Flags.Disallow_Vote_Staff))
+                        continue; // disallow for staff to be voted for, even if they are in the database.
+                    if (student.ToString().ToLower().StartsWith(message))
+                    {
+                        shouldGo = true;
+                    }
+                    else if (student.LastName.ToLower().StartsWith(message)) //?? - essentially looking to see if the name contains the query, ignoring any case
+                    { // it is actually just returning an index of where the query string is within the student's name (same as like list.Indexof)
+                      // the >=0 is because if it does not contain ^, then it returns -1 instead
+                        shouldGo = true;
+                    }
+                    else if (student.FirstName.ToLower().StartsWith(message))
+                    {
+                        shouldGo = true;
+                    }
+                    if (shouldGo)
+                    {
+                        count++;
+                        if (count >= Program.Options.Maximum_Query_Response)
+                        {
+                            break;
+                        }
+                        responses.Add(student); //add the student's name + properties to a list of names to send to the client
+                    }
+                }
+                return responses;
             }
 
             private void HandleMessage(string message) //when a the server receives a message from the client
@@ -111,6 +203,7 @@ namespace AwardsServer
                     // SUBMIT:male;female#male;female#male;female ....
                     // the male;female pairs are in order, so we should just be able to increment a counter as we go thorugh each
                     string rejectedReason = "";
+                    UserVoteSubmit vote = new UserVoteSubmit(this.User);
                     try
                     {
                         string[] cats = message.Split('#'); //categories
@@ -122,10 +215,8 @@ namespace AwardsServer
                             string[] winners = thing.Split(';'); // these are "male;female", so yes
                             string maleWin = winners[0];
                             string femaleWin = winners[1];
-                            User firstWinner;
-                            User secondWinner;
-                            Program.TryGetUser(maleWin, out firstWinner);
-                            Program.TryGetUser(femaleWin, out secondWinner);
+                            Program.TryGetUser(maleWin, out User firstWinner);
+                            Program.TryGetUser(femaleWin, out User secondWinner);
                             if ((firstWinner?.AccountName ?? ",") == (secondWinner?.AccountName ?? ""))
                             {
                                 rejectedReason = "Rejected:Duplicate";
@@ -134,26 +225,17 @@ namespace AwardsServer
                             if (firstWinner != null)
                             {
                                 if (firstWinner.AccountName == this.User.AccountName) //trying to vote for themself
-                                {
                                     rejectedReason = "Rejected:Self";
-                                }
-                                else
-                                {
-                                    Program.Database.AddVoteFor(index + 1, firstWinner, this.User);
-                                }
                             }
                             if(secondWinner != null)
                             {
                                 if (secondWinner.AccountName == this.User.AccountName)
-                                {
                                     rejectedReason = "Rejected:Self";
-                                }
-                                else
-                                {
-                                    Program.Database.AddVoteFor(index + 1, secondWinner, this.User);
-                                }
                             }
-
+                            if(string.IsNullOrWhiteSpace(rejectedReason))
+                            {
+                                vote.AddVote(index + 1, firstWinner, secondWinner);
+                            }
                         }
                     } catch (Exception ex)
                     {
@@ -166,6 +248,7 @@ namespace AwardsServer
                             var now = DateTime.Now;
                             var ts = now - this.StartedTime;
                             Program.Database.AlreadyVotedNames.Add(this.User.AccountName);
+                            vote.Submit();
                             this.Send("Accepted");
                             Logging.Log(Logging.LogSeverity.Warning, $"User has voted (took: {ts})", this.User.AccountName);
                         }
@@ -182,36 +265,8 @@ namespace AwardsServer
                     // format:
                     // ENTERED_TEXT
                     // its substring(2) '2' because we need to ignore first M/F and the :
-                    int count = 0; //what would this count ?? - allows us to limit number of names to respond with (so we dont crash the network)
-                    foreach (var student in Program.Database.AllStudents.Values)
-                    {
-                        bool shouldGo = false; // shouldGo: does the name match the query? if so, SHOULD we GO and send it
-                        // yes i know its not best naming but /shrug
-                        message = message.ToLower();
-                        if (student.Flags.Contains(Flags.Disallow_Vote_Staff))
-                            continue; // disallow for staff to be voted for, even if they are in the database.
-                        if(student.ToString().ToLower().StartsWith(message)) 
-                        {
-                            shouldGo = true;
-                        }
-                        else if (student.LastName.ToLower().StartsWith(message)) //?? - essentially looking to see if the name contains the query, ignoring any case
-                        { // it is actually just returning an index of where the query string is within the student's name (same as like list.Indexof)
-                            // the >=0 is because if it does not contain ^, then it returns -1 instead
-                            shouldGo = true;
-                        } else if(student.FirstName.ToLower().StartsWith(message))
-                        {
-                            shouldGo = true;
-                        }
-                        if (shouldGo)
-                        {
-                            count++;
-                            if (count >= Program.Options.Maximum_Query_Response)
-                            {
-                                break;
-                            }
-                            response += student.ToString("AN:FN:LN:TT") + "#"; //add the student's name + properties to a list of names to send to the client
-                        }
-                    }
+                    var students = QueryStudent(message);
+                    foreach(var student in students) { response += student.ToString("AN:FN:LN:TT") + "#"; }
                     this.Send("Q_RES:" + response);
                 } else if(message.StartsWith("QUES:"))
                 {
@@ -227,6 +282,110 @@ namespace AwardsServer
                     {
                         Logging.Log("SuggestFile", ex);
                     }
+                } else if(message.StartsWith("REPORT:"))
+                {
+                    var report = BugReport.BugReport.Parse(message, this.User);
+                    Logging.Log(Logging.LogSeverity.Warning,
+                        $"NEW: {report.Primary ?? report.Additional}{(string.IsNullOrWhiteSpace(report.Primary) ? "" : " " + report.Additional)} @ {report.LogFile}"
+                        , $"Bugs/{report.Reporter.AccountName}");
+                    Program.BugReports.Add(report);
+                    Program.SaveBugs();
+                } else if(message.StartsWith("/"))
+                {
+                    // admin message
+                    message = message.Substring(1);
+                    if(message.StartsWith("CHAT:"))
+                    {
+                        message = message.Substring(5);
+                        Program.SendAdminChat(new AdminMessage(this, message));
+                    } else if(message.StartsWith("QUEUE"))
+                    {
+                        var str = "/AQU:";
+                        int num = 0;
+                        foreach(var s in ClientQueue)
+                        {
+                            num += 1;
+                            str += $"{s.User.AccountName}:{s.User.FirstName}:{s.User.LastName}:{s.User.Tutor}:{num}:{s.IPAddress}#";
+                        }
+                        Send(str);
+                    } else if(message.StartsWith("VOTERS"))
+                    {
+                        var str = "/AVT:";
+                        int num = 0;
+                        foreach (var s in CurrentClients)
+                        {
+                            num += 1;
+                            str += $"{s.User.AccountName}:{s.User.FirstName}:{s.User.LastName}:{s.User.Tutor}:{(int)s.Authentication}:{s.IPAddress}#";
+                        }
+                        Send(str);
+                    } else if (message.StartsWith("KICK:"))
+                    {
+                        message = message.Substring("KICK:".Length);
+                        var split = message.Split(':');
+                        if(Program.TryGetUser(split[0], out User user))
+                        {
+                            var conn = AllClients.FirstOrDefault(x => x.User.AccountName == user.AccountName);
+                            if(conn != null)
+                            {
+                                if (conn.Authentication >= this.Authentication || conn.UserName == this.UserName)
+                                    return; // prevent kicking self or those with higher 'auth'
+                                var kick = new Kick(conn, this.User, split[1]);
+                                if(Program.Options.Perm_Block_Kicked_Users)
+                                    PriorKickedUsers.Add(kick);
+                                conn.Send("Kicked:" + kick.Reason);
+                                AdminMessage msg = new AdminMessage("Server", Authentication.Sysadmin, $"[STATUS] {kick.Kicked.AccountName} was kicked by {kick.Admin.AccountName} for {kick.Reason}");
+                                Program.SendAdminChat(msg);
+                                conn.Close($"Kicked by {kick.Admin.AccountName} with reason {kick.Reason}");
+                            }
+                        }
+                    } else if(message.StartsWith("MANR:"))
+                    {
+                        message = message.Replace("MANR:", "");
+                        if(Program.TryGetUser(message, out User user))
+                        {
+                            string response = "/MANRD:";
+                            foreach(var category in Program.Database.AllCategories.Values)
+                            {
+                                var votes = category.GetVotesBy(user);
+                                response += $"{votes.Item1?.ToString("AN:FN:LN:TT") ?? ""};{votes.Item2?.ToString("AN:FN:LN:TT") ?? ""}#";
+                            }
+                            Send(response);
+                        }
+                    } else if(message.StartsWith("MANVOTE:"))
+                    {
+                        message = message.Replace("MANVOTE:", "");
+                        var split = message.Split(':');
+                        if(Program.Database.AllStudents.TryGetValue(split.ElementAt(0), out User user))
+                        {
+                            int categoryId = 1;
+                            var votes = split.ElementAt(1).Split('#').Where(x => !string.IsNullOrWhiteSpace(x));
+                            foreach(string vote in votes)
+                            {
+                                var each = vote.Split(';');
+                                Program.TryGetUser(each.ElementAt(0), out User first);
+                                Program.TryGetUser(each.ElementAt(1), out User second);
+                                if(first != null)
+                                    Program.Database.AddVoteFor(categoryId, first, user);
+                                if(second != null)
+                                    Program.Database.AddVoteFor(categoryId, second, user);
+                                categoryId++;
+                            }
+                        }
+
+                    } else if (message.StartsWith("QUERY:"))
+                    {
+                        message = message.Replace("QUERY:", "");
+                        var split = message.Split(':').Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
+
+                        var rowIndex = int.Parse(split[0]);
+                        var colIndex = int.Parse(split[1]);
+                        var queryT = split[2];
+                        var students = QueryStudent(queryT);
+                        if(students.Count == 1)
+                        {
+                            Send($"/QUERY:{rowIndex}:{colIndex}:{students[0].ToString("AN;FN;LN;TT")}");
+                        }
+                    }
                 }
             }
 
@@ -237,6 +396,10 @@ namespace AwardsServer
             public void Close(string reason = "unknown")
             {
                 Logging.Log(Logging.LogSeverity.Warning, $"Closing {UserName}({this.User?.ToString() ?? "n/a"}) due to {reason}");
+                try
+                {
+                    this.User.Connection = null;
+                } catch { }
                 try
                 {
                     Client.Close();
@@ -290,7 +453,11 @@ namespace AwardsServer
                             Logging.Log(Logging.LogSeverity.Debug, message, $"{UserName}/Rec");
                             HandleMessage(message);
                         }
-                    } catch (Exception ex)
+                    } catch (ThreadAbortException)
+                    {
+                        // thread is closing, already logged - no need to catch again
+                    }
+                    catch (Exception ex)
                     {
                         Logging.Log($"{UserName}/Rec", ex);
                         Close("Errored");
@@ -449,7 +616,14 @@ public static string GetLocalIPAddress()
                         user.Close("Blocked from voting, online-only account");
                         continue;
                     }
-                    lock(LockClient)
+                    var getKick = GetKick(user);
+                    if (getKick != null)
+                    {
+                        user.Send("REJECT:Kicked:" + getKick.Reason);
+                        user.Close("prior kicked, by " + getKick.Admin.AccountName);
+                        continue;
+                    }
+                    lock (LockClient)
                     {
                         ClientQueue.Add(user);
                         user.Send("QUEUE:" + ClientQueue.Count);
@@ -461,6 +635,13 @@ public static string GetLocalIPAddress()
                             CurrentClients.Add(ClientQueue[0]);
                             ClientQueue.RemoveAt(0);
                         }
+                        var adminsInQueue = ClientQueue.Where(x => x.Authentication > Authentication.Student).ToList();
+                        foreach(var adm in adminsInQueue)
+                        {
+                            ClientQueue.RemoveAll(x => x.UserName == adm.UserName);
+                            CurrentClients.Add(adm);
+                            adm.AcceptFromQueue(true);
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -470,4 +651,82 @@ public static string GetLocalIPAddress()
             }
         }
     }
+
+
+    public class AdminMessage
+    {
+        public string From;
+        public SocketHandler.Authentication FromAuth;
+        public string Content;
+
+        public AdminMessage(string from, SocketHandler.Authentication auth, string content)
+        {
+            From = from;
+            FromAuth = auth;
+            Content = content;
+        }
+
+        public AdminMessage(SocketHandler.SocketConnection connection, string content) : this(connection.User.AccountName, connection.Authentication, content)
+        {
+        }
+
+        public string ToSend()
+        {
+            return $"/CHAT:{From}^{(int)FromAuth}^{Content}";
+        }
+
+        public static AdminMessage Parse(string message)
+        {
+            if (message.StartsWith("/"))
+                message = message.Substring(1);
+            if (message.StartsWith("CHAT:"))
+                message = message.Substring(4);
+            var split = message.Split('^').ToList();
+            var from = split[0];
+            var auth = (SocketHandler.Authentication)int.Parse(split[1]);
+            split.RemoveRange(0, 2);
+            var content = string.Join("", split);
+            return new AdminMessage(from, auth, content);
+        }
+    }
+
+    public class Kick
+    {
+        public User Kicked;
+        public User Admin;
+        public string Reason;
+        public List<string> IPAddresses;
+        public bool Match(SocketHandler.SocketConnection user)
+        {
+            if(!Program.Options.Perm_Block_Kicked_Users)
+                return false;
+
+            if (user.User.AccountName == Kicked.AccountName)
+            {
+                if (!IPAddresses.Contains(user.IPAddress))
+                    IPAddresses.Add(user.IPAddress);
+                return true;
+            }
+            foreach (var ip in IPAddresses)
+                if (ip == user.IPAddress || ip == user.IPEnd.Address.ToString())
+                    return true;
+            return false;
+        }
+        public Kick(User kicked, User admin, string reason, string ip)
+        {
+            Kicked = kicked;
+            Admin = admin;
+            Reason = reason;
+            IPAddresses = new List<string>() { ip };
+        }
+        public Kick(SocketHandler.SocketConnection connection, User admin, string reason)
+        {
+            Kicked = connection.User;
+            Admin = admin;
+            Reason = reason;
+            IPAddresses = new List<string>() { connection.IPAddress };
+        }
+
+    }
+
 }

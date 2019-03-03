@@ -53,7 +53,12 @@ namespace AwardsServer
             Info,
             Warning,
             Severe,
-            Error
+            Error,
+            /// <summary>
+            /// Not to be used normally for logging
+            /// Ensures that responses to console are clearly distinguished.
+            /// </summary>
+            Console = 99
         }
         private static object lockObj = new object();
         private static string _logDirectory = Path.Combine( Directory.GetCurrentDirectory(), "Logs");
@@ -97,6 +102,9 @@ namespace AwardsServer
                     case LogSeverity.Debug:
                             Console.ForegroundColor = ConsoleColor.DarkGray;
                         break;
+                    case LogSeverity.Console:
+                        Console.ForegroundColor = ConsoleColor.Cyan;
+                        break;
                 }
                 bool shouldDisplay = true;
                 if(msg.Severity < Program.Options.Only_Show_Above_Severity)
@@ -111,7 +119,7 @@ namespace AwardsServer
                 {
                     shouldDisplay = false;
                 }
-                if(shouldDisplay)
+                if(shouldDisplay || msg.Severity == LogSeverity.Console)
                     Console.Out.WriteLineAsync(logText);       // Write the log text to the console
                 Console.ForegroundColor = ConsoleColor.Blue;
             }

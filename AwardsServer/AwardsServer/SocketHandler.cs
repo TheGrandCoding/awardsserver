@@ -78,7 +78,7 @@ namespace AwardsServer
             public void ReSendAuthentication()
             {
                 Authentication = Authentication.Student;
-                if (User.Flags.Contains(Flags.Automatic_Sysop))
+                if (User.Flags.Contains(Flags.System_Operator))
                     this.Authentication = Authentication.Sysop;
                 if (IPEnd.Address.ToString() == "127.0.0.1" || IPEnd.Address.ToString() == Program.GetLocalIPAddress() || IPEnd.Address.ToString() == "192.168.1.1")
                     this.Authentication = Authentication.Sysadmin;
@@ -103,10 +103,10 @@ namespace AwardsServer
                     {
                         if(CachedKnownIPs.ContainsKey(User.AccountName)) {
                             Logging.Log(Logging.LogSeverity.Warning, $"User {User.ToString("AN FN")} was connected via {CachedKnownIPs[User.AccountName]} but now has connected via {ip}");
-                            CachedKnownIPs[User.AccountName] = ip;
+                            CachedKnownIPs[User.AccountName] = ip.Replace("127.0.0.1", Program.GetLocalIPAddress());
                         } else
                         {
-                            CachedKnownIPs.Add(User.AccountName, ip);
+                            CachedKnownIPs.Add(User.AccountName, ip.Replace("127.0.0.1", Program.GetLocalIPAddress()));
                         }
                     }
                     User.Connection = this;

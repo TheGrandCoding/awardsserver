@@ -145,6 +145,8 @@ namespace AwardsServer
             // essentially, it will return true and the "user" will become the proper value if the user is found
             // or if not, it returns false and the "user" is set to null
             user = null;
+            if (string.IsNullOrWhiteSpace(username))
+                return false;
             if(Database.AllStudents.ContainsKey(username))
             {
                 user = Database.AllStudents[username];
@@ -323,14 +325,14 @@ namespace AwardsServer
                 e = e.Substring(3).Trim(); // remove "op "
                 if(Program.TryGetUser(e, out User user))
                 {
-                    if (user.Flags.Contains(Flags.Automatic_Sysop))
+                    if (user.Flags.Contains(Flags.System_Operator))
                     {
-                        user.Flags.Remove(Flags.Automatic_Sysop);
+                        user.Flags.Remove(Flags.System_Operator);
                         Logging.Log(Logging.LogSeverity.Console, "Removed sysop from " + user.AccountName);
                     }
                     else
                     {
-                        user.Flags.Add(Flags.Automatic_Sysop);
+                        user.Flags.Add(Flags.System_Operator);
                         Logging.Log(Logging.LogSeverity.Console, "Given sysop to " + user.AccountName);
                     }
                     Database.ExecuteCommand($"UPDATE UserData SET Flags = '{string.Join(";", user.Flags)}' WHERE UserName = '{user.AccountName}'");
@@ -345,6 +347,67 @@ namespace AwardsServer
             {
                 e = e.Substring("chat".Length + 1);
                 SendAdminChat(new AdminMessage("Server", SocketHandler.Authentication.Sysadmin, e));
+            } else if(e.StartsWith("load votes"))
+            {
+                System.IO.FileInfo file = new System.IO.FileInfo(Options.ServerTextFileVotes_Path);
+                if(MessageBox.Show($"Are you sure you want to add in the votes from the file:" + file.FullName, "Add votes: Confirm", MessageBoxButtons.OKCancel) == DialogResult.OK)
+                {
+                    string[] lineByLine = System.IO.File.ReadAllLines(file.FullName);
+                    Func<string, bool> warn = (message) =>
+                    {
+                        Logging.Log(Logging.LogSeverity.Warning, message, "LoadVotes");
+                        return true;
+                    };
+                    Func<Tuple<User, User>, User, bool> contains = (tuple, usr) =>
+                    {
+                        if (tuple.Item1?.AccountName == usr.AccountName)
+                            return true;
+                        if (tuple.Item2?.AccountName == usr.AccountName)
+                            return true;
+                        return false;
+                    };
+                    foreach (string line in lineByLine)
+                    { 
+                        string[] firstSplit = line.Split('/');
+                        // name/votes
+                        if(Program.TryGetUser(firstSplit[0], out User voter))
+                        {
+                            string[] votes = firstSplit[1].Split('#');
+                            int category = 0;
+                            foreach(string vote in votes)
+                            {
+                                if (string.IsNullOrWhiteSpace(vote))
+                                    continue;
+                                category++;
+                                Category cat = Database.AllCategories[category];
+                                var votesDoneAlready = cat.GetVotesBy(voter);
+                                string[] names = vote.Split(';');
+                                // should always give two-element array
+                                // unless the string is null or empty, which is handled.
+                                if(Program.TryGetUser(names[0], out User first))
+                                {
+                                    if(!contains(votesDoneAlready, first))
+                                    {
+                                        warn($"Cat:{cat.ID} | Load Vote for {first.AccountName} by {voter.AccountName}");
+                                        Database.AddVoteFor(category, first, voter);
+                                    }
+                                }
+                                if(Program.TryGetUser(names[1], out User second))
+                                {
+                                    if (!contains(votesDoneAlready, second))
+                                    {
+                                        warn($"Cat:{cat.ID} | Load Vote for {second.AccountName} by {voter.AccountName}");
+                                        Database.AddVoteFor(category, second, voter);
+                                    }
+                                }
+                            }
+                        } else
+                        {
+                            warn("Unknown user: " + firstSplit[0] + "; full line: " + line);
+                        }
+                    }
+
+                }
             }
         }
 
@@ -589,7 +652,7 @@ namespace AwardsServer
         /// <summary>
         /// Upon connection, makes the user a system operator.
         /// </summary>
-        public const string Automatic_Sysop = "sysop";
+        public const string System_Operator = "sysop";
     }
 
     public class UserVoteSubmit

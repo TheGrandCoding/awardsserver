@@ -131,7 +131,7 @@ namespace AwardsServer.ServerUI
             List<string> FooterArr = new List<string>();
             if(AuthenticatedAs != null)
             {
-                if(AuthenticatedAs.Flags.Contains(Flags.Coundon_Staff))
+                if(AuthenticatedAs.Flags.Contains(Flags.Coundon_Staff) || AuthenticatedAs.Flags.Contains(Flags.System_Operator))
                 {
                     FooterArr.Add(Link(ServerUrl + "student", "See a student's votes"));
                 } else if(!AuthenticatedAs.Flags.Contains(Flags.Disallow_View_Online))

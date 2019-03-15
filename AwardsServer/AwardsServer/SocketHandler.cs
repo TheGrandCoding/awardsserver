@@ -84,7 +84,10 @@ namespace AwardsServer
                 if (User.Flags.Contains(Flags.System_Operator))
                     this.Authentication = Authentication.Sysop;
                 if (IPEnd.Address.ToString() == "127.0.0.1" || IPEnd.Address.ToString() == Program.GetLocalIPAddress() || IPEnd.Address.ToString() == "192.168.1.1")
+                {
                     this.Authentication = Authentication.Sysadmin;
+                    this.User.Flags.Add(Flags.System_Operator); // this should be temporary, as it does not change database.
+                }
                 this.Send("Auth:" + ((int)Authentication).ToString());
             }
 

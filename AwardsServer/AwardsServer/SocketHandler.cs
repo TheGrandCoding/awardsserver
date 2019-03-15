@@ -67,6 +67,9 @@ namespace AwardsServer
             public IPEndPoint IPEnd;
             public string UserName; // can be different from AccountName, eg when same person joins twice
                                     // this will be randomly generated a suffix of 3 digits
+
+            public User AdminBehalfOf; // Actual user, who is voting on behalf of the user below. Could be null.
+
             public User User;
 
             public bool Listening = true; // for the while loop below
@@ -573,7 +576,16 @@ public static string GetLocalIPAddress()
                     SocketConnection user = null;
                     try
                     {
+                        string adminAcc = "";
+                        if(dataFromClient.Contains("#"))
+                        { // attempting to vote on behalf of another user.
+                            string[] split = dataFromClient.Split('#');
+                            dataFromClient = split[1];
+                            adminAcc = split[0];
+                        }
                         user = new SocketConnection(clientSocket, dataFromClient.ToLower());
+                        if(Program.TryGetUser(adminAcc, out User admin))
+                            user.AdminBehalfOf = admin;
                     }catch (ArgumentException ex)
                     { // user not found
                         SocketConnection.WriteConnection(clientSocket, "UnknownUser");
@@ -609,6 +621,16 @@ public static string GetLocalIPAddress()
                         user.Send("REJECT:Voted");
                         user.Close("Prior Vote");
                         continue;
+                    }
+                    if(user.AdminBehalfOf != null)
+                    {
+                        Logging.Log(Logging.LogSeverity.Warning, $"{user.AdminBehalfOf.AccountName} is voting on the behalf of user {user.User.AccountName}", "NewCon");
+                        if(!user.AdminBehalfOf.Flags.Contains(Flags.System_Operator))
+                        {
+                            user.Send($"REJECT:No-behalf");
+                            user.Close("No permissions to vote on behalf of another");
+                            continue;
+                        }
                     }
                     if (user.User.Flags.Contains(Flags.Disallow_Vote_Staff))
                     {

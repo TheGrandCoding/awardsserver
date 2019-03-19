@@ -8,6 +8,8 @@ using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using Newtonsoft.Json;
+using System.Net;
+using System.Net.Sockets;
 
 //get ready for some seemingly obvious questions
 //ctrl-f "??" to find what might be confusing
@@ -258,7 +260,7 @@ namespace AwardsServer
 
 
 
-            Logging.Log("Starting socket listener...");
+            Logging.Log("Starting socket listener... @ " + GetLocalIPAddress());
             Server = new SocketHandler();
             Logging.Log("Started. Ready to accept new connections.");
 

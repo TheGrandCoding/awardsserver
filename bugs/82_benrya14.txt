@@ -1,0 +1,79 @@
+------------------
+New bug report:
+Type: Other
+Primary: 
+Additional: Manual vote for client has names weirdly formatted
+------------------
+05:40:23.007: MainForm/ Loaded for cheale14
+05:40:23.043: MainForm/ Started conn thread
+05:40:23.355: MainForm/ Starting connection to 10.249.74.147:56567
+05:40:44.381: MainForm/ System.Net.Sockets.SocketException (0x80004005): A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond 10.249.74.147:56567
+   at System.Net.Sockets.Socket.EndConnect(IAsyncResult asyncResult)
+   at System.Net.Sockets.TcpClient.EndConnect(IAsyncResult asyncResult)
+   at AwardsClient.MainForm.AttemptConnection(Int32 delay)
+05:40:44.404: MainForm/ Started conn thread
+05:40:49.406: MainForm/ Starting connection to 127.0.0.1:56567
+05:40:49.418: MainForm/ Connected to server
+05:40:49.434: MainForm/ Started conn thread
+05:40:49.445: MainForm/ Send/ cheale14
+05:40:49.461: Server/ Auth:3
+05:40:49.496: MainForm/ Send/ /QUEUE
+05:40:49.504: MainForm/ Send/ /VOTERS
+05:40:49.519: Server/ QUEUE:1
+05:40:49.531: Server/ Ready:Alexander
+05:40:49.543: Server/ NumCat:17
+05:40:49.555: Server/ /AQU:
+05:40:49.570: Server/ /AVT:cheale14:Alexander:Chester:11OWI:3:127.0.0.1#
+05:40:54.046: Server/ hi
+05:40:58.480: MainForm/ System.Threading.ThreadAbortException: Thread was being aborted.
+   at System.Net.UnsafeNclNativeMethods.OSSOCK.recv(IntPtr socketHandle, Byte* pinnedBuffer, Int32 len, SocketFlags socketFlags)
+   at System.Net.Sockets.Socket.Receive(Byte[] buffer, Int32 offset, Int32 size, SocketFlags socketFlags, SocketError& errorCode)
+   at System.Net.Sockets.Socket.Receive(Byte[] buffer, Int32 offset, Int32 size, SocketFlags socketFlags)
+   at System.Net.Sockets.NetworkStream.Read(Byte[] buffer, Int32 offset, Int32 size)
+   at AwardsClient.MainForm.ReceiveMessage()
+05:41:09.232: MainForm/ Loaded for cheale14
+05:41:17.914: MainForm/ Voting on behalf of: benrya14
+05:41:17.956: MainForm/ Started conn thread
+05:41:18.281: MainForm/ Starting connection to 10.249.74.147:56567
+05:41:39.307: MainForm/ System.Net.Sockets.SocketException (0x80004005): A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond 10.249.74.147:56567
+   at System.Net.Sockets.Socket.EndConnect(IAsyncResult asyncResult)
+   at System.Net.Sockets.TcpClient.EndConnect(IAsyncResult asyncResult)
+   at AwardsClient.MainForm.AttemptConnection(Int32 delay)
+05:41:39.331: MainForm/ Started conn thread
+05:41:44.331: MainForm/ Starting connection to 127.0.0.1:56567
+05:41:44.343: MainForm/ Connected to server
+05:43:43.997: MainForm/ Loaded for cheale14
+05:43:50.637: MainForm/ Voting on behalf of: benrya14
+05:43:50.651: MainForm/ Started conn thread
+05:43:51.119: MainForm/ Starting connection to 10.249.74.147:56567
+05:44:12.167: MainForm/ System.Net.Sockets.SocketException (0x80004005): A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond 10.249.74.147:56567
+   at System.Net.Sockets.Socket.EndConnect(IAsyncResult asyncResult)
+   at System.Net.Sockets.TcpClient.EndConnect(IAsyncResult asyncResult)
+   at AwardsClient.MainForm.AttemptConnection(Int32 delay)
+05:44:12.190: MainForm/ Started conn thread
+05:44:17.191: MainForm/ Starting connection to 127.0.0.1:56567
+05:44:17.198: MainForm/ Connected to server
+05:44:17.378: MainForm/ Started conn thread
+05:44:17.386: MainForm/ Send/ cheale14#benrya14
+05:44:17.401: Server/ Auth:3
+05:44:17.425: MainForm/ Send/ /QUEUE
+05:44:17.448: MainForm/ Send/ /VOTERS
+05:44:17.464: Server/ QUEUE:1
+05:44:17.483: Server/ Ready:Ryan
+05:44:17.491: Server/ NumCat:17
+05:44:17.495: Server/ /AQU:
+05:44:17.507: Server/ /AVT:benrya14:Ryan:Benson:11OWI:3:127.0.0.1#
+05:44:19.054: Server/ hi
+05:44:24.050: Server/ hi
+05:44:29.046: Server/ hi
+05:44:31.343: MainForm/ Send/ /MANR:benrya14
+05:44:31.355: Server/ /MANRD:mohsoh14:Sohail:Mohammed Khail:11ORE;edgjos14:Joshua:Edge:11KAU#edgjos14:Joshua:Edge:11KAU;mohsoh14:Sohail:Mohammed Khail:11ORE#mohsoh14:Sohail:Mohammed Khail:11ORE;edgjos14:Joshua:Edge:11KAU#mohsoh14:Sohail:Mohammed Khail:11ORE;edgjos14:Joshua:Edge:11KAU#mohsoh14:Sohail:Mohammed Khail:11ORE;edgjos14:Joshua:Edge:11KAU#edgjos14:Joshua:Edge:11KAU;mohsoh14:Sohail:Mohammed Khail:11ORE#edgjos14:Joshua:Edge:11KAU;mohsoh14:Sohail:Mohammed Khail:11ORE#mohsoh14:Sohail:Mohammed Khail:11ORE;edgjos14:Joshua:Edge:11KAU#mohsoh14:Sohail:Mohammed Khail:11ORE;edgjos14:Joshua:Edge:11KAU#edgjos14:Joshua:Edge:11KAU;mohsoh14:Sohail:Mohammed Khail:11ORE#edgjos14:Joshua:Edge:11KAU;mohsoh14:Sohail:Mohammed Khail:11ORE#mohsoh14:Sohail:Mohammed Khail:11ORE;edgjos14:Joshua:Edge:11KAU#mohsoh14:Sohail:Mohammed Khail:11ORE;edgjos14:Joshua:Edge:11KAU#edgjos14:Joshua:Edge:11KAU;mohsoh14:Sohail:Mohammed Khail:11ORE#edgjos14:Joshua:Edge:11KAU;mohsoh14:Sohail:Mohammed Khail:11ORE#edgjos14:Joshua:Edge:11KAU;mohsoh14:Sohail:Mohammed Khail:11ORE#mohsoh14:Sohail:Mohammed Khail:11ORE;edgjos14:Joshua:Edge:11KAU#
+05:44:34.054: Server/ hi
+05:44:39.046: Server/ hi
+05:44:44.040: Server/ hi
+05:44:48.758: MainForm/ Send/ GET_CATE:1
+05:44:48.766: Server/ Cat:1:Happiest Person
+05:44:48.778: MainForm/ Send/ GET_CATE:2
+05:44:48.790: Server/ Cat:2:Most outrageous laugh
+05:44:49.043: Server/ hi
+05:44:54.044: Server/ hi

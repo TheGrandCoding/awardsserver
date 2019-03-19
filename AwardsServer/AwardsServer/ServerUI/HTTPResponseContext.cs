@@ -131,7 +131,7 @@ namespace AwardsServer.ServerUI
             List<string> FooterArr = new List<string>();
             if(AuthenticatedAs != null)
             {
-                if(AuthenticatedAs.Flags.Contains(Flags.Coundon_Staff))
+                if(AuthenticatedAs.Flags.Contains(Flags.Coundon_Staff) || AuthenticatedAs.Flags.Contains(Flags.System_Operator))
                 {
                     FooterArr.Add(Link(ServerUrl + "student", "See a student's votes"));
                 } else if(!AuthenticatedAs.Flags.Contains(Flags.Disallow_View_Online))
@@ -337,7 +337,7 @@ namespace AwardsServer.ServerUI
                 } else
                 {
                     if(Viewing.Flags.Contains(Flags.Disallow_View_Online) ||
-                        (
+                        ( // Looking at self, and self is staff, and self is not allowed to vote.
                         Viewing.AccountName == AuthenticatedAs.AccountName && 
                         AuthenticatedAs.Flags.Contains(Flags.Coundon_Staff) && 
                         AuthenticatedAs.Flags.Contains(Flags.Disallow_Vote_Staff)
@@ -468,6 +468,8 @@ namespace AwardsServer.ServerUI
                         }
                         // Displays how many total votes have been made, and how many unique people have been voted, for each category.
                         string categoryTable = "<table><tr><th>Category</th><th>Total Votes (by people)</th><th>Unique Voted (num people voted)</th></tr>";
+                        int totalVotes = 0;
+                        int highestPeopleVoted = 0;
                         foreach (var category in Program.Database.AllCategories.Values)
                         {
                             int votes = 0;
@@ -478,7 +480,11 @@ namespace AwardsServer.ServerUI
                             string tempClass = (category.ID % 2 == 0) ? "class=\"tblEven\"" : "";
                             string format = $"<tr {tempClass}><td>{category.Prompt}</td><td>{votes}</td><td>{category.Votes.Count}</td></tr>";
                             categoryTable += format;
+                            totalVotes += votes;
+                            if (category.Votes.Count > highestPeopleVoted)
+                                highestPeopleVoted = category.Votes.Count;
                         }
+                        categoryTable += $"<tr><td><strong>Totals</strong><td>{totalVotes}</td><td>{highestPeopleVoted}</td></tr>";
                         categoryTable += "</table>";
 
                         string winnersTable = "<table><tr><th>Category</th><th>First Winner</th><th>Second Winner</th></tr>";
@@ -521,7 +527,7 @@ namespace AwardsServer.ServerUI
                     }
                     else if (URLUntilTokens == "/student")
                     {
-                        if (!AuthenticatedAs.Flags.Contains(Flags.Coundon_Staff))
+                        if (!AuthenticatedAs.Flags.Contains(Flags.Coundon_Staff) && !AuthenticatedAs.Flags.Contains(Flags.System_Operator))
                         {
                             Body = "<label class=\"error\">You do not have access to view other people's votes.</label>";
                             Code = HttpStatusCode.Forbidden;

@@ -255,6 +255,7 @@ namespace AwardsServer
 #if DEBUG
             var st = new User(Environment.UserName.ToLower(), "Local", "Host", "1010");
             st.Flags.Add(Flags.System_Operator);
+            st.Flags.Add(Flags.View_Online);
             if (!Database.AllStudents.ContainsKey(st.AccountName)) //if the user is not in the database
                 Database.AllStudents.Add(st.AccountName, st); //add the user
 #endif

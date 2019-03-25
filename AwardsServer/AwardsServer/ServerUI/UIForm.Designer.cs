@@ -54,9 +54,6 @@
             this.Column12 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.tabPage6 = new System.Windows.Forms.TabPage();
             this.dgvCurrentVoters = new System.Windows.Forms.DataGridView();
-            this.dataGridViewTextBoxColumn1 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Column14 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.dataGridViewTextBoxColumn2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.tabPage7 = new System.Windows.Forms.TabPage();
             this.btnSubmitManualVote = new System.Windows.Forms.Button();
             this.btnReadyManualVote = new System.Windows.Forms.Button();
@@ -66,7 +63,6 @@
             this.Column16 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.txtNameOfManualVote = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
-            this.queueTimer = new System.Windows.Forms.Timer(this.components);
             this.tabPage8 = new System.Windows.Forms.TabPage();
             this.dgvBugReports = new System.Windows.Forms.DataGridView();
             this.Column17 = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -76,6 +72,11 @@
             this.Column21 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Column23 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Column22 = new System.Windows.Forms.DataGridViewButtonColumn();
+            this.queueTimer = new System.Windows.Forms.Timer(this.components);
+            this.dataGridViewTextBoxColumn1 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Column14 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataGridViewTextBoxColumn2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Column24 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvStudents)).BeginInit();
@@ -358,7 +359,8 @@
             this.dgvCurrentVoters.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.dataGridViewTextBoxColumn1,
             this.Column14,
-            this.dataGridViewTextBoxColumn2});
+            this.dataGridViewTextBoxColumn2,
+            this.Column24});
             this.dgvCurrentVoters.Dock = System.Windows.Forms.DockStyle.Fill;
             this.dgvCurrentVoters.Location = new System.Drawing.Point(3, 2);
             this.dgvCurrentVoters.Margin = new System.Windows.Forms.Padding(4);
@@ -367,24 +369,6 @@
             this.dgvCurrentVoters.RowHeadersVisible = false;
             this.dgvCurrentVoters.Size = new System.Drawing.Size(786, 417);
             this.dgvCurrentVoters.TabIndex = 1;
-            // 
-            // dataGridViewTextBoxColumn1
-            // 
-            this.dataGridViewTextBoxColumn1.HeaderText = "IP";
-            this.dataGridViewTextBoxColumn1.Name = "dataGridViewTextBoxColumn1";
-            this.dataGridViewTextBoxColumn1.ReadOnly = true;
-            // 
-            // Column14
-            // 
-            this.Column14.HeaderText = "Connection";
-            this.Column14.Name = "Column14";
-            this.Column14.ReadOnly = true;
-            // 
-            // dataGridViewTextBoxColumn2
-            // 
-            this.dataGridViewTextBoxColumn2.HeaderText = "Name";
-            this.dataGridViewTextBoxColumn2.Name = "dataGridViewTextBoxColumn2";
-            this.dataGridViewTextBoxColumn2.ReadOnly = true;
             // 
             // tabPage7
             // 
@@ -471,12 +455,6 @@
             this.label1.TabIndex = 0;
             this.label1.Text = "Add a vote on behalf of (username)";
             // 
-            // queueTimer
-            // 
-            this.queueTimer.Enabled = true;
-            this.queueTimer.Interval = 10000;
-            this.queueTimer.Tick += new System.EventHandler(this.queueTimer_Tick);
-            // 
             // tabPage8
             // 
             this.tabPage8.Controls.Add(this.dgvBugReports);
@@ -562,6 +540,36 @@
             this.Column22.Name = "Column22";
             this.Column22.ReadOnly = true;
             // 
+            // queueTimer
+            // 
+            this.queueTimer.Enabled = true;
+            this.queueTimer.Interval = 10000;
+            this.queueTimer.Tick += new System.EventHandler(this.queueTimer_Tick);
+            // 
+            // dataGridViewTextBoxColumn1
+            // 
+            this.dataGridViewTextBoxColumn1.HeaderText = "IP";
+            this.dataGridViewTextBoxColumn1.Name = "dataGridViewTextBoxColumn1";
+            this.dataGridViewTextBoxColumn1.ReadOnly = true;
+            // 
+            // Column14
+            // 
+            this.Column14.HeaderText = "Connection";
+            this.Column14.Name = "Column14";
+            this.Column14.ReadOnly = true;
+            // 
+            // dataGridViewTextBoxColumn2
+            // 
+            this.dataGridViewTextBoxColumn2.HeaderText = "Name";
+            this.dataGridViewTextBoxColumn2.Name = "dataGridViewTextBoxColumn2";
+            this.dataGridViewTextBoxColumn2.ReadOnly = true;
+            // 
+            // Column24
+            // 
+            this.Column24.HeaderText = "Category (one ahead)";
+            this.Column24.Name = "Column24";
+            this.Column24.ReadOnly = true;
+            // 
             // UIForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -614,9 +622,6 @@
         private System.Windows.Forms.DataGridView dgvStudents;
         private System.Windows.Forms.TabPage tabPage6;
         private System.Windows.Forms.DataGridView dgvCurrentVoters;
-        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn1;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Column14;
-        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn2;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column1;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column2;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column3;
@@ -643,5 +648,9 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn Column21;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column23;
         private System.Windows.Forms.DataGridViewButtonColumn Column22;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn1;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Column14;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn2;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Column24;
     }
 }

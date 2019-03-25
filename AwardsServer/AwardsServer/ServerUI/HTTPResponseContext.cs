@@ -140,6 +140,9 @@ namespace AwardsServer.ServerUI
                 } 
             }
             FooterArr.Add(Link(ServerUrl + "all", "See all votes"));
+            if (Code == HttpStatusCode.OK && pageTitle.Contains("500 error"))
+                pageTitle = "Y11 Awards";
+
 
             List<string> response_text = new List<string>()
             {
@@ -147,6 +150,8 @@ namespace AwardsServer.ServerUI
                 "<html>",
                 "<head>",
                 "<link rel=\"stylesheet\" href=\"/WebStyles.css\">", // in resources
+                "<link rel=\"stylesheet\" href=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css\" integrity=\"sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u\" crossorigin=\"anonymous\">",
+                "<link rel=\"stylesheet\" href=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css\" integrity=\"sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp\" crossorigin=\"anonymous\">",
                 "<script src=\"/WebScripts.js\"></script>", // also in resources
                 "<meta charset=\"UTF-8\">",
                 $"<title>{pageTitle}</title>",
@@ -242,7 +247,7 @@ namespace AwardsServer.ServerUI
                         };
                     } else
                     {
-                        splited = authorisation.Split(';');
+                        splited = authorisation.Split('.');
                     }
                     var name = splited[0];
                     var lastName = splited[1];
@@ -556,6 +561,8 @@ namespace AwardsServer.ServerUI
                                 text += catText;
                             }
                             text += "</table>";
+                            text += "<button id=\"btnid\" onclick=\"resetStudent();\">Change student</button>";
+
                             Body = text; Code = HttpStatusCode.OK;
                         }
                     }

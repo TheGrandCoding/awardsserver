@@ -78,6 +78,8 @@ namespace AwardsServer
 
             public Authentication Authentication = Authentication.Student;
 
+            public int LastCategoryRequested = 1;
+
             public void ReSendAuthentication()
             {
                 Authentication = Authentication.Student;
@@ -180,6 +182,7 @@ namespace AwardsServer
                     message = message.Replace("GET_CATE:", "");
                     if(int.TryParse(message, out int id))
                     {
+                        LastCategoryRequested = id;
                         if(Program.Database.AllCategories.TryGetValue(id, out Category cat))
                         {
                             response = $"{cat.ID}:{cat.Prompt}";

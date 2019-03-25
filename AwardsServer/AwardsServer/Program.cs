@@ -412,6 +412,28 @@ namespace AwardsServer
                     }
 
                 }
+            } else if(e.StartsWith("save votes"))
+            {
+                System.IO.FileInfo file = new System.IO.FileInfo(Options.ServerTextFileVotes_Path);
+                if(MessageBox.Show($"Are you sure you want to OVERWRITE the votes in:\r\n" + file.FullName, "Overwrite votes: Confirm", MessageBoxButtons.OKCancel) == DialogResult.OK)
+                {
+                    string contents = "";
+                    foreach(var student in Database.AllStudents)
+                    {
+                        string str = $"{student.Key}/";
+                        bool yesVote = false;
+                        foreach(var category in Database.AllCategories.Values)
+                        {
+                            var votes = category.GetVotesBy(student.Value);
+                            if (votes.Item1 != null || votes.Item2 != null) 
+                                yesVote = true;
+                            str += $"{(votes.Item1?.AccountName ?? "")};{(votes.Item2?.AccountName ?? "")}#";
+                        }
+                        if(yesVote) // only append when they have actually voted
+                            contents += str + "\r\n";
+                    }
+                    System.IO.File.WriteAllText(file.FullName, contents);
+                }
             }
         }
 

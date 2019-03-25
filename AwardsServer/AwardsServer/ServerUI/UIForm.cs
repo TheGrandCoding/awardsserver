@@ -111,7 +111,7 @@ namespace AwardsServer.ServerUI
                 {
                     foreach (var uu in SocketHandler.CurrentClients)
                     {
-                        object[] row = new object[] { uu.IPAddress, uu.UserName, uu.User.ToString("AN FN LN TT") };
+                        object[] row = new object[] { uu.IPAddress, uu.UserName, uu.User.ToString("FN LN TT"), uu.LastCategoryRequested.ToString("00") };
                         dgvCurrentVoters.Rows.Add(row);
                     }
                 }

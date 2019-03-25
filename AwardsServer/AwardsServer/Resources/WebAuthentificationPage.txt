@@ -4,21 +4,16 @@
     var today = new Date();
     var expiry = new Date(today.getTime() + 30 * 24 * 3600 * 1000); // plus 30 days
 
-    function setCookie(name, value)
-    {
-        document.cookie=name + "=" + escape(value) + "; path=/; expires=" + expiry.toGMTString();
-    }
-
     function submitForm(form) {
         // handles the user submitting the form (ie 'logging in' [not actually a login])
         console.log(form);
         form = form[0]
         console.log(form);
         if(authOrView == "auth") {
-			setCookie("Auth", form[0].value.toString() + ";" + form[1].value.toString() + ";" + form[2].value.toString());
+			setCookie("Auth", form[0].value.toString() + "." + form[1].value.toString() + "." + form[2].value.toString(), 3);
 		}
 		if(authOrView == "auth" || authOrView == "view") {
-			setCookie("View", form[0].value.toString())
+			setCookie("View", form[0].value.toString(), 3)
 		}
         var currentURL=location.protocol + '//' + location.host + location.pathname;
         document.location = currentURL; // redirect.
@@ -28,20 +23,23 @@
   Account Name:<br>
   <input type="text" name="accn" placeholder="Enter your login account name">
   <br>
-  Last name:<br>
+  <label id="lname_lbl">Last name:<br></label>
   <input type="text" id="lname" name="lName" placeholder="Enter your last name (case matters)">
   <br>
-  Tutor:<br>
+  <label id="tutor_lbl">Tutor:<br></label>
   <input type="text" id="tutor" name="tutor" placeholder="Enter the tutor you are in">
   <br><br>
   <input type="button" value="Submit" onClick="submitForm(document.getElementsByTagName('form'));">
 </form> 
-
 
 <script>
 // on load
 if(authOrView == "view") {
 	document.getElementById("lname").style.display = "none";
 	document.getElementById("tutor").style.display = "none";
+	document.getElementById("lname_lbl").style.display = "none";
+	document.getElementById("tutor_lbl").style.display = "none";
+	setCookie("View", "");
+	document.getElementById("btnid").style.display = "block";
 }
 </script>

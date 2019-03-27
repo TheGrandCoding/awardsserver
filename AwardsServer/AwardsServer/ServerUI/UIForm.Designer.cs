@@ -54,6 +54,10 @@
             this.Column12 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.tabPage6 = new System.Windows.Forms.TabPage();
             this.dgvCurrentVoters = new System.Windows.Forms.DataGridView();
+            this.dataGridViewTextBoxColumn1 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Column14 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataGridViewTextBoxColumn2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Column24 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.tabPage7 = new System.Windows.Forms.TabPage();
             this.btnSubmitManualVote = new System.Windows.Forms.Button();
             this.btnReadyManualVote = new System.Windows.Forms.Button();
@@ -73,10 +77,10 @@
             this.Column23 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Column22 = new System.Windows.Forms.DataGridViewButtonColumn();
             this.queueTimer = new System.Windows.Forms.Timer(this.components);
-            this.dataGridViewTextBoxColumn1 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Column14 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.dataGridViewTextBoxColumn2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Column24 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.uiLockTab = new System.Windows.Forms.TabPage();
+            this.lblInputLock = new System.Windows.Forms.Label();
+            this.txtInputLock = new System.Windows.Forms.TextBox();
+            this.btnInputLock = new System.Windows.Forms.Button();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvStudents)).BeginInit();
@@ -93,6 +97,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.dgvManualVotes)).BeginInit();
             this.tabPage8.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvBugReports)).BeginInit();
+            this.uiLockTab.SuspendLayout();
             this.SuspendLayout();
             // 
             // tabControl1
@@ -105,6 +110,7 @@
             this.tabControl1.Controls.Add(this.tabPage6);
             this.tabControl1.Controls.Add(this.tabPage7);
             this.tabControl1.Controls.Add(this.tabPage8);
+            this.tabControl1.Controls.Add(this.uiLockTab);
             this.tabControl1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tabControl1.Location = new System.Drawing.Point(0, 0);
             this.tabControl1.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
@@ -370,6 +376,30 @@
             this.dgvCurrentVoters.Size = new System.Drawing.Size(786, 417);
             this.dgvCurrentVoters.TabIndex = 1;
             // 
+            // dataGridViewTextBoxColumn1
+            // 
+            this.dataGridViewTextBoxColumn1.HeaderText = "IP";
+            this.dataGridViewTextBoxColumn1.Name = "dataGridViewTextBoxColumn1";
+            this.dataGridViewTextBoxColumn1.ReadOnly = true;
+            // 
+            // Column14
+            // 
+            this.Column14.HeaderText = "Connection";
+            this.Column14.Name = "Column14";
+            this.Column14.ReadOnly = true;
+            // 
+            // dataGridViewTextBoxColumn2
+            // 
+            this.dataGridViewTextBoxColumn2.HeaderText = "Name";
+            this.dataGridViewTextBoxColumn2.Name = "dataGridViewTextBoxColumn2";
+            this.dataGridViewTextBoxColumn2.ReadOnly = true;
+            // 
+            // Column24
+            // 
+            this.Column24.HeaderText = "Category (one ahead)";
+            this.Column24.Name = "Column24";
+            this.Column24.ReadOnly = true;
+            // 
             // tabPage7
             // 
             this.tabPage7.Controls.Add(this.btnSubmitManualVote);
@@ -546,29 +576,46 @@
             this.queueTimer.Interval = 10000;
             this.queueTimer.Tick += new System.EventHandler(this.queueTimer_Tick);
             // 
-            // dataGridViewTextBoxColumn1
+            // uiLockTab
             // 
-            this.dataGridViewTextBoxColumn1.HeaderText = "IP";
-            this.dataGridViewTextBoxColumn1.Name = "dataGridViewTextBoxColumn1";
-            this.dataGridViewTextBoxColumn1.ReadOnly = true;
+            this.uiLockTab.Controls.Add(this.btnInputLock);
+            this.uiLockTab.Controls.Add(this.txtInputLock);
+            this.uiLockTab.Controls.Add(this.lblInputLock);
+            this.uiLockTab.Location = new System.Drawing.Point(4, 25);
+            this.uiLockTab.Name = "uiLockTab";
+            this.uiLockTab.Padding = new System.Windows.Forms.Padding(3);
+            this.uiLockTab.Size = new System.Drawing.Size(792, 421);
+            this.uiLockTab.TabIndex = 8;
+            this.uiLockTab.Text = "UI Lock";
+            this.uiLockTab.UseVisualStyleBackColor = true;
             // 
-            // Column14
+            // lblInputLock
             // 
-            this.Column14.HeaderText = "Connection";
-            this.Column14.Name = "Column14";
-            this.Column14.ReadOnly = true;
+            this.lblInputLock.AutoSize = true;
+            this.lblInputLock.Location = new System.Drawing.Point(218, 186);
+            this.lblInputLock.Name = "lblInputLock";
+            this.lblInputLock.Size = new System.Drawing.Size(77, 17);
+            this.lblInputLock.TabIndex = 0;
+            this.lblInputLock.Text = "Enter input";
             // 
-            // dataGridViewTextBoxColumn2
+            // txtInputLock
             // 
-            this.dataGridViewTextBoxColumn2.HeaderText = "Name";
-            this.dataGridViewTextBoxColumn2.Name = "dataGridViewTextBoxColumn2";
-            this.dataGridViewTextBoxColumn2.ReadOnly = true;
+            this.txtInputLock.Location = new System.Drawing.Point(66, 183);
+            this.txtInputLock.MaxLength = 8;
+            this.txtInputLock.Name = "txtInputLock";
+            this.txtInputLock.PasswordChar = '*';
+            this.txtInputLock.Size = new System.Drawing.Size(146, 22);
+            this.txtInputLock.TabIndex = 1;
             // 
-            // Column24
+            // btnInputLock
             // 
-            this.Column24.HeaderText = "Category (one ahead)";
-            this.Column24.Name = "Column24";
-            this.Column24.ReadOnly = true;
+            this.btnInputLock.Location = new System.Drawing.Point(66, 211);
+            this.btnInputLock.Name = "btnInputLock";
+            this.btnInputLock.Size = new System.Drawing.Size(229, 23);
+            this.btnInputLock.TabIndex = 2;
+            this.btnInputLock.Text = "Lock / Unlock";
+            this.btnInputLock.UseVisualStyleBackColor = true;
+            this.btnInputLock.Click += new System.EventHandler(this.btnInputLock_Click);
             // 
             // UIForm
             // 
@@ -598,6 +645,8 @@
             ((System.ComponentModel.ISupportInitialize)(this.dgvManualVotes)).EndInit();
             this.tabPage8.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.dgvBugReports)).EndInit();
+            this.uiLockTab.ResumeLayout(false);
+            this.uiLockTab.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -652,5 +701,9 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn Column14;
         private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn2;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column24;
+        private System.Windows.Forms.TabPage uiLockTab;
+        private System.Windows.Forms.TextBox txtInputLock;
+        private System.Windows.Forms.Label lblInputLock;
+        private System.Windows.Forms.Button btnInputLock;
     }
 }

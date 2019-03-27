@@ -434,6 +434,11 @@ namespace AwardsServer
                     }
                     System.IO.File.WriteAllText(file.FullName, contents);
                 }
+            } else if(e.StartsWith("count") || e.StartsWith("num"))
+            {
+                Logging.Log(Logging.LogSeverity.Console, $"In queue:     {SocketHandler.ClientQueue.Count}\r\n" +
+                    $"Cur voting:   {SocketHandler.CurrentClients.Count}\r\n" +
+                    $"All students: {SocketHandler.CurrentClients.Count + SocketHandler.ClientQueue.Count}");
             }
         }
 
@@ -619,6 +624,21 @@ namespace AwardsServer
             }
             // "OrDefault" means it will return null instead of erroring.
             return new Tuple<User, User>(voted.ElementAtOrDefault(0), voted.ElementAtOrDefault(1));
+        }
+
+
+        /// <summary>
+        /// Returns a list of the users who voted --for-- the voted
+        /// </summary>
+        /// <param name="voted">User who was voted for</param>
+        public List<User> GetVotesFor(User voted)
+        {
+            foreach(var vote in Votes)
+            {
+                if (vote.Key == voted.AccountName)
+                    return vote.Value;
+            }
+            return new List<User>();
         }
 
         /// <summary>

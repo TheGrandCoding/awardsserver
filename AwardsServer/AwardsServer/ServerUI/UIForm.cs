@@ -20,6 +20,8 @@ namespace AwardsServer.ServerUI
             InitializeComponent();
         }
 
+        public bool LockedUI;
+
         public void UpdateStudents()
         {
             dgvStudents.Rows.Clear();
@@ -78,7 +80,11 @@ namespace AwardsServer.ServerUI
                 {
                     secondWinner = "N/A";
                 }
-
+                if(LockedUI)
+                {
+                    firstWinner = "[Hidden]";
+                    secondWinner = "[Hidden]";
+                }
                 object[] row = new object[] { cat.Value.ID.ToString("00") + ": " + cat.Value.Prompt, firstWinner, secondWinner };
                 dgvWinners.Rows.Add(row);
             }
@@ -186,6 +192,7 @@ namespace AwardsServer.ServerUI
 
         public void UpdateOptions()
         { // yeah, i have no idea how to comment all this lol
+            btnSaveOptions.Enabled = !LockedUI;
             foreach (var opt in options)
             {
                 opt.Clear();
@@ -286,6 +293,9 @@ namespace AwardsServer.ServerUI
         {
             if (txtNameOfManualVote.Enabled == true)
                 btnSubmitManualVote.Visible = false;
+
+            txtNameOfManualVote.Visible = !LockedUI;
+            btnSubmitManualVote.Enabled = !LockedUI;
         }
 
         public void UpdateBugReports()
@@ -341,9 +351,27 @@ namespace AwardsServer.ServerUI
             }
         }
 
+        public void UpdateLockUI()
+        {
+            string registry = "uipassword";
+            var savedItem = GetOption(registry, "");
+            ServerUIForm.LockedUI = !string.IsNullOrWhiteSpace(savedItem);
+            if (LockedUI)
+            {
+                lblInputLock.Text = "Enter input to unlock the UI";
+                btnInputLock.Text = "Unlock";
+            } else
+            {
+                lblInputLock.Text = "Enter input to lock the UI";
+                btnInputLock.Text = "Lock UI";
+            }
+            txtInputLock.Text = ""; // clear any passwords
+        }
+
         static bool warnedGithubBefore = false;
         private void UIForm_Load(object sender, EventArgs e)
         {
+            UpdateLockUI();
             UpdateStudents();
             UpdateCategory();
             UpdateWinners();
@@ -790,6 +818,28 @@ namespace AwardsServer.ServerUI
                 }
                 Program.SaveBugs();
             }
+        }
+
+        private void btnInputLock_Click(object sender, EventArgs e)
+        {
+            string registry = "uipassword";
+            var savedItem = GetOption(registry, "");
+            ServerUIForm.LockedUI = !string.IsNullOrWhiteSpace(savedItem);
+            if(LockedUI)
+            {
+                // we are unlocking.
+                if (txtInputLock.Text == savedItem)
+                {
+                    SetOption(registry, "");
+                } else
+                {
+                    MessageBox.Show($"Password incorrect.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            } else
+            {
+                SetOption(registry, txtInputLock.Text);
+            }
+            this.Close(); // UI will reopen with new settings instantly applied
         }
     }
 }

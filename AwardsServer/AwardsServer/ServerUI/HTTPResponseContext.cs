@@ -565,6 +565,46 @@ namespace AwardsServer.ServerUI
 
                             Body = text; Code = HttpStatusCode.OK;
                         }
+                    } else if(URLUntilTokens == "/voted")
+                    {
+                        if(!AuthenticatedAs.Flags.Contains(Flags.System_Operator))
+                        {
+                            Body = "<label class=\"error\">You do not have access that page.</label>";
+                            Code = HttpStatusCode.Forbidden;
+                            Title = "Forbidden";
+                            return;
+                        }
+                        if(this.Tokens.TryGetValue("user", out string accountName))
+                        {
+                            string filter = "";
+                            if (Tokens.TryGetValue("filter", out string f)) filter = f;
+                            if(Program.TryGetUser(accountName, out User user))
+                            {
+                                string text = $"Votes for {user.FirstName}:";
+                                text += "<table>" +
+                                    "<tr><th>Category</th><th>Votes</th><th>People voted</th></tr>";
+                                foreach(var category in Program.Database.AllCategories.Values)
+                                {
+                                    string row = $"<tr><td>{category.Prompt}</td>";
+                                    var votes = category.GetVotesFor(user);
+                                    row += $"<td>{votes.Count}</td>";
+                                    row += $"<td>{string.Join(", ", votes.Select(x => x.AccountName == filter ? $"<strong>{x.FullName}</strong>" : x.FullName))}</td>";
+                                    row += "</tr>";
+                                    text += row;
+                                }
+                                text += "</table>";
+                                Body = text;
+                            } else
+                            {
+                                Body = "<label class=\"error\">The user provided is unknown.</label>";
+                                Code = HttpStatusCode.BadRequest;
+                            }
+                        } else
+                        {
+                            Body = "<label class=\"error\">You did not pass a proper URL query paramator of name 'user'" +
+                                ", containing the account name of the student desired</label>";
+                            Code = HttpStatusCode.BadRequest;
+                        }
                     }
                     else
                     { // unknown/not set up request

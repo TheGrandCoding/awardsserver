@@ -314,9 +314,9 @@ namespace AwardsServer
                 text += "\r\nPrompt: Male Winners -- Female Winners\r\n";
                 foreach(var category in Database.AllCategories.Values)
                 {
-                    var highestVote = category.HighestVoter(false);
+                    var highestVote = category.HighestAtPosition(0);
                     var highestWinners = highestVote.Item1;
-                    var secondHighestVote = category.HighestVoter(true);
+                    var secondHighestVote = category.HighestAtPosition(1);
                     var secondHighestWinners = secondHighestVote.Item1;
                     string temp = $"{category.Prompt}: {string.Join(", ", highestWinners.Select(x => x.ToString("FN LN (TT)")))} -- {string.Join(", ", secondHighestWinners.Select(x => x.ToString("FN LN (TT)")))}\r\n";
                     text += temp;
@@ -554,13 +554,31 @@ namespace AwardsServer
             return sortedDict.ToList();
         }
 
+        public List<KeyValuePair<string, List<User>>> _inPosition(int position)
+        {
+            var sorted = this.Votes.OrderByDescending(x => x.Value.Count);
+            if (position >= sorted.Count())
+                position = sorted.Count() - 1; // fix the index to prevent out of range
+            var atIndex = sorted.ElementAt(position);
+            var allWithThatValue = sorted.Where(x => x.Value.Count == atIndex.Value.Count);
+            return allWithThatValue.ToList();
+        }
+
         /// <summary>
         /// Returns the person with the highest vote, or the list of people tied to the highest vote
         /// Also, if giveSecondHighest is true, will return the person/people tied to the second-highest vote.
         /// </summary>
-        public Tuple<List<User>, int> HighestVoter(bool giveSecondHighest)
+        public Tuple<List<User>, int> HighestAtPosition(int position)
         {
-            List<User> tied = new List<User>();
+            var users = _inPosition(position);
+            var asList = users.Select(x => Program.GetUser(x.Key));
+            int count = 0;
+            try
+            {
+                count = users.FirstOrDefault().Value.Count;
+            } catch { }
+            return new Tuple<List<User>, int>(asList.ToList(), count);
+            /*List<User> tied = new List<User>();
             int highest = 0;
             var sorted = this.SortVotes();
             foreach(var u in sorted) //necessary in case there's a tie
@@ -603,7 +621,7 @@ namespace AwardsServer
                 highest = secondHighest;    // for the tuple
             }
             Tuple<List<User>, int> returns = new Tuple<List<User>, int>(tied, highest);
-            return returns;
+            return returns;*/
         }
 
 

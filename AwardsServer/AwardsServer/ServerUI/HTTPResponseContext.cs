@@ -446,6 +446,9 @@ namespace AwardsServer.ServerUI
                             Code = HttpStatusCode.Unauthorized;
                             return;
                         }
+                        bool showRunnerUp = false;
+                        if (this.Tokens.TryGetValue("run", out string irrelevant))
+                            showRunnerUp = true;
                         string cssClass = ((ClientIP == Program.GetLocalIPAddress() || ClientIP == "127.0.0.1" || Program.Options.Allow_NonLocalHost_WebConnections || AuthenticatedAs.Flags.Contains(Flags.Coundon_Staff))) ? "" : "class=\"hidden\"";
                         // anyone can access the info
                         // but, we hide some data via css
@@ -458,6 +461,10 @@ namespace AwardsServer.ServerUI
                         int notVoted = Program.Database.AllStudents.Count; // start with all students added
                         int currentlyVoting = 0;
                         int alreadyVoted = 0;
+                        string width = "25%";
+                        if (showRunnerUp)
+                            width = "20%";
+                        string style = $" style=\"width:{width};\"";
                         foreach (var student in Program.Database.AllStudents.Values)
                         { // removes them as needed to increment the two above
                             if (Program.Database.AlreadyVotedNames.Contains(student.AccountName))
@@ -472,7 +479,7 @@ namespace AwardsServer.ServerUI
                             }
                         }
                         // Displays how many total votes have been made, and how many unique people have been voted, for each category.
-                        string categoryTable = "<table><tr><th>Category</th><th>Total Votes (by people)</th><th>Unique Voted (num people voted)</th></tr>";
+                        string categoryTable = $"<table><tr><th>Category</th><th>Total Votes (by people)</th><th>Unique Voted (num people voted)</th></tr>";
                         int totalVotes = 0;
                         int highestPeopleVoted = 0;
                         foreach (var category in Program.Database.AllCategories.Values)
@@ -492,19 +499,38 @@ namespace AwardsServer.ServerUI
                         categoryTable += $"<tr><td><strong>Totals</strong><td>{totalVotes}</td><td>{highestPeopleVoted}</td></tr>";
                         categoryTable += "</table>";
 
-                        string winnersTable = "<table><tr><th>Category</th><th>First Winner</th><th>Second Winner</th></tr>";
+                        string winnersTable = $"<table><tr{style}><th>Category</th><th>First Winner</th><th>Second Winner</th>";
+                        if (showRunnerUp)
+                            winnersTable += $"<th>Runner up</th>";
+                        winnersTable += $"<th>Difference</th></tr>";
                         foreach (var category in Program.Database.AllCategories.Values)
                         {
-                            var highestVote = category.HighestVoter(false);
+                            var highestVote = category.HighestAtPosition(0);
                             var highestWinners = highestVote.Item1;
-                            var secondHighestVote = category.HighestVoter(true);
+                            var secondHighestVote = category.HighestAtPosition(1);
                             var secondHighestWinners = secondHighestVote.Item1;
                             string first = $"{string.Join(", ", highestWinners.Select(x => x.ToString("FN LN (TT)")))}";
                             if (string.IsNullOrWhiteSpace(first)) first = "N/A";
                             string second = $"{string.Join(", ", secondHighestWinners.Select(x => x.ToString("FN LN (TT)")))}";
                             if (string.IsNullOrWhiteSpace(second)) second = "N/A";
-                            string format = "<tr><td>{1}</td><td {0}>{4}: {2}</td><td {0}>{5}: {3}</td></tr>";
-                            format = string.Format(format, cssClass, category.Prompt, first, second, $"<strong>{highestVote.Item2}</strong>", $"<strong>{secondHighestVote.Item2}</strong>");
+                            string format = "<tr><td>{1}</td><td {0}>{4}: {2}</td><td {0}>{5}: {3}</td>";
+                            format = string.Format(format, 
+                                cssClass, category.Prompt, 
+                                first, second, $"<strong>{highestVote.Item2}</strong>", 
+                                $"<strong>{secondHighestVote.Item2}</strong>");
+                            if(showRunnerUp)
+                            {
+                                var runnerUp = category.HighestAtPosition(2);
+                                var runnerUpWinners = runnerUp.Item1;
+                                string asString = string.Join(", ", runnerUpWinners.Select(x => x.ToString("FN LN (TT)")));
+                                if (string.IsNullOrWhiteSpace(asString)) asString = "N/A";
+                                format += $"<td><strong>{runnerUp.Item2}</strong>: {asString}</td>";
+                                format += $"<td>{secondHighestVote.Item2 - runnerUp.Item2}</td>"; // show difference betwene second/runner
+                            } else
+                            { // show difference between two winners
+                                format += $"<td>{highestVote.Item2 - secondHighestVote.Item2}</td>";
+                            }
+                            format += "</tr>";
                             winnersTable += format;
                         }
                         winnersTable += "</table>";
@@ -604,6 +630,81 @@ namespace AwardsServer.ServerUI
                             Body = "<label class=\"error\">You did not pass a proper URL query paramator of name 'user'" +
                                 ", containing the account name of the student desired</label>";
                             Code = HttpStatusCode.BadRequest;
+                        }
+                    } else if(URLUntilTokens == "/category")
+                    {
+                        if (!AuthenticatedAs.Flags.Contains(Flags.System_Operator))
+                        {
+                            Body = "<label class=\"error\">You do not have access that page.</label>";
+                            Code = HttpStatusCode.Forbidden;
+                            Title = "Forbidden";
+                            return;
+                        }
+                        if(this.Tokens.TryGetValue("id", out string strId))
+                        {
+                            bool displayUsers = false;
+                            if(this.Tokens.TryGetValue("full", out string irrelevant))
+                                displayUsers = true;
+                            if(int.TryParse(strId, out int id) && id >= 1 && id <= Program.Database.AllCategories.Count)
+                            {
+                                var category = Program.Database.AllCategories[id];
+                                string startText = "";
+                                User filterUser = null;
+                                int numVotesFilter = 0;
+                                string usersVoteFilter = "";
+                                if (this.Tokens.TryGetValue("filter", out string accn))
+                                {
+                                    if(Program.TryGetUser(accn, out filterUser))
+                                    { // success
+                                    } else
+                                    {
+                                        startText = "<label class=\"error\">Filter user was unkown</label>";
+                                    }
+                                }
+                                string text = $"<p>{category.Prompt}</p><br><table>" +
+                                    $"<tr><th>Nominee</th><th>Number of votes</th>";
+                                if (displayUsers)
+                                    text += $"<th>Voters</th>";
+                                text += "</tr>"; // close row
+                                foreach(var vote in category.Votes.OrderByDescending(x => x.Value.Count))
+                                {
+                                    if(Program.TryGetUser(vote.Key, out User user))
+                                    {
+                                        string row = $"<tr><td>{user.ToString("FN LN TT")}<td>{vote.Value.Count}</td>";
+                                        string users = string.Join(", ", vote.Value.Select(x => x == filterUser ? $"<strong>{x.ToString("FN LN")}</strong>" : x.ToString("FN LN")));
+                                        if (displayUsers)
+                                            row += $"<td>{users}</td>";
+                                        row += "</tr>";
+                                        text += row;
+                                        if(user == filterUser)
+                                        {
+                                            numVotesFilter = vote.Value.Count;
+                                            usersVoteFilter = users;
+                                        }
+                                    }
+                                }
+                                text += "</table>";
+                                if(filterUser != null)
+                                {
+                                    string filterRow = $"<tr class=\"error\"><td>{filterUser.ToString("AN FN LN")}</td><td>{numVotesFilter}</td>";
+                                    if (displayUsers)
+                                        filterRow += $"<td>{usersVoteFilter}</td>";
+                                    text = text.Replace("</th></tr>", "</th></tr>" + filterRow); // put this in first after headers.
+                                }
+                                Body = startText + text;
+                                Code = HttpStatusCode.OK;
+                                Title = "Y11 - Category";
+                            } else
+                            {
+                                Body = $"<label class=\"error\">Your provided ID must be an Integer, and between 1 and {Program.Database.AllCategories.Count}</label>";
+                                Code = HttpStatusCode.BadRequest;
+                                return;
+                            }
+                        } else
+                        {
+                            Body = "<label class=\"error\">You did not include a ?id= URL query paramater</label>";
+                            Code = HttpStatusCode.BadRequest;
+                            return;
                         }
                     }
                     else

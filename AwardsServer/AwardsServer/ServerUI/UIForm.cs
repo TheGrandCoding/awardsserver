@@ -54,8 +54,8 @@ namespace AwardsServer.ServerUI
                 string firstWinner = "";
                 string secondWinner = "";
 
-                var highestWinners = cat.Value.HighestVoter(false);
-                var secondHighestWinners = cat.Value.HighestVoter(true);
+                var highestWinners = cat.Value.HighestAtPosition(0);
+                var secondHighestWinners = cat.Value.HighestAtPosition(1);
                 foreach (var maleWin in highestWinners.Item1)
                 {
                     firstWinner += $"{maleWin.FullName} {maleWin.Tutor}, ";

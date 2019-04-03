@@ -140,6 +140,8 @@ namespace AwardsServer.ServerUI
 
             public FieldInfo FieldInfo; // the variable itself in the Options class.
 
+            public OptionAttribute AttributeItself; // the attribute itself
+
             public object Value // gets value, from input, via parsing it depending on its input/type
             {
                 get
@@ -213,7 +215,8 @@ namespace AwardsServer.ServerUI
                     AttributeValue = option.Description,
                     InputType = variable.FieldType,
                     VariableName = variable.Name,
-                    FieldInfo = variable
+                    FieldInfo = variable,
+                    AttributeItself = option
                 }; // holds option (get it?) related information
 
                 // dynamic = compiler doesnt check to see if the functions exist
@@ -252,6 +255,11 @@ namespace AwardsServer.ServerUI
                 {
                     inputCont = new TextBox();
                     ((TextBox)inputCont).Text = (string)savedValue;
+                    if(option.Sensitive && LockedUI)
+                    {
+                        var txt = (TextBox)inputCont;
+                        txt.PasswordChar = '*';
+                    }
                 }
                 else if (savedValue.GetType() == typeof(bool))
                 {
@@ -487,7 +495,12 @@ namespace AwardsServer.ServerUI
                 {
                     hold.FieldInfo.SetValue(null, hold.Value);
                     SetOption(hold.VariableName, hold.Value.ToString());
-                    Logging.Log(Logging.LogSeverity.Warning, $"Updated {hold.VariableName}, now: {hold.FieldInfo.GetValue(null)}");
+                    string nowValue = hold.FieldInfo.GetValue(null).ToString();
+                    if(hold.AttributeItself.Sensitive)
+                    { // never log sensitive things
+                        nowValue = new string('*', nowValue.Length);
+                    }
+                    Logging.Log(Logging.LogSeverity.Warning, $"Updated {hold.VariableName}, now: {nowValue}");
                     if (hold.VariableName == nameof(Program.Options.WebSever_Enabled))
                     {
                         Logging.Log(Logging.LogSeverity.Warning, "WEB SERVER CHANGED:");

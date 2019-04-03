@@ -10,6 +10,7 @@ using System.Windows.Forms;
 using Newtonsoft.Json;
 using System.Net;
 using System.Net.Sockets;
+using System.Net.Http;
 
 //get ready for some seemingly obvious questions
 //ctrl-f "??" to find what might be confusing
@@ -36,6 +37,7 @@ namespace AwardsServer
             public readonly string Description;
             public readonly object DefaultValue;
             public readonly bool ReadOnly;
+            public readonly bool Sensitive;
             /// <summary>
             /// Constructs the information for an Option.
             /// </summary>
@@ -43,12 +45,14 @@ namespace AwardsServer
             /// <param name="name">Internal/short name for this option</param>
             /// <param name="defaultValue">Default value for the option</param>
             /// <param name="readOnly">Determines whether the option can be edited in the UI (note, can still be edited in code, and via registry)</param>
-            public OptionAttribute(string description, string name, object defaultValue, bool readOnly = false)
+            /// <param name="sensitive">Determines whether a text/string should be displayed</param>
+            public OptionAttribute(string description, string name, object defaultValue, bool readOnly = false, bool sensitive = false)
             {
                 Name = name;
                 Description = description;
                 DefaultValue = defaultValue;
                 ReadOnly = readOnly;
+                Sensitive = sensitive;
             }
         }
         public static class Options
@@ -92,8 +96,11 @@ namespace AwardsServer
             [Option("Can the server manually vote on behalf of a user via its 'Manual Vote' tab", "Can server save a vote", true)]
             public static bool Allow_Manual_Vote;
 
-            [Option("Github authentication token", "Github authentification token", "")]
+            [Option("Github authentication token", "Github authentification token", "", false, true)]
             public static string Github_AuthToken;
+
+            [Option("Masterlist:: Username @ Password", "Masterlist user & password, seperator @", "", false, true)]
+            public static string Masterlist_UserPassword;
 
             [Option("Kicked users are unable to rejoin", "Kick is infact a ban", false)]
             public static bool Perm_Block_Kicked_Users;
@@ -431,29 +438,42 @@ namespace AwardsServer
                 System.IO.FileInfo file = new System.IO.FileInfo(Options.ServerTextFileVotes_Path);
                 if(MessageBox.Show($"Are you sure you want to OVERWRITE the votes in:\r\n" + file.FullName, "Overwrite votes: Confirm", MessageBoxButtons.OKCancel) == DialogResult.OK)
                 {
-                    string contents = "";
-                    foreach(var student in Database.AllStudents)
-                    {
-                        string str = $"{student.Key}/";
-                        bool yesVote = false;
-                        foreach(var category in Database.AllCategories.Values)
-                        {
-                            var votes = category.GetVotesBy(student.Value);
-                            if (votes.Item1 != null || votes.Item2 != null) 
-                                yesVote = true;
-                            str += $"{(votes.Item1?.AccountName ?? "")};{(votes.Item2?.AccountName ?? "")}#";
-                        }
-                        if(yesVote) // only append when they have actually voted
-                            contents += str + "\r\n";
-                    }
-                    System.IO.File.WriteAllText(file.FullName, contents);
+                    _saveVotes();
                 }
             } else if(e.StartsWith("count") || e.StartsWith("num"))
             {
                 Logging.Log(Logging.LogSeverity.Console, $"In queue:     {SocketHandler.ClientQueue.Count}\r\n" +
                     $"Cur voting:   {SocketHandler.CurrentClients.Count}\r\n" +
                     $"All students: {SocketHandler.CurrentClients.Count + SocketHandler.ClientQueue.Count}");
+            } else if(e == "upload votes")
+            {
+                System.IO.FileInfo file = new System.IO.FileInfo(Options.ServerTextFileVotes_Path);
+                string url = $"https://{Program.Options.Masterlist_UserPassword}@masterlist.uk.ms/secure/dev/upload.html";
+                Logging.Log(Logging.LogSeverity.Console, $"Location of votes: {file.FullName}");
+                System.Diagnostics.Process.Start(Program.Options.DEFAULT_WEB_BROWSER, url);
             }
+        }
+
+        static string _saveVotes()
+        {
+            System.IO.FileInfo file = new System.IO.FileInfo(Options.ServerTextFileVotes_Path);
+            string contents = "";
+            foreach (var student in Database.AllStudents)
+            {
+                string str = $"{student.Key}/";
+                bool yesVote = false;
+                foreach (var category in Database.AllCategories.Values)
+                {
+                    var votes = category.GetVotesBy(student.Value);
+                    if (votes.Item1 != null || votes.Item2 != null)
+                        yesVote = true;
+                    str += $"{(votes.Item1?.AccountName ?? "")};{(votes.Item2?.AccountName ?? "")}#";
+                }
+                if (yesVote) // only append when they have actually voted
+                    contents += str + "\r\n";
+            }
+            System.IO.File.WriteAllText(file.FullName, contents);
+            return contents;
         }
 
         public static void SendAdminChat(AdminMessage message)

@@ -276,7 +276,15 @@ namespace AwardsServer
             while(Server.Listening)
             {
                 var str = Console.ReadLine(); // reads line and stores to var
-                ConsoleInput?.Invoke(null, str); // invokes any places that are listening to the event, passing the input
+                try
+                {
+                    ConsoleInput?.Invoke(null, str); // invokes any places that are listening to the event, passing the input
+                }
+                catch (Exception ex)
+                {
+                    Logging.Log("Console", ex);
+                    Logging.Log(Logging.LogSeverity.Console, "Your input caused an error. Double check you typed it correctly, and try again");
+                }
             }
             Logging.Log(Logging.LogSeverity.Severe, "Server has exited its main listening loop");
             Logging.Log(Logging.LogSeverity.Error, "Server closed.");
@@ -345,12 +353,18 @@ namespace AwardsServer
                 }
                 else
                 {
-                    Logging.Log(Logging.LogSeverity.Console, "Unknown user accounr: " + e);
+                    Logging.Log(Logging.LogSeverity.Console, "Unknown user account: " + e);
                 }
             } else if (e.StartsWith("chat"))
             {
-                e = e.Substring("chat".Length + 1);
-                SendAdminChat(new AdminMessage("Server", SocketHandler.Authentication.Sysadmin, e));
+                if(e.Trim() == "chat")
+                {
+                    Logging.Log(Logging.LogSeverity.Console, "You must actually type a message to send.");
+                } else
+                {
+                    e = e.Substring("chat".Length + 1);
+                    SendAdminChat(new AdminMessage("Server", SocketHandler.Authentication.Sysadmin, e));
+                }
             } else if(e.StartsWith("load votes"))
             {
                 System.IO.FileInfo file = new System.IO.FileInfo(Options.ServerTextFileVotes_Path);

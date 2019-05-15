@@ -228,7 +228,7 @@ namespace AwardsServer
         /// Executes a SQL command.
         /// </summary>
         /// <param name="cmd">Command to execute.</param>
-        public void ExecuteCommand(string cmd)
+        public int ExecuteCommand(string cmd)
         {
             lock(_databaseLock)
             {
@@ -241,7 +241,7 @@ namespace AwardsServer
                 OleDbCommand command = new OleDbCommand();
                 command.Connection = connection;
                 command.CommandText = cmd;
-                command.ExecuteNonQuery();
+                return command.ExecuteNonQuery();
             }
         }
 

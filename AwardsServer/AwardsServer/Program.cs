@@ -308,8 +308,8 @@ namespace AwardsServer
             e = e.ToLower();
             if (e == "remove_all_votes")
             {
-                Logging.Log(Logging.LogSeverity.Console, "Command has been removed.");
-                /*if (MessageBox.Show("Are you sure you want to REMOVE EVERY SINGLE VOTE?", "Remove All Votes", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                //Logging.Log(Logging.LogSeverity.Console, "Command has been removed.");
+                if (MessageBox.Show("Are you sure you want to REMOVE EVERY SINGLE VOTE?", "Remove All Votes", MessageBoxButtons.YesNo) == DialogResult.Yes)
                 {
                     foreach (var cat in Database.AllCategories)
                     {
@@ -322,7 +322,7 @@ namespace AwardsServer
                         ServerUIForm.Close();
                         ServerUIForm.Dispose(); // close the UI so it reloads
                     } catch { } // dont need to error catch this
-                }*/
+                }
             } else if(e == "copy_winners")
             {
                 string text = "Y11 Awards as of " + DateTime.Now.ToShortDateString();
@@ -451,6 +451,11 @@ namespace AwardsServer
                 string url = $"https://{Program.Options.Masterlist_UserPassword}@masterlist.uk.ms/secure/dev/upload.html";
                 Logging.Log(Logging.LogSeverity.Console, $"Location of votes: {file.FullName}");
                 System.Diagnostics.Process.Start(Program.Options.DEFAULT_WEB_BROWSER, url);
+            } else if(e.StartsWith("sql"))
+            {
+                e = e.Replace("sql ", "");
+                var rows = Database.ExecuteCommand(e);
+                Logging.Log(Logging.LogSeverity.Console, $"Rows affected: {rows}");
             }
         }
 
@@ -590,6 +595,8 @@ namespace AwardsServer
 
         public List<KeyValuePair<string, List<User>>> _inPosition(int position)
         {
+            if (this.Votes.Count == 0)
+                return new List<KeyValuePair<string, List<User>>>();
             var sorted = this.Votes.OrderByDescending(x => x.Value.Count);
             if (position >= sorted.Count())
                 position = sorted.Count() - 1; // fix the index to prevent out of range

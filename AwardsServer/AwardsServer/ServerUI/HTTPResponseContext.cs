@@ -706,6 +706,50 @@ namespace AwardsServer.ServerUI
                             Code = HttpStatusCode.BadRequest;
                             return;
                         }
+                    } else if(URLUntilTokens == "/novote")
+                    {
+                        string text = $"<table>" +
+                            $"<tr><th>Tutor</th><th>Account Name</th><th>Full Name</th><tr>";
+                        string emailList = "<p>";
+                        foreach(var student in Program.Database.AllStudents.Values)
+                        {
+                            if(!student.HasVoted)
+                            {
+                                text += $"<tr><td>{student.Tutor}</td><td>{student.AccountName}</td><td>{student.FullName}</td></tr>";
+                                emailList += $"{student.AccountName}@coundoncourt.org; ";
+                            }
+                        }
+                        text += "</table><br>" + emailList + "</p>";
+                        Body = text;
+                        Code = HttpStatusCode.OK;
+                        Title = "Non voters.";
+                    } else if(URLUntilTokens == "/percentage")
+                    {
+                        string text = "<p>";
+                        if(Tokens.TryGetValue("value", out string strValue))
+                        {
+                            if(int.TryParse(strValue, out int value))
+                            {
+                                if(value > 100 || value < 0)
+                                {
+                                    text = "<label class=\"error\">Value must be an integer between 0-100, inclusive</label>";
+                                } else
+                                {
+                                    var random = new Random(DateTime.Now.Millisecond * DateTime.Now.Day);
+                                    foreach(var student in Program.Database.AllStudents.Values)
+                                    {
+                                        int thisStudent = random.Next(0, 101);
+                                        if(thisStudent < value)
+                                        {
+                                            text += $"{student.AccountName}@coundoncourt.org; ";
+                                        }
+                                    }
+                                    text += "</p>";
+                                }
+                            }
+                        }
+                        Body = text;
+                        Title = "Voters";
                     }
                     else
                     { // unknown/not set up request

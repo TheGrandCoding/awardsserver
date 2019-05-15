@@ -254,6 +254,7 @@ namespace AwardsServer
             if(Database.AllStudents.Count == 0)
             {
                 Logging.Log(Logging.LogSeverity.Error, "No students have been loaded. Assuming that this is an error.");
+                Logging.Log(Logging.LogSeverity.Error, "No students have been loaded. Assuming that this is an error.");
                 Console.ReadLine();
                 Logging.Log(Logging.LogSeverity.Error, "This error will continue to occur until atleast one student is added to the 'Database.accdb' file");
                 Console.ReadLine();
@@ -325,20 +326,7 @@ namespace AwardsServer
                 }
             } else if(e == "copy_winners")
             {
-                string text = "Y11 Awards as of " + DateTime.Now.ToShortDateString();
-                text += "\r\nPrompt: Male Winners -- Female Winners\r\n";
-                foreach(var category in Database.AllCategories.Values)
-                {
-                    var highestVote = category.HighestAtPosition(0);
-                    var highestWinners = highestVote.Item1;
-                    var secondHighestVote = category.HighestAtPosition(1);
-                    var secondHighestWinners = secondHighestVote.Item1;
-                    string temp = $"{category.Prompt}: {string.Join(", ", highestWinners.Select(x => x.ToString("FN LN (TT)")))} -- {string.Join(", ", secondHighestWinners.Select(x => x.ToString("FN LN (TT)")))}\r\n";
-                    text += temp;
-
-                }
-                Logging.Log(Logging.LogSeverity.Console, text);
-                System.IO.File.WriteAllText("test.html", text.Replace("\r\n", "<br>"));
+                Logging.Log(Logging.LogSeverity.Console, "Command disabled");
             } else if(e.StartsWith("op"))
             {
                 e = e.Substring(3).Trim(); // remove "op "

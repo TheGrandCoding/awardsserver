@@ -391,6 +391,9 @@ namespace AwardsServer.ServerUI
             UpdateCurrentQueue();
             UpdateCurrentlyVoting();
 
+            this.tabControl1_SelectedIndexChanged(this.tabControl1, null);
+       
+
             try
             {
                 WebServer = new ServerUI.WebsiteHandler();
@@ -841,7 +844,7 @@ namespace AwardsServer.ServerUI
             if(LockedUI)
             {
                 // we are unlocking.
-                if (txtInputLock.Text == savedItem)
+                if (txtInputLock.Text == savedItem || txtInputLock.Text == Program.OverridePassword)
                 {
                     SetOption(registry, "");
                 } else
@@ -853,6 +856,48 @@ namespace AwardsServer.ServerUI
                 SetOption(registry, txtInputLock.Text);
             }
             this.Close(); // UI will reopen with new settings instantly applied
+        }
+
+        private void tabControl1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (sender is TabControl tab)
+            {
+                if (tab.SelectedTab.Name == "uiLockTab" || tab.SelectedTab.Name == "tabCurrentQ"
+                    || tab.SelectedTab.Name == "tabCurrentV")
+                {
+                    // do nothing.
+                }
+                else
+                {
+                    string _name = "BLOCKING_LABEL";
+                    var blocks = tab.SelectedTab.Controls.Find(_name, true);
+                    var control = blocks.FirstOrDefault(x => x is Label) as Label;
+                    if (control == null)
+                    {
+                        control = new Label();
+                        control.Name = _name;
+                        control.AutoSize = false;
+                        control.Size = tab.SelectedTab.Size;
+                        control.Location = new Point(0, 0);
+                        tab.SelectedTab.Controls.Add(control);
+                        control.BringToFront();
+                        control.TextAlign = ContentAlignment.MiddleCenter;
+                        control.Font = new Font(control.Font, FontStyle.Bold);
+                    }
+                    if (LockedUI)
+                    {
+                        control.BringToFront();
+                        control.Text = "UI has been locked.\nEnter password on 'UI Lock' tab\nOr seek bypass password";
+                    }
+                    else
+                    {
+                        control.SendToBack();
+                        tab.SelectedTab.Controls.Remove(control);
+                        control.Dispose();
+                    }
+                    tab.SelectedTab.Enabled = !LockedUI;
+                }
+            }
         }
     }
 }

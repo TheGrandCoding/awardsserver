@@ -48,11 +48,11 @@
             this.Column10 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.tabPage4 = new System.Windows.Forms.TabPage();
             this.btnSaveOptions = new System.Windows.Forms.Button();
-            this.tabPage5 = new System.Windows.Forms.TabPage();
+            this.tabCurrentQ = new System.Windows.Forms.TabPage();
             this.dgvQueue = new System.Windows.Forms.DataGridView();
             this.Column11 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Column12 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.tabPage6 = new System.Windows.Forms.TabPage();
+            this.tabCurrentV = new System.Windows.Forms.TabPage();
             this.dgvCurrentVoters = new System.Windows.Forms.DataGridView();
             this.dataGridViewTextBoxColumn1 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Column14 = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -76,11 +76,11 @@
             this.Column21 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Column23 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Column22 = new System.Windows.Forms.DataGridViewButtonColumn();
-            this.queueTimer = new System.Windows.Forms.Timer(this.components);
             this.uiLockTab = new System.Windows.Forms.TabPage();
-            this.lblInputLock = new System.Windows.Forms.Label();
-            this.txtInputLock = new System.Windows.Forms.TextBox();
             this.btnInputLock = new System.Windows.Forms.Button();
+            this.txtInputLock = new System.Windows.Forms.TextBox();
+            this.lblInputLock = new System.Windows.Forms.Label();
+            this.queueTimer = new System.Windows.Forms.Timer(this.components);
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvStudents)).BeginInit();
@@ -89,9 +89,9 @@
             this.tabPage3.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvWinners)).BeginInit();
             this.tabPage4.SuspendLayout();
-            this.tabPage5.SuspendLayout();
+            this.tabCurrentQ.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvQueue)).BeginInit();
-            this.tabPage6.SuspendLayout();
+            this.tabCurrentV.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvCurrentVoters)).BeginInit();
             this.tabPage7.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvManualVotes)).BeginInit();
@@ -106,8 +106,8 @@
             this.tabControl1.Controls.Add(this.tabPage2);
             this.tabControl1.Controls.Add(this.tabPage3);
             this.tabControl1.Controls.Add(this.tabPage4);
-            this.tabControl1.Controls.Add(this.tabPage5);
-            this.tabControl1.Controls.Add(this.tabPage6);
+            this.tabControl1.Controls.Add(this.tabCurrentQ);
+            this.tabControl1.Controls.Add(this.tabCurrentV);
             this.tabControl1.Controls.Add(this.tabPage7);
             this.tabControl1.Controls.Add(this.tabPage8);
             this.tabControl1.Controls.Add(this.uiLockTab);
@@ -118,6 +118,7 @@
             this.tabControl1.SelectedIndex = 0;
             this.tabControl1.Size = new System.Drawing.Size(800, 450);
             this.tabControl1.TabIndex = 0;
+            this.tabControl1.SelectedIndexChanged += new System.EventHandler(this.tabControl1_SelectedIndexChanged);
             // 
             // tabPage1
             // 
@@ -299,17 +300,17 @@
             this.btnSaveOptions.UseVisualStyleBackColor = true;
             this.btnSaveOptions.Click += new System.EventHandler(this.btnSaveOptions_Click);
             // 
-            // tabPage5
+            // tabCurrentQ
             // 
-            this.tabPage5.Controls.Add(this.dgvQueue);
-            this.tabPage5.Location = new System.Drawing.Point(4, 25);
-            this.tabPage5.Margin = new System.Windows.Forms.Padding(4);
-            this.tabPage5.Name = "tabPage5";
-            this.tabPage5.Padding = new System.Windows.Forms.Padding(4);
-            this.tabPage5.Size = new System.Drawing.Size(792, 421);
-            this.tabPage5.TabIndex = 4;
-            this.tabPage5.Text = "Current Queue";
-            this.tabPage5.UseVisualStyleBackColor = true;
+            this.tabCurrentQ.Controls.Add(this.dgvQueue);
+            this.tabCurrentQ.Location = new System.Drawing.Point(4, 25);
+            this.tabCurrentQ.Margin = new System.Windows.Forms.Padding(4);
+            this.tabCurrentQ.Name = "tabCurrentQ";
+            this.tabCurrentQ.Padding = new System.Windows.Forms.Padding(4);
+            this.tabCurrentQ.Size = new System.Drawing.Size(792, 421);
+            this.tabCurrentQ.TabIndex = 4;
+            this.tabCurrentQ.Text = "Current Queue";
+            this.tabCurrentQ.UseVisualStyleBackColor = true;
             // 
             // dgvQueue
             // 
@@ -343,17 +344,17 @@
             this.Column12.Name = "Column12";
             this.Column12.ReadOnly = true;
             // 
-            // tabPage6
+            // tabCurrentV
             // 
-            this.tabPage6.Controls.Add(this.dgvCurrentVoters);
-            this.tabPage6.Location = new System.Drawing.Point(4, 25);
-            this.tabPage6.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
-            this.tabPage6.Name = "tabPage6";
-            this.tabPage6.Padding = new System.Windows.Forms.Padding(3, 2, 3, 2);
-            this.tabPage6.Size = new System.Drawing.Size(792, 421);
-            this.tabPage6.TabIndex = 5;
-            this.tabPage6.Text = "Current Voters";
-            this.tabPage6.UseVisualStyleBackColor = true;
+            this.tabCurrentV.Controls.Add(this.dgvCurrentVoters);
+            this.tabCurrentV.Location = new System.Drawing.Point(4, 25);
+            this.tabCurrentV.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            this.tabCurrentV.Name = "tabCurrentV";
+            this.tabCurrentV.Padding = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            this.tabCurrentV.Size = new System.Drawing.Size(792, 421);
+            this.tabCurrentV.TabIndex = 5;
+            this.tabCurrentV.Text = "Current Voters";
+            this.tabCurrentV.UseVisualStyleBackColor = true;
             // 
             // dgvCurrentVoters
             // 
@@ -570,12 +571,6 @@
             this.Column22.Name = "Column22";
             this.Column22.ReadOnly = true;
             // 
-            // queueTimer
-            // 
-            this.queueTimer.Enabled = true;
-            this.queueTimer.Interval = 10000;
-            this.queueTimer.Tick += new System.EventHandler(this.queueTimer_Tick);
-            // 
             // uiLockTab
             // 
             this.uiLockTab.Controls.Add(this.btnInputLock);
@@ -589,14 +584,15 @@
             this.uiLockTab.Text = "UI Lock";
             this.uiLockTab.UseVisualStyleBackColor = true;
             // 
-            // lblInputLock
+            // btnInputLock
             // 
-            this.lblInputLock.AutoSize = true;
-            this.lblInputLock.Location = new System.Drawing.Point(218, 186);
-            this.lblInputLock.Name = "lblInputLock";
-            this.lblInputLock.Size = new System.Drawing.Size(77, 17);
-            this.lblInputLock.TabIndex = 0;
-            this.lblInputLock.Text = "Enter input";
+            this.btnInputLock.Location = new System.Drawing.Point(66, 211);
+            this.btnInputLock.Name = "btnInputLock";
+            this.btnInputLock.Size = new System.Drawing.Size(229, 23);
+            this.btnInputLock.TabIndex = 2;
+            this.btnInputLock.Text = "Lock / Unlock";
+            this.btnInputLock.UseVisualStyleBackColor = true;
+            this.btnInputLock.Click += new System.EventHandler(this.btnInputLock_Click);
             // 
             // txtInputLock
             // 
@@ -607,15 +603,20 @@
             this.txtInputLock.Size = new System.Drawing.Size(146, 22);
             this.txtInputLock.TabIndex = 1;
             // 
-            // btnInputLock
+            // lblInputLock
             // 
-            this.btnInputLock.Location = new System.Drawing.Point(66, 211);
-            this.btnInputLock.Name = "btnInputLock";
-            this.btnInputLock.Size = new System.Drawing.Size(229, 23);
-            this.btnInputLock.TabIndex = 2;
-            this.btnInputLock.Text = "Lock / Unlock";
-            this.btnInputLock.UseVisualStyleBackColor = true;
-            this.btnInputLock.Click += new System.EventHandler(this.btnInputLock_Click);
+            this.lblInputLock.AutoSize = true;
+            this.lblInputLock.Location = new System.Drawing.Point(218, 186);
+            this.lblInputLock.Name = "lblInputLock";
+            this.lblInputLock.Size = new System.Drawing.Size(77, 17);
+            this.lblInputLock.TabIndex = 0;
+            this.lblInputLock.Text = "Enter input";
+            // 
+            // queueTimer
+            // 
+            this.queueTimer.Enabled = true;
+            this.queueTimer.Interval = 10000;
+            this.queueTimer.Tick += new System.EventHandler(this.queueTimer_Tick);
             // 
             // UIForm
             // 
@@ -636,9 +637,9 @@
             this.tabPage3.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.dgvWinners)).EndInit();
             this.tabPage4.ResumeLayout(false);
-            this.tabPage5.ResumeLayout(false);
+            this.tabCurrentQ.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.dgvQueue)).EndInit();
-            this.tabPage6.ResumeLayout(false);
+            this.tabCurrentV.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.dgvCurrentVoters)).EndInit();
             this.tabPage7.ResumeLayout(false);
             this.tabPage7.PerformLayout();
@@ -664,12 +665,12 @@
         private System.Windows.Forms.Button btnSaveOptions;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column6;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column7;
-        private System.Windows.Forms.TabPage tabPage5;
+        private System.Windows.Forms.TabPage tabCurrentQ;
         private System.Windows.Forms.DataGridView dgvQueue;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column11;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column12;
         private System.Windows.Forms.DataGridView dgvStudents;
-        private System.Windows.Forms.TabPage tabPage6;
+        private System.Windows.Forms.TabPage tabCurrentV;
         private System.Windows.Forms.DataGridView dgvCurrentVoters;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column1;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column2;

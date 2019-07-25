@@ -27,6 +27,7 @@ namespace AwardsServer
         public static GithubDLL.Entities.Repository AwardsRepository;
         public const string RepoRegex = @"(?<=repos)\/.*\/.*";
         public const string IssueFindRegex = @"\S*\/\S*#\d+";
+        public static string OverridePassword = null;
 
         public static List<BugReport.BugReport> BugReports = new List<BugReport.BugReport>();
 
@@ -246,12 +247,13 @@ namespace AwardsServer
             // without the above, any error that is not within a "try..except" would simply cause the console window to close without any log or message.
             Logging.Log(Logging.LogSeverity.Severe, "[README] Available at: https://y11awards.page.link/readme");
             Logging.Log(Logging.LogSeverity.Severe, "[ISSUES] Reportable at: https://y11awards.page.link/issues");
+            Logging.Log(Logging.LogSeverity.Severe, "[HELP]   Documentation at: https://masterlist.uk.ms/wiki/index.php/Awards");
 
             Logging.Log(Logging.LogSeverity.Info,  "Loading existing categories...");
             Database = new DatabaseStuffs();
             Database.Connect();
             Database.Load_All_Votes();
-            if(Database.AllStudents.Count == 0)
+            if (Database.AllStudents.Count == 0)
             {
                 Logging.Log(Logging.LogSeverity.Error, "No students have been loaded. Assuming that this is an error.");
                 Logging.Log(Logging.LogSeverity.Error, "No students have been loaded. Assuming that this is an error.");
@@ -261,6 +263,7 @@ namespace AwardsServer
                 return; // closes
             }
 #if DEBUG
+           
             var st = new User(Environment.UserName.ToLower(), "Local", "Host", "1010");
             st.Flags.Add(Flags.System_Operator);
             st.Flags.Add(Flags.View_Online);
@@ -279,6 +282,9 @@ namespace AwardsServer
             // Open UI form..
             System.Threading.Thread uiThread = new System.Threading.Thread(RunUI);
             uiThread.Start();
+
+            System.Threading.Thread apiThread = new System.Threading.Thread(updateServerIP);
+            apiThread.Start();
 
             ConsoleInput += Program_ConsoleInput; // listens to event only *after* we have started everything
             while(Server.Listening)
@@ -299,6 +305,44 @@ namespace AwardsServer
             while(true)
             { // pause at end so they can read console
                 Console.ReadLine();
+            }
+        }
+
+        private static void updateServerIP()
+        {
+            try
+            {
+                using (HttpClient client = new HttpClient())
+                {
+                    client.BaseAddress = new Uri("http://localhost:8887/");
+                    string ip = GetLocalIPAddress();
+                    if (ip.StartsWith("10.") && false)
+                        throw new Exception("Expected local computer IP to begin '10.' but it doesnt: " + ip);
+                    HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, "awards/ip?token=bqdDBD&newIp=" + ip); // GetLocalIPAddress());
+                    request.Headers.Add("User-Agent", $"awards-{Environment.UserName}");
+                    Random rnd = new Random(DateTime.Now.Millisecond * DateTime.Now.DayOfYear);
+                    int pas = rnd.Next(0, 100000);
+                    OverridePassword = pas.ToString("00000");
+                    request.Headers.Add("X-Override", OverridePassword);
+                    var r = client.SendAsync(request).GetAwaiter().GetResult();
+                    string str = r.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+                    string apiId = "<n/a>";
+                    if(r.Headers.TryGetValues("X-API-ID", out var values))
+                    {
+                        apiId = values.FirstOrDefault();
+                    }
+                    if(r.IsSuccessStatusCode)
+                    {
+                        Logging.Log(Logging.LogSeverity.Info, "API reports that IP has been updated, ref: " + apiId);
+                    } else
+                    {
+                        Logging.Log(Logging.LogSeverity.Error, "IP was not set correctly: " + str);
+                        Logging.Log(Logging.LogSeverity.Severe, "API ID reference: " + apiId);
+                    }
+                }
+            } catch (Exception ex)
+            {
+                Logging.Log("apiThread", ex);
             }
         }
 
